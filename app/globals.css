@@ -1,0 +1,158 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Brand colors */
+  --color-brand-50: hsl(221 83% 97%);
+  --color-brand-100: hsl(221 83% 93%);
+  --color-brand-400: hsl(221 83% 65%);
+  --color-brand-500: hsl(221 83% 53%);
+  --color-brand-600: hsl(221 83% 45%);
+  --color-brand-700: hsl(221 83% 38%);
+
+  /* Surface (dark navy) */
+  --color-surface-50: hsl(222 47% 11%);
+  --color-surface-100: hsl(222 47% 13%);
+  --color-surface-200: hsl(222 47% 16%);
+  --color-surface-300: hsl(222 47% 20%);
+  --color-surface-400: hsl(222 47% 25%);
+  --color-surface-500: hsl(222 47% 32%);
+
+  /* Gain / Loss */
+  --color-gain: hsl(142 71% 45%);
+  --color-gain-muted: hsl(142 71% 45% / 0.15);
+  --color-loss: hsl(0 84% 60%);
+  --color-loss-muted: hsl(0 84% 60% / 0.15);
+
+  /* Warning */
+  --color-warn: hsl(38 92% 50%);
+  --color-warn-muted: hsl(38 92% 50% / 0.15);
+}
+
+/* shadcn CSS variable overrides — dark mode only for this app */
+:root {
+  --background: 222 47% 11%;
+  --foreground: 210 40% 98%;
+  --card: 222 47% 13%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222 47% 13%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 221 83% 53%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 222 47% 16%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 222 47% 16%;
+  --muted-foreground: 215 20% 65%;
+  --accent: 221 83% 53%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 222 47% 20%;
+  --input: 222 47% 16%;
+  --ring: 221 83% 53%;
+  --radius: 0.75rem;
+  --chart-1: 221 83% 53%;
+  --chart-2: 142 71% 45%;
+  --chart-3: 38 92% 50%;
+  --chart-4: 270 76% 62%;
+  --chart-5: 0 84% 60%;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+  border-color: hsl(var(--border));
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: hsl(var(--background)); }
+::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground)); }
+
+/* Glassmorphism utility */
+.glass {
+  background: hsl(var(--card) / 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid hsl(var(--border) / 0.5);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, hsl(221 83% 70%), hsl(270 76% 72%));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glow effect for KPI cards */
+.glow-blue { box-shadow: 0 0 20px hsl(221 83% 53% / 0.2); }
+.glow-green { box-shadow: 0 0 20px hsl(142 71% 45% / 0.2); }
+.glow-red { box-shadow: 0 0 20px hsl(0 84% 60% / 0.2); }
+
+/* Gain/loss text */
+.text-gain { color: hsl(142 71% 45%); }
+.text-loss { color: hsl(0 84% 60%); }
+.text-warn { color: hsl(38 92% 50%); }
+
+/* Background variants */
+.bg-gain-muted { background: hsl(142 71% 45% / 0.1); }
+.bg-loss-muted { background: hsl(0 84% 60% / 0.1); }
+
+/* Chart tooltip */
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: hsl(var(--popover)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: var(--radius) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Sidebar width */
+:root {
+  --sidebar-width: 240px;
+  --sidebar-collapsed-width: 60px;
+  --topbar-height: 60px;
+}
+
+/* Animated gradient border for selected nav item */
+@keyframes gradient-border {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Pulse animation for live badge */
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(0.95); }
+}
+.animate-live-pulse { animation: live-pulse 2s ease-in-out infinite; }
+
+/* Fade-in for page content */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up { animation: fade-in-up 0.35s ease forwards; }
+
+/* Number counter animation */
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-count-up { animation: count-up 0.4s ease-out forwards; }
