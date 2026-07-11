@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchAllSheetData } from '@/lib/sheets/fetcher';
+import { auth } from '@/auth';
 
 export async function GET(request: NextRequest) {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized', meta: { lastFetched: null, tabs: [], errors: ['Unauthorized'] } }, { status: 401 });
+  }
+
   const force = request.nextUrl.searchParams.get('force') === 'true';
 
   try {

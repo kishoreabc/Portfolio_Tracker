@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Providers } from './providers';
-import { Sidebar } from '@/components/layout/Sidebar';
+import { LayoutWrapper } from '@/components/layout/LayoutWrapper';
+import { SessionWatcher } from '@/components/auth/SessionWatcher';
 
 export const metadata: Metadata = {
   title: {
@@ -21,15 +22,11 @@ export default function RootLayout({
     <html lang="en" className="dark" suppressHydrationWarning>
       <body className="min-h-screen antialiased">
         <Providers>
-          <div className="flex min-h-screen">
-            <Sidebar />
-            <main
-              className="flex-1 transition-all duration-300"
-              style={{ paddingLeft: 'var(--sidebar-width, 240px)', paddingTop: '60px' }}
-            >
+          <SessionWatcher>
+            <LayoutWrapper>
               {children}
-            </main>
-          </div>
+            </LayoutWrapper>
+          </SessionWatcher>
         </Providers>
       </body>
     </html>

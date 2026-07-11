@@ -10,6 +10,7 @@ import { buildUnifiedPortfolio } from '@/lib/mappers/unified';
 import { computeAssetAllocation, computeSectorAllocation } from '@/lib/calc/allocation';
 import { computeConcentrationRisk, computeWinnersLosers } from '@/lib/calc/risk';
 import { buildBondMaturityEvents, buildBondLadder, buildCreditRatingDistribution } from '@/lib/calc/forecast';
+import { useMemo } from 'react';
 
 async function fetchSheetsData(force = false): Promise<SheetsApiResponse> {
   const url = force ? '/api/sheets?force=true' : '/api/sheets';
@@ -28,24 +29,24 @@ export function usePortfolioData(force = false) {
   });
 
   // Derived data — memoized by query cache
-  const equity = mapEquityHoldings(raw?.equity ?? null);
-  const bonds = mapBondHoldings(raw?.bonds ?? null);
-  const transactions = mapTransactions(raw?.transactions ?? null);
-  const cashFlowStats = buildCashFlowStats(transactions);
-  const portfolio = buildUnifiedPortfolio(equity, bonds);
-  const assetAllocation = computeAssetAllocation(equity, bonds);
-  const sectorAllocation = computeSectorAllocation(equity, bonds);
-  const concentrationRisk = computeConcentrationRisk(equity, bonds);
-  const { winners, losers } = computeWinnersLosers(equity);
-  const bondMaturityEvents = buildBondMaturityEvents(bonds);
-  const bondLadder = buildBondLadder(bonds);
-  const creditRatingDistribution = buildCreditRatingDistribution(bonds);
+  const equity = useMemo(() => mapEquityHoldings(raw?.equity ?? null), [raw?.equity]);
+  const bonds = useMemo(() => mapBondHoldings(raw?.bonds ?? null), [raw?.bonds]);
+  const transactions = useMemo(() => mapTransactions(raw?.transactions ?? null), [raw?.transactions]);
+  const cashFlowStats = useMemo(() => buildCashFlowStats(transactions), [transactions]);
+  const portfolio = useMemo(() => buildUnifiedPortfolio(equity, bonds), [equity, bonds]);
+  const assetAllocation = useMemo(() => computeAssetAllocation(equity, bonds), [equity, bonds]);
+  const sectorAllocation = useMemo(() => computeSectorAllocation(equity, bonds), [equity, bonds]);
+  const concentrationRisk = useMemo(() => computeConcentrationRisk(equity, bonds), [equity, bonds]);
+  const { winners, losers } = useMemo(() => computeWinnersLosers(equity), [equity]);
+  const bondMaturityEvents = useMemo(() => buildBondMaturityEvents(bonds), [bonds]);
+  const bondLadder = useMemo(() => buildBondLadder(bonds), [bonds]);
+  const creditRatingDistribution = useMemo(() => buildCreditRatingDistribution(bonds), [bonds]);
 
-  const equityTotal = equity.reduce((s, h) => s + h.currentValue, 0);
-  const bondTotal = bonds.reduce((s, b) => s + b.totalValue, 0);
+  const equityTotal = useMemo(() => equity.reduce((s, h) => s + h.currentValue, 0), [equity]);
+  const bondTotal = useMemo(() => bonds.reduce((s, b) => s + b.totalValue, 0), [bonds]);
   const netWorth = equityTotal + bondTotal;
 
-  const todaysChange = equity.reduce((s, h) => s + h.priceChange * h.shares, 0);
+  const todaysChange = useMemo(() => equity.reduce((s, h) => s + h.priceChange * h.shares, 0), [equity]);
   const todaysChangePct = netWorth > 0 ? todaysChange / netWorth : 0;
 
   return {

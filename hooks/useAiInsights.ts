@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import type { AIInsightsResponse } from '@/types/insights';
 
 interface InsightPayload {
   equitySummary: object;
@@ -10,7 +11,7 @@ interface InsightPayload {
 }
 
 export function useAiInsights() {
-  const [insights, setInsights] = useState<string | null>(null);
+  const [insights, setInsights] = useState<AIInsightsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cached, setCached] = useState(false);
@@ -35,5 +36,12 @@ export function useAiInsights() {
     }
   };
 
-  return { insights, isLoading, error, cached, fetchInsights };
+  const resetInsights = () => {
+    setInsights(null);
+    setError(null);
+    setCached(false);
+  };
+
+  return { insights, isLoading, error, cached, fetchInsights, resetInsights };
 }
+

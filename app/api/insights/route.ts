@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { auth } from '@/auth';
 
 // Rate-limit: one Gemini call per 15-min window (same as data refresh)
-let insightCache: { prompt_hash: string; result: string; fetchedAt: number } | null = null;
+let insightCache: { prompt_hash: string; result: any; fetchedAt: number } | null = null;
 const CACHE_MS = 15 * 60 * 1000;
 
 function hashString(s: string): string {
@@ -14,6 +15,11 @@ function hashString(s: string): string {
 }
 
 export async function POST(request: NextRequest) {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized', insights: null }, { status: 401 });
+  }
+
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
@@ -39,21 +45,58 @@ export async function POST(request: NextRequest) {
 Portfolio Summary:
 ${JSON.stringify({ equitySummary, bondSummary, cashFlowSummary, allocationSummary }, null, 2)}
 
-Provide a concise analysis (max 400 words) covering:
-1. Portfolio Health: Overall assessment of asset allocation and diversification
-2. Top Opportunities: 2-3 specific actionable suggestions based on the data
-3. Key Risks: 2-3 concentration or maturity risks to watch
-4. Cash Flow: Assessment of investment vs spending patterns
+Provide a concise analysis and return ONLY valid JSON matching this schema:
+{
+  "health": {
+    "score": number (0-100),
+    "summary": "1 sentence overall summary",
+    "status": "Excellent" | "Good" | "Fair" | "Poor"
+  },
+  "allocation": {
+    "equity": number,
+    "bonds": number,
+    "gold": number,
+    "cash": number
+  },
+  "opportunities": [
+    {
+      "title": "Short title",
+      "description": "Specific actionable suggestion",
+      "priority": "High" | "Medium" | "Low"
+    }
+  ],
+  "risks": [
+    {
+      "title": "Short title",
+      "description": "Risk description",
+      "severity": "High" | "Medium" | "Low"
+    }
+  ],
+  "cashFlow": {
+    "investment": number,
+    "expenses": number,
+    "net": number,
+    "summary": "1 sentence summary of cashflow"
+  },
+  "recommendations": ["string", "string"],
+  "summary": "Overall portfolio executive summary"
+}
 
-Be specific, use the actual numbers from the data, and avoid generic advice. Format with clear headers.`;
+Ensure gold and cash are 0 if no data is provided. Never return markdown formatting or explanations outside the JSON object.`;
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: {
+        responseMimeType: 'application/json',
+      }
+    });
     const text = result.response.text();
+    const parsedJSON = JSON.parse(text);
 
-    insightCache = { prompt_hash: promptHash, result: text, fetchedAt: Date.now() };
-    return NextResponse.json({ insights: text, cached: false });
+    insightCache = { prompt_hash: promptHash, result: parsedJSON, fetchedAt: Date.now() };
+    return NextResponse.json({ insights: parsedJSON, cached: false });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Gemini API error';
     return NextResponse.json({ error: message, insights: null }, { status: 500 });

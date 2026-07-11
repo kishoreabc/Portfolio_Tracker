@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Topbar } from '@/components/layout/Topbar';
 import { usePortfolioData } from '@/hooks/usePortfolioData';
@@ -28,17 +28,17 @@ export default function AnalyticsPage() {
         {/* Diversification Score */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
           <Card className="border-border/50">
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2">
                     <Shield className="w-4 h-4 text-blue-400" /> Diversification Score
                   </CardTitle>
-                  <p className="text-xs text-muted-foreground mt-0.5">Based on Herfindahl-Hirschman Index</p>
+                  <CardDescription>Based on Herfindahl-Hirschman Index</CardDescription>
                 </div>
                 {isLoading ? <Skeleton className="h-10 w-20 bg-white/5" /> : (
-                  <span className={`text-4xl font-bold tabular-nums ${diversificationColor}`}>
-                    {concentrationRisk.diversificationScore}<span className="text-xl text-muted-foreground">/100</span>
+                  <span className={`text-display font-bold tabular-nums ${diversificationColor}`}>
+                    {concentrationRisk.diversificationScore}<span className="text-body text-muted-foreground/80 font-normal">/100</span>
                   </span>
                 )}
               </div>
@@ -49,17 +49,17 @@ export default function AnalyticsPage() {
               )}
               <div className="grid grid-cols-3 gap-3 pt-1">
                 <div className="text-center">
-                  <p className="text-xs text-muted-foreground">HHI Index</p>
-                  <p className="text-sm font-semibold">{concentrationRisk.herfindahlIndex.toFixed(4)}</p>
+                  <p className="text-caption font-semibold text-muted-foreground/80 uppercase tracking-wide">HHI Index</p>
+                  <p className="text-body font-bold text-foreground mt-0.5">{concentrationRisk.herfindahlIndex.toFixed(4)}</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-xs text-muted-foreground">Top 5 Holdings</p>
-                  <p className="text-sm font-semibold">{(concentrationRisk.top5Percent * 100).toFixed(1)}% of portfolio</p>
+                  <p className="text-caption font-semibold text-muted-foreground/80 uppercase tracking-wide">Top 5 Holdings</p>
+                  <p className="text-body font-bold text-foreground mt-0.5">{(concentrationRisk.top5Percent * 100).toFixed(1)}%</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-xs text-muted-foreground">Risk Level</p>
-                  <p className={`text-sm font-semibold ${diversificationColor}`}>
-                    {concentrationRisk.diversificationScore >= 70 ? 'Well Diversified' :
+                  <p className="text-caption font-semibold text-muted-foreground/80 uppercase tracking-wide">Risk Level</p>
+                  <p className={`text-body font-bold mt-0.5 ${diversificationColor}`}>
+                    {concentrationRisk.diversificationScore >= 70 ? 'Well Div.' :
                      concentrationRisk.diversificationScore >= 40 ? 'Moderate' : 'Concentrated'}
                   </p>
                 </div>
@@ -70,16 +70,16 @@ export default function AnalyticsPage() {
 
         {/* Top Concentration */}
         <Card className="border-border/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Top 5 Concentration Risk</CardTitle>
-            <p className="text-xs text-muted-foreground">Largest single holdings by portfolio weight</p>
+          <CardHeader className="pb-5">
+            <CardTitle>Top 5 Concentration Risk</CardTitle>
+            <CardDescription>Largest single holdings by portfolio weight</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {isLoading ? Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-8 bg-white/5" />) :
               concentrationRisk.top5Holdings.map((h, i) => (
                 <div key={i} className="space-y-1">
-                  <div className="flex justify-between text-xs">
-                    <span className="font-medium text-foreground">{h.name}</span>
+                  <div className="flex justify-between text-body">
+                    <span className="font-semibold text-foreground">{h.name}</span>
                     <span className={h.type === 'equity' ? 'text-blue-400' : 'text-green-400'}>
                       {(h.percent * 100).toFixed(1)}%
                     </span>
@@ -93,8 +93,8 @@ export default function AnalyticsPage() {
         {/* Winners & Losers */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card className="border-border/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <CardHeader className="pb-5">
+              <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-emerald-400" /> Best Performers
               </CardTitle>
             </CardHeader>
@@ -104,12 +104,12 @@ export default function AnalyticsPage() {
                   <motion.div key={w.ticker} whileHover={{ x: 4 }}
                     className="flex items-center justify-between p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
                     <div>
-                      <p className="text-xs font-bold">{w.ticker}</p>
-                      <p className="text-[11px] text-muted-foreground max-w-[120px] truncate">{w.name}</p>
+                      <p className="text-small font-semibold">{w.ticker}</p>
+                      <p className="text-caption text-muted-foreground max-w-[120px] truncate">{w.name}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-bold text-emerald-400">+{(w.percentChange * 100).toFixed(2)}%</p>
-                      <p className="text-[11px] text-muted-foreground">{fmt(w.currentValue)}</p>
+                      <p className="text-body font-bold text-emerald-400">+{(w.percentChange * 100).toFixed(2)}%</p>
+                      <p className="text-caption text-muted-foreground">{fmt(w.currentPrice)}</p>
                     </div>
                   </motion.div>
                 ))}
@@ -117,8 +117,8 @@ export default function AnalyticsPage() {
           </Card>
 
           <Card className="border-border/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <CardHeader className="pb-5">
+              <CardTitle className="flex items-center gap-2">
                 <TrendingDown className="w-4 h-4 text-red-400" /> Worst Performers
               </CardTitle>
             </CardHeader>
@@ -128,12 +128,12 @@ export default function AnalyticsPage() {
                   <motion.div key={l.ticker} whileHover={{ x: 4 }}
                     className="flex items-center justify-between p-3 rounded-lg bg-red-500/5 border border-red-500/10">
                     <div>
-                      <p className="text-xs font-bold">{l.ticker}</p>
-                      <p className="text-[11px] text-muted-foreground max-w-[120px] truncate">{l.name}</p>
+                      <p className="text-small font-semibold">{l.ticker}</p>
+                      <p className="text-caption text-muted-foreground max-w-[120px] truncate">{l.name}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-bold text-red-400">{(l.percentChange * 100).toFixed(2)}%</p>
-                      <p className="text-[11px] text-muted-foreground">{fmt(l.currentValue)}</p>
+                      <p className="text-body font-bold text-red-400">{(l.percentChange * 100).toFixed(2)}%</p>
+                      <p className="text-caption text-muted-foreground">{fmt(l.currentPrice)}</p>
                     </div>
                   </motion.div>
                 ))}
@@ -143,16 +143,16 @@ export default function AnalyticsPage() {
 
         {/* Sector exposure */}
         <Card className="border-border/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Sector Exposure</CardTitle>
+          <CardHeader className="pb-5">
+            <CardTitle>Sector Exposure</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {isLoading ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-6 bg-white/5" />) :
               sectorAllocation.map((s) => (
                 <div key={s.sector} className="space-y-1">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">{s.sector}</span>
-                    <span className="font-medium">{fmt(s.totalValue)} <span className="text-muted-foreground">({(s.percent * 100).toFixed(1)}%)</span></span>
+                  <div className="flex justify-between text-body">
+                    <span className="text-muted-foreground/80 font-medium">{s.sector}</span>
+                    <span className="font-semibold text-foreground">{fmt(s.totalValue)} <span className="text-caption text-muted-foreground font-normal">({(s.percent * 100).toFixed(1)}%)</span></span>
                   </div>
                   <div className="flex gap-0.5 h-1.5 rounded overflow-hidden">
                     <div style={{ width: `${s.totalValue > 0 ? (s.equityValue / s.totalValue) * (s.percent * 100) : 0}%`, background: 'hsl(221 83% 53%)', minWidth: s.equityValue > 0 ? 2 : 0 }} className="rounded-l" />

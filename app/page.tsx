@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import {
   Wallet, TrendingUp, Building2, Activity, ArrowUpDown, IndianRupee,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { KpiCard } from '@/components/shared/KpiCard';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Topbar } from '@/components/layout/Topbar';
@@ -125,18 +125,18 @@ export default function DashboardPage() {
         {/* Asset Breakdown Table */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
           <Card className="border-border/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold">Asset Breakdown</CardTitle>
-              <p className="text-xs text-muted-foreground">Allocation computed from portfolio totals</p>
+            <CardHeader className="pb-5">
+              <CardTitle>Asset Breakdown</CardTitle>
+              <CardDescription>Allocation computed from portfolio totals</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
                   <TableRow className="border-border/50 hover:bg-transparent">
-                    <TableHead className="text-lg font-semibold text-muted-foreground">Asset Class</TableHead>
-                    <TableHead className="text-lg font-semibold text-muted-foreground text-right">Holdings</TableHead>
-                    <TableHead className="text-lg font-semibold text-muted-foreground text-right">Value</TableHead>
-                    <TableHead className="text-lg font-semibold text-muted-foreground text-right">Allocation %</TableHead>
+                    <TableHead className="text-body-lg font-semibold text-foreground/90 tracking-wide">Asset Class</TableHead>
+                    <TableHead className="text-body-lg font-semibold text-foreground/90 tracking-wide text-right">Holdings</TableHead>
+                    <TableHead className="text-body-lg font-semibold text-foreground/90 tracking-wide text-right">Value</TableHead>
+                    <TableHead className="text-body-lg font-semibold text-foreground/90 tracking-wide text-right">Allocation %</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -182,18 +182,18 @@ export default function DashboardPage() {
                             transition={{ delay: 0.2 + i * 0.05 }}
                             className="border-border/30 hover:bg-white/[0.02] transition-colors"
                           >
-                            <TableCell>
+                            <TableCell className="text-body font-semibold text-foreground max-w-[200px] truncate">
                               <div className="flex items-center gap-2">
                                 <div className={`w-7 h-7 rounded-lg ${r.bg} flex items-center justify-center flex-shrink-0`}>
                                   <r.icon className={`w-3.5 h-3.5 ${r.color}`} />
                                 </div>
-                                <span className={`text-sm font-semibold ${r.color}`}>{r.label}</span>
+                                <span className={`text-body font-semibold ${r.color}`}>{r.label}</span>
                               </div>
                             </TableCell>
-                            <TableCell className="text-right text-xs text-muted-foreground tabular-nums">
+                            <TableCell className="text-right text-small text-muted-foreground/80 tabular-nums">
                               {r.count} {r.unit}
                             </TableCell>
-                            <TableCell className="text-right text-sm font-medium tabular-nums">
+                            <TableCell className="text-right text-body font-medium tabular-nums text-foreground">
                               {formatINR(r.value)}
                             </TableCell>
                             <TableCell className="text-right">
@@ -206,7 +206,7 @@ export default function DashboardPage() {
                                     style={{ width: `${r.alloc}%` }}
                                   />
                                 </div>
-                                <span className={`text-sm font-semibold tabular-nums ${r.color}`}>
+                                <span className={`text-body font-semibold tabular-nums ${r.color}`}>
                                   {r.alloc.toFixed(2)}%
                                 </span>
                               </div>
@@ -214,15 +214,15 @@ export default function DashboardPage() {
                           </motion.tr>
                         ))}
                         {/* Total row */}
-                        <TableRow className="border-border/50 border-t-2 bg-white/[0.015]">
-                          <TableCell className="text-sm font-bold text-foreground">Total Portfolio</TableCell>
-                          <TableCell className="text-right text-xs text-muted-foreground tabular-nums">
+                        <TableRow className="border-border/50 border-t bg-white/[0.015]">
+                          <TableCell className="text-body font-bold text-foreground">Total Portfolio</TableCell>
+                          <TableCell className="text-right text-small text-muted-foreground/80 tabular-nums">
                             {equityCount + bondCount} holdings
                           </TableCell>
-                          <TableCell className="text-right text-sm font-bold tabular-nums text-foreground">
+                          <TableCell className="text-right text-body font-bold tabular-nums text-foreground">
                             {formatINR(total)}
                           </TableCell>
-                          <TableCell className="text-right text-sm font-bold tabular-nums text-foreground">100.00%</TableCell>
+                          <TableCell className="text-right text-body font-bold tabular-nums text-foreground">100.00%</TableCell>
                         </TableRow>
                       </>
                     );
@@ -236,9 +236,9 @@ export default function DashboardPage() {
         {/* Charts row 1 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card className="border-border/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold text-foreground">Asset Allocation</CardTitle>
-              <p className="text-xs text-muted-foreground">Equity vs. Bonds</p>
+            <CardHeader className="pb-5">
+              <CardTitle>Asset Allocation</CardTitle>
+              <CardDescription>Equity vs. Bonds</CardDescription>
             </CardHeader>
             <CardContent>
               <AssetAllocationPie data={assetAllocation} />
@@ -246,9 +246,9 @@ export default function DashboardPage() {
           </Card>
 
           <Card className="border-border/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold text-foreground">Sector Allocation</CardTitle>
-              <p className="text-xs text-muted-foreground">Total value by sector</p>
+            <CardHeader className="pb-5">
+              <CardTitle>Sector Allocation</CardTitle>
+              <CardDescription>Total value by sector</CardDescription>
             </CardHeader>
             <CardContent>
               <SectorAllocationChart data={dashboardSectors} />
@@ -259,9 +259,9 @@ export default function DashboardPage() {
         {/* Charts row 2 */}
         <div className="grid grid-cols-1 gap-4">
           <Card className="border-border/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold text-foreground">Monthly Cash Flow</CardTitle>
-              <p className="text-xs text-muted-foreground">Investment & expenses from Daily Transaction</p>
+            <CardHeader className="pb-5">
+              <CardTitle>Monthly Cash Flow</CardTitle>
+              <CardDescription>Investment & expenses from Daily Transaction</CardDescription>
             </CardHeader>
             <CardContent>
               <CashFlowChart data={cashFlowStats.monthlySummaries} />
@@ -284,8 +284,8 @@ export default function DashboardPage() {
               { label: 'Others', value: formatINR(cashFlowStats.totalOthers) },
             ].map(({ label, value }) => (
               <div key={label} className="rounded-lg border border-border/40 px-4 py-3 bg-card/50">
-                <p className="text-xs text-muted-foreground mb-1">{label}</p>
-                <p className="text-sm font-semibold text-foreground tabular-nums">{value}</p>
+                <p className="text-small text-muted-foreground font-medium mb-1">{label}</p>
+                <p className="text-body font-semibold text-foreground tabular-nums">{value}</p>
               </div>
             ))}
           </motion.div>

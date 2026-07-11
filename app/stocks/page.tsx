@@ -73,8 +73,8 @@ export default function StocksPage() {
         {/* Winners / Losers */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card className="border-border/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <CardHeader className="pb-5">
+              <CardTitle className="flex items-center gap-2 text-emerald-400">
                 <TrendingUp className="w-4 h-4 text-emerald-400" /> Top Gainers
               </CardTitle>
             </CardHeader>
@@ -83,12 +83,12 @@ export default function StocksPage() {
                 winners.slice(0, 1).map((w) => (
                   <div key={w.ticker} className="flex items-center justify-between px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
                     <div>
-                      <p className="text-xs font-semibold text-foreground">{w.ticker}</p>
-                      <p className="text-[11px] text-muted-foreground truncate max-w-[140px]">{w.name}</p>
+                      <p className="text-small font-semibold text-foreground">{w.ticker}</p>
+                      <p className="text-caption text-muted-foreground truncate max-w-[140px]">{w.name}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-bold text-emerald-400">+{(w.percentChange * 100).toFixed(2)}%</p>
-                      <p className="text-[11px] text-muted-foreground">{fmtPrice(w.currentPrice)}</p>
+                      <p className="text-body font-bold text-emerald-400">+{(w.percentChange * 100).toFixed(2)}%</p>
+                      <p className="text-caption text-muted-foreground">{fmtPrice(w.currentPrice)}</p>
                     </div>
                   </div>
                 ))}
@@ -96,8 +96,8 @@ export default function StocksPage() {
           </Card>
 
           <Card className="border-border/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <CardHeader className="pb-5">
+              <CardTitle className="flex items-center gap-2 text-red-400">
                 <TrendingDown className="w-4 h-4 text-red-400" /> Top Losers
               </CardTitle>
             </CardHeader>
@@ -106,12 +106,12 @@ export default function StocksPage() {
                 losers.slice(0, 1).map((l) => (
                   <div key={l.ticker} className="flex items-center justify-between px-3 py-2 rounded-lg bg-red-500/5 border border-red-500/10">
                     <div>
-                      <p className="text-xs font-semibold text-foreground">{l.ticker}</p>
-                      <p className="text-[11px] text-muted-foreground truncate max-w-[140px]">{l.name}</p>
+                      <p className="text-small font-semibold text-foreground">{l.ticker}</p>
+                      <p className="text-caption text-muted-foreground truncate max-w-[140px]">{l.name}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-bold text-red-400">{(l.percentChange * 100).toFixed(2)}%</p>
-                      <p className="text-[11px] text-muted-foreground">{fmtPrice(l.currentPrice)}</p>
+                      <p className="text-body font-bold text-red-400">{(l.percentChange * 100).toFixed(2)}%</p>
+                      <p className="text-caption text-muted-foreground">{fmtPrice(l.currentPrice)}</p>
                     </div>
                   </div>
                 ))}
@@ -121,8 +121,8 @@ export default function StocksPage() {
 
         {/* Sector breakdown */}
         <Card className="border-border/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Equity by Sector</CardTitle>
+          <CardHeader className="pb-5">
+            <CardTitle>Equity by Sector</CardTitle>
           </CardHeader>
           <CardContent>
             <SectorAllocationChart data={equitySectors} />
@@ -131,12 +131,12 @@ export default function StocksPage() {
 
         {/* Holdings table */}
         <Card className="border-border/50">
-          <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-base font-semibold">Equity Holdings ({equity.length})</CardTitle>
+          <CardHeader className="pb-5 flex flex-row items-center justify-between">
+            <CardTitle>Equity Holdings ({equity.length})</CardTitle>
             <div className="relative w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <Input id="stocks-search" placeholder="Search stocks…" value={search}
-                onChange={(e) => setSearch(e.target.value)} className="pl-8 h-8 text-xs bg-card border-border/50" />
+                onChange={(e) => setSearch(e.target.value)} className="pl-8 h-8 text-small bg-card border-border/50 placeholder:text-body text-body" />
             </div>
           </CardHeader>
           <CardContent className="p-0">
@@ -144,15 +144,15 @@ export default function StocksPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-border/50 hover:bg-transparent">
-                    <TableHead className="text-m font-semibold text-muted-foreground hover:text-foreground cursor-pointer select-none" onClick={() => handleSort('ticker')}>Symbol <SortIcon columnKey="ticker" /></TableHead>
-                    <TableHead className="text-m font-semibold text-muted-foreground hover:text-foreground cursor-pointer select-none" onClick={() => handleSort('name')}>Name <SortIcon columnKey="name" /></TableHead>
-                    <TableHead className="text-m font-semibold text-muted-foreground hover:text-foreground cursor-pointer select-none" onClick={() => handleSort('sector')}>Sector <SortIcon columnKey="sector" /></TableHead>
-                    <TableHead className="text-m font-semibold text-muted-foreground hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('shares')}>Shares <SortIcon columnKey="shares" /></TableHead>
-                    <TableHead className="text-m font-semibold text-muted-foreground hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('currentPrice')}>CMP <SortIcon columnKey="currentPrice" /></TableHead>
-                    <TableHead className="text-m font-semibold text-muted-foreground hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('currentValue')}>Value <SortIcon columnKey="currentValue" /></TableHead>
-                    <TableHead className="text-m font-semibold text-muted-foreground hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('allocationPercent')}>Alloc % <SortIcon columnKey="allocationPercent" /></TableHead>
-                    <TableHead className="text-m font-semibold text-muted-foreground hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('priceChange')}>Price Chg <SortIcon columnKey="priceChange" /></TableHead>
-                    <TableHead className="text-m font-semibold text-muted-foreground hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('percentChange')}>Change % <SortIcon columnKey="percentChange" /></TableHead>
+                    <TableHead className="text-body-lg font-semibold text-foreground/90 hover:text-foreground cursor-pointer select-none tracking-wide" onClick={() => handleSort('ticker')}>Symbol <SortIcon columnKey="ticker" /></TableHead>
+                    <TableHead className="text-body-lg font-semibold text-foreground/90 hover:text-foreground cursor-pointer select-none tracking-wide" onClick={() => handleSort('name')}>Name <SortIcon columnKey="name" /></TableHead>
+                    <TableHead className="text-body-lg font-semibold text-foreground/90 hover:text-foreground cursor-pointer select-none tracking-wide" onClick={() => handleSort('sector')}>Sector <SortIcon columnKey="sector" /></TableHead>
+                    <TableHead className="text-body-lg font-semibold text-foreground/90 hover:text-foreground cursor-pointer select-none text-right tracking-wide" onClick={() => handleSort('shares')}>Shares <SortIcon columnKey="shares" /></TableHead>
+                    <TableHead className="text-body-lg font-semibold text-foreground/90 hover:text-foreground cursor-pointer select-none text-right tracking-wide" onClick={() => handleSort('currentPrice')}>CMP <SortIcon columnKey="currentPrice" /></TableHead>
+                    <TableHead className="text-body-lg font-semibold text-foreground/90 hover:text-foreground cursor-pointer select-none text-right tracking-wide" onClick={() => handleSort('currentValue')}>Value <SortIcon columnKey="currentValue" /></TableHead>
+                    <TableHead className="text-body-lg font-semibold text-foreground/90 hover:text-foreground cursor-pointer select-none text-right tracking-wide" onClick={() => handleSort('allocationPercent')}>Alloc % <SortIcon columnKey="allocationPercent" /></TableHead>
+                    <TableHead className="text-body-lg font-semibold text-foreground/90 hover:text-foreground cursor-pointer select-none text-right tracking-wide" onClick={() => handleSort('priceChange')}>Price Chg <SortIcon columnKey="priceChange" /></TableHead>
+                    <TableHead className="text-body-lg font-semibold text-foreground/90 hover:text-foreground cursor-pointer select-none text-right tracking-wide" onClick={() => handleSort('percentChange')}>Change % <SortIcon columnKey="percentChange" /></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -165,21 +165,21 @@ export default function StocksPage() {
                   )) : filteredAndSorted.map((h, i) => (
                     <motion.tr key={h.ticker} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.015 }} className="border-border/30 hover:bg-white/[0.02] transition-colors">
-                      <TableCell className="font-mono text-xs font-semibold text-blue-400">{h.ticker}</TableCell>
-                      <TableCell className="text-xs font-medium max-w-[160px] truncate">{h.name}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{h.sector}</TableCell>
-                      <TableCell className="text-right text-xs tabular-nums">{h.shares.toLocaleString()}</TableCell>
-                      <TableCell className="text-right text-xs tabular-nums">{fmtPrice(h.currentPrice)}</TableCell>
-                      <TableCell className="text-right text-xs font-medium tabular-nums">{fmt(h.currentValue)}</TableCell>
-                      <TableCell className="text-right text-xs text-muted-foreground tabular-nums">
+                      <TableCell className="font-mono text-small font-semibold text-blue-400">{h.ticker}</TableCell>
+                      <TableCell className="text-body font-semibold text-foreground max-w-[160px] truncate">{h.name}</TableCell>
+                      <TableCell className="text-small text-muted-foreground/80 font-normal">{h.sector}</TableCell>
+                      <TableCell className="text-right text-body font-medium tabular-nums text-foreground/90">{h.shares.toLocaleString()}</TableCell>
+                      <TableCell className="text-right text-body font-medium tabular-nums text-foreground/90">{fmtPrice(h.currentPrice)}</TableCell>
+                      <TableCell className="text-right text-body font-medium tabular-nums text-foreground">{fmt(h.currentValue)}</TableCell>
+                      <TableCell className="text-right text-body font-medium tabular-nums text-foreground/90">
                         {(h.allocationPercent).toFixed(2)}%
                       </TableCell>
-                      <TableCell className="text-right text-xs tabular-nums">
+                      <TableCell className="text-right text-body font-medium tabular-nums">
                         <span className={h.priceChange >= 0 ? 'text-emerald-400' : 'text-red-400'}>
                           {fmtChange(h.priceChange)}
                         </span>
                       </TableCell>
-                      <TableCell className="text-right text-xs tabular-nums">
+                      <TableCell className="text-right text-body font-medium tabular-nums">
                         <span className={h.percentChange >= 0 ? 'text-emerald-400' : 'text-red-400'}>
                           {h.percentChange >= 0 ? '+' : '-'}{Math.abs(h.percentChange * 100).toFixed(2)}%
                         </span>

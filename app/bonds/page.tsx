@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowUpDown } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -124,9 +124,9 @@ export default function BondsPage() {
         {/* Bond Ladder + Rating Distribution */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card className="border-border/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold">Bond Maturity Ladder</CardTitle>
-              <p className="text-xs text-muted-foreground">Total value maturing per year</p>
+            <CardHeader className="pb-5">
+              <CardTitle>Bond Maturity Ladder</CardTitle>
+              <CardDescription>Total value maturing per year</CardDescription>
             </CardHeader>
             <CardContent>
               {isLoading ? <Skeleton className="h-[220px] bg-white/5" /> : (
@@ -145,9 +145,9 @@ export default function BondsPage() {
           </Card>
 
           <Card className="border-border/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold">Credit Rating Distribution</CardTitle>
-              <p className="text-xs text-muted-foreground">By total bond value</p>
+            <CardHeader className="pb-5">
+              <CardTitle>Credit Rating Distribution</CardTitle>
+              <CardDescription>By total bond value</CardDescription>
             </CardHeader>
             <CardContent>
               {isLoading ? <Skeleton className="h-[220px] bg-white/5" /> : (
@@ -174,42 +174,42 @@ export default function BondsPage() {
 
         {/* Upcoming maturities */}
         <Card className="border-border/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Upcoming Maturities</CardTitle>
+          <CardHeader className="pb-5">
+            <CardTitle>Upcoming Maturities</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow className="border-border/50 hover:bg-transparent">
                   {['Security', 'ISIN', 'Issuer', 'Rating', 'Maturity', 'Payout Type', 'Upcoming Interest', 'Value', 'YTM', 'Coupon'].map(h => (
-                    <TableHead key={h} className="text-base font-semibold text-muted-foreground">{h}</TableHead>
+                    <TableHead key={h} className="text-body-lg font-semibold text-foreground/90 tracking-wide">{h}</TableHead>
                   ))}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i} className="border-border/30">
-                    {Array.from({ length: 8 }).map((_, j) => (
+                    {Array.from({ length: 10 }).map((_, j) => (
                       <TableCell key={j}><Skeleton className="h-4 bg-white/5" /></TableCell>
                     ))}
                   </TableRow>
                 )) : sortedBonds.map((b, i) => (
                   <motion.tr key={b.isin || i} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.02 }} className="border-border/30 hover:bg-white/[0.02] transition-colors">
-                    <TableCell className="text-xs font-medium max-w-[160px] truncate">{b.securityName}</TableCell>
-                    <TableCell className="text-xs font-mono text-muted-foreground">{b.isin}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground max-w-[100px] truncate">{b.issuer}</TableCell>
+                    <TableCell className="text-body font-semibold text-foreground max-w-[160px] truncate">{b.securityName}</TableCell>
+                    <TableCell className="text-small font-mono text-muted-foreground/80 font-medium">{b.isin}</TableCell>
+                    <TableCell className="text-small text-muted-foreground/80 max-w-[100px] truncate">{b.issuer}</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="text-[10px] px-1.5"
+                      <Badge variant="outline" className="text-caption px-1.5 font-semibold"
                         style={{ borderColor: `${getRatingColor(b.creditRating, 'gray')}40`, color: getRatingColor(b.creditRating, 'gray') }}>
                         {b.creditRating}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-xs tabular-nums">{b.maturityDate ?? '—'}</TableCell>
+                    <TableCell className="text-body tabular-nums text-foreground/90">{b.maturityDate ?? '—'}</TableCell>
                     {/* Payout Type column */}
                     <TableCell>
                       {b.payoutType ? (
-                        <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium"
+                        <span className="inline-flex items-center rounded px-1.5 py-0.5 text-caption font-semibold"
                           style={{
                             background: getPayoutStyle(b.payoutType).bg,
                             color: getPayoutStyle(b.payoutType).text,
@@ -218,32 +218,32 @@ export default function BondsPage() {
                           {b.payoutType}
                         </span>
                       ) : (
-                        <span className="text-xs text-muted-foreground/50">—</span>
+                        <span className="text-body text-muted-foreground/50">—</span>
                       )}
                     </TableCell>
                     {/* Upcoming Interest column */}
                     <TableCell>
                       {(() => {
                         const next = nextPaymentMap.get(b.isin);
-                        if (!next) return <span className="text-xs text-muted-foreground/50">—</span>;
+                        if (!next) return <span className="text-body text-muted-foreground/50">—</span>;
                         return (
                           <div className="flex flex-col gap-0.5">
-                            <span className={`text-xs font-semibold tabular-nums ${
+                            <span className={`text-body font-bold tabular-nums ${
                               next.isEstimated ? 'text-amber-400' : 'text-green-400'
                             }`}>
                               {next.isEstimated ? '~' : ''}{fmt(next.amount)}
                             </span>
-                            <span className="text-[10px] text-muted-foreground tabular-nums">
+                            <span className="text-caption text-muted-foreground/80 tabular-nums">
                               {format(next.date, 'dd MMM yyyy')}
-                              {next.isEstimated && <span className="ml-1 text-amber-400/60">est.</span>}
+                              {next.isEstimated && <span className="ml-1 text-amber-400/60 font-semibold">est.</span>}
                             </span>
                           </div>
                         );
                       })()}
                     </TableCell>
-                    <TableCell className="text-sm font-medium tabular-nums">{fmt(b.totalValue)}</TableCell>
-                    <TableCell className="text-xs tabular-nums text-blue-400">{b.ytm ? `${(b.ytm * 100).toFixed(2)}%` : '—'}</TableCell>
-                    <TableCell className="text-xs tabular-nums text-amber-400">{b.couponRate ? `${(b.couponRate * 100).toFixed(2)}%` : '—'}</TableCell>
+                    <TableCell className="text-body font-semibold tabular-nums text-foreground">{fmt(b.totalValue)}</TableCell>
+                    <TableCell className="text-body font-medium tabular-nums text-blue-400">{b.ytm ? `${(b.ytm * 100).toFixed(2)}%` : '—'}</TableCell>
+                    <TableCell className="text-body font-medium tabular-nums text-amber-400">{b.couponRate ? `${(b.couponRate * 100).toFixed(2)}%` : '—'}</TableCell>
                   </motion.tr>
                 ))}
               </TableBody>

@@ -4,6 +4,17 @@
 @theme {
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 
+  /* Typography scale tokens (Tailwind CSS v4 custom properties) */
+  --text-display: var(--text-scale-display);
+  --text-h1: var(--text-scale-h1);
+  --text-h2: var(--text-scale-h2);
+  --text-h3: var(--text-scale-h3);
+  --text-h4: var(--text-scale-h4);
+  --text-body-lg: var(--text-scale-body-lg);
+  --text-body: var(--text-scale-body);
+  --text-small: var(--text-scale-small);
+  --text-caption: var(--text-scale-caption);
+
   /* Brand colors */
   --color-brand-50: hsl(221 83% 97%);
   --color-brand-100: hsl(221 83% 93%);
@@ -33,6 +44,17 @@
 
 /* shadcn CSS variable overrides — dark mode only for this app */
 :root {
+  /* Typography Scale variables (relative to 18px base root) */
+  --text-scale-display: 2rem;       /* 36px */
+  --text-scale-h1: 1.667rem;        /* 30px */
+  --text-scale-h2: 1.333rem;        /* 24px */
+  --text-scale-h3: 1.111rem;        /* 20px */
+  --text-scale-h4: 1rem;            /* 18px */
+  --text-scale-body-lg: 0.889rem;   /* 16px */
+  --text-scale-body: 0.778rem;      /* 14px */
+  --text-scale-small: 0.722rem;     /* 13px */
+  --text-scale-caption: 0.667rem;   /* 12px */
+
   --background: 222 47% 11%;
   --foreground: 210 40% 98%;
   --card: 222 47% 13%;
@@ -75,7 +97,10 @@ body {
   color: hsl(var(--foreground));
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+}
+
+button:not(:disabled):hover {
+  cursor: pointer;
 }
 
 /* Custom scrollbar */

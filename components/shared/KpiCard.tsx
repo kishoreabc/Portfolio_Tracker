@@ -91,7 +91,7 @@ export function KpiCard({
       )}>
         <div>
           <div className="flex items-start justify-between mb-3">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{title}</p>
+            <p className="text-body font-semibold text-muted-foreground uppercase tracking-wider">{title}</p>
             {Icon && (
               <div className={cn('p-2 rounded-lg', accent.icon)}>
                 <Icon className="w-4 h-4" />
@@ -101,7 +101,7 @@ export function KpiCard({
 
           <div className="space-y-1">
             <motion.p
-              className="text-2xl font-bold text-foreground tabular-nums"
+              className="text-h1 font-bold text-foreground tabular-nums"
               key={value}
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
@@ -111,7 +111,7 @@ export function KpiCard({
             </motion.p>
 
             {subValue && (
-              <p className="text-xs text-muted-foreground">{subValue}</p>
+              <p className="text-small text-muted-foreground">{subValue}</p>
             )}
           </div>
         </div>
@@ -122,7 +122,7 @@ export function KpiCard({
             {isNegative && <TrendingDown className="w-3.5 h-3.5 text-red-400" />}
             {!isPositive && !isNegative && <Minus className="w-3.5 h-3.5 text-slate-500" />}
             <span className={cn(
-              'text-xs font-medium',
+              'text-small font-semibold',
               isPositive && 'text-emerald-400',
               isNegative && 'text-red-400',
               !isPositive && !isNegative && 'text-slate-500'
@@ -130,12 +130,12 @@ export function KpiCard({
               {isPositive && '+'}
               {(change * 100).toFixed(2)}%
             </span>
-            {changeLabel && <span className="text-xs text-muted-foreground">{changeLabel}</span>}
+            {changeLabel && <span className="text-small text-muted-foreground">{changeLabel}</span>}
           </div>
         )}
 
         {note && (
-          <p className="text-[11px] text-muted-foreground/70 mt-2 italic">{note}</p>
+          <p className="text-caption text-muted-foreground/70 mt-2 italic">{note}</p>
         )}
       </Card>
     </motion.div>

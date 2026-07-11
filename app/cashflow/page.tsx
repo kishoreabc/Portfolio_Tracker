@@ -34,8 +34,8 @@ export default function CashFlowPage() {
               className="rounded-xl border border-border/50 p-4 bg-card">
               {isLoading ? <Skeleton className="h-8 bg-white/5" /> : (
                 <>
-                  <p className="text-xs text-muted-foreground mb-1">{label}</p>
-                  <p className={`text-xl font-bold tabular-nums ${color}`}>{fmt(value)}</p>
+                  <p className="text-small font-medium text-muted-foreground mb-1">{label}</p>
+                  <p className={`text-h2 font-bold tabular-nums ${color}`}>{fmt(value)}</p>
                 </>
               )}
             </motion.div>
@@ -44,9 +44,9 @@ export default function CashFlowPage() {
 
         {/* Monthly chart */}
         <Card className="border-border/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Monthly Breakdown</CardTitle>
-            <p className="text-xs text-muted-foreground">From Daily Transaction sheet · {cashFlowStats.startDate?.toLocaleDateString('en-IN') ?? '—'} to {cashFlowStats.endDate?.toLocaleDateString('en-IN') ?? '—'}</p>
+          <CardHeader className="pb-5">
+            <CardTitle>Monthly Breakdown</CardTitle>
+            <p className="text-small text-muted-foreground font-normal">From Daily Transaction sheet · {cashFlowStats.startDate?.toLocaleDateString('en-IN') ?? '—'} to {cashFlowStats.endDate?.toLocaleDateString('en-IN') ?? '—'}</p>
           </CardHeader>
           <CardContent>
             {isLoading ? <Skeleton className="h-[280px] bg-white/5" /> : <CashFlowChart data={summaries} />}
@@ -55,8 +55,8 @@ export default function CashFlowPage() {
 
         {/* Monthly table */}
         <Card className="border-border/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Monthly Detail</CardTitle>
+          <CardHeader className="pb-5">
+            <CardTitle>Monthly Detail</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -64,7 +64,7 @@ export default function CashFlowPage() {
                 <TableHeader>
                   <TableRow className="border-border/50 hover:bg-transparent">
                     {['Month', 'Investment', 'Food & Ent.', 'Others', 'Total Expenses'].map(h => (
-                      <TableHead key={h} className="text-xs text-muted-foreground">{h}</TableHead>
+                      <TableHead key={h} className="text-body-lg font-semibold text-foreground/90 tracking-wide">{h}</TableHead>
                     ))}
                   </TableRow>
                 </TableHeader>
@@ -76,11 +76,11 @@ export default function CashFlowPage() {
                   )) : [...summaries].reverse().map((m, i) => (
                     <motion.tr key={m.label} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.02 }}
                       className="border-border/30 hover:bg-white/[0.02]">
-                      <TableCell className="text-sm font-medium">{m.label}</TableCell>
-                      <TableCell className="text-sm text-blue-400 tabular-nums">{fmt(m.investment)}</TableCell>
-                      <TableCell className="text-sm text-amber-400 tabular-nums">{fmt(m.foodAndEntertainment)}</TableCell>
-                      <TableCell className="text-sm text-purple-400 tabular-nums">{fmt(m.others)}</TableCell>
-                      <TableCell className="text-sm text-red-400 font-semibold tabular-nums">{fmt(m.totalExpenses)}</TableCell>
+                      <TableCell className="text-body font-semibold text-foreground">{m.label}</TableCell>
+                      <TableCell className="text-body text-blue-400 tabular-nums font-medium">{fmt(m.investment)}</TableCell>
+                      <TableCell className="text-body text-amber-400 tabular-nums font-medium">{fmt(m.foodAndEntertainment)}</TableCell>
+                      <TableCell className="text-body text-purple-400 tabular-nums font-medium">{fmt(m.others)}</TableCell>
+                      <TableCell className="text-body text-red-400 font-bold tabular-nums">{fmt(m.totalExpenses)}</TableCell>
                     </motion.tr>
                   ))}
                 </TableBody>

@@ -5,6 +5,8 @@ import { RefreshCw, Clock, Wifi, WifiOff, ALargeSmall } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import { useRefreshData } from '@/hooks/useRefreshData';
+import { useSession, signOut } from 'next-auth/react';
+import { useSessionWatcher } from '@/components/auth/SessionWatcher';
 
 interface TopbarProps {
   lastFetched?: string | null;
@@ -16,7 +18,7 @@ const FONT_STEP = 1;     // px per click
 const FONT_MIN  = 11;    // px minimum
 const FONT_MAX  = 30;    // px maximum
 const FONT_DEFAULT = 18; // px — body/content base
-const FONT_DEFAULT_HEADER_REM = 25 / 18; // ≈1.222rem → 22px at default scale
+const FONT_DEFAULT_HEADER_REM = 36 / 18; // 2rem → 36px at default scale
 const STORAGE_KEY = 'portfolio-font-size';
 
 function applyFontSize(px: number) {
@@ -25,6 +27,8 @@ function applyFontSize(px: number) {
 
 export function Topbar({ lastFetched, pageTitle = 'Dashboard', apiErrors = [] }: TopbarProps) {
   const { refresh, isRefreshing } = useRefreshData();
+  const { data: session } = useSession();
+  const { totalTimeRemaining } = useSessionWatcher();
 
   // ── Online status ──────────────────────────────────────────────────────────
   const [isOnline, setIsOnline] = useState(true);
@@ -73,7 +77,7 @@ export function Topbar({ lastFetched, pageTitle = 'Dashboard', apiErrors = [] }:
       style={{ background: 'hsl(222 47% 11% / 0.85)', backdropFilter: 'blur(12px)' }}
     >
       <div className="flex items-center gap-3" style={{ paddingLeft: 'var(--sidebar-width, 240px)' }}>
-        <h1 className="font-semibold text-white" style={{ fontSize: `${FONT_DEFAULT_HEADER_REM}rem` }}>{pageTitle}</h1>
+        <h1 className="font-bold text-white leading-[1.2]" style={{ fontSize: `${FONT_DEFAULT_HEADER_REM}rem` }}>{pageTitle}</h1>
         {apiErrors.length > 0 && (
           <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
             {apiErrors.length} data warning{apiErrors.length > 1 ? 's' : ''}
@@ -148,29 +152,63 @@ export function Topbar({ lastFetched, pageTitle = 'Dashboard', apiErrors = [] }:
         </motion.button>
 
         {/* ── Font size controls (right end) ── */}
-        <div className="flex items-center gap-0.5 rounded-lg border border-white/10 bg-white/5 px-1 py-1"
+        <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2 py-1 ml-2"
           title="Adjust font size">
-          <ALargeSmall className="w-3.5 h-3.5 text-slate-400 mr-1" />
-          <button
-            id="font-decrease-btn"
-            aria-label="Decrease font size"
-            disabled={fontSize <= FONT_MIN}
-            onClick={() => changeFontSize(-FONT_STEP)}
-            className="w-6 h-6 flex items-center justify-center rounded text-xs font-bold text-slate-300 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors select-none"
-          >
-            A<sup style={{ fontSize: '0.6em', verticalAlign: 'super' }}>−</sup>
-          </button>
-          <span className="text-[10px] text-slate-500 tabular-nums w-6 text-center">{fontSize}px</span>
-          <button
-            id="font-increase-btn"
-            aria-label="Increase font size"
-            disabled={fontSize >= FONT_MAX}
-            onClick={() => changeFontSize(FONT_STEP)}
-            className="w-6 h-6 flex items-center justify-center rounded text-xs font-bold text-slate-300 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors select-none"
-          >
-            A<sup style={{ fontSize: '0.6em', verticalAlign: 'super' }}>+</sup>
-          </button>
+          
+          <div className="flex items-center gap-1">
+            <button
+              id="font-decrease-btn"
+              aria-label="Decrease font size"
+              disabled={fontSize <= FONT_MIN}
+              onClick={() => changeFontSize(-FONT_STEP)}
+              className="w-7 h-7 flex items-center justify-center rounded-md bg-white/5 hover:bg-white/15 text-xs font-bold text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors select-none"
+            >
+              A-
+            </button>
+            <span className="text-[11px] font-medium text-slate-400 tabular-nums w-8 text-center">{fontSize}px</span>
+            <button
+              id="font-increase-btn"
+              aria-label="Increase font size"
+              disabled={fontSize >= FONT_MAX}
+              onClick={() => changeFontSize(FONT_STEP)}
+              className="w-7 h-7 flex items-center justify-center rounded-md bg-white/5 hover:bg-white/15 text-xs font-bold text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors select-none"
+            >
+              A+
+            </button>
+          </div>
         </div>
+
+        {/* ── User Profile ── */}
+        {session?.user && (
+          <div className="flex items-center gap-3 ml-2 border-l border-white/10 pl-4 py-1">
+            <div className="flex flex-col items-end">
+              <span className="text-xs font-semibold text-foreground leading-tight">{session.user.name}</span>
+              <span className="text-[10px] text-muted-foreground leading-tight">{session.user.email}</span>
+            </div>
+            {session.user.image ? (
+              <img src={session.user.image} alt="Profile" className="w-8 h-8 rounded-full border border-white/10" />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-300 font-bold text-xs">
+                {session.user.name?.[0]?.toUpperCase() || 'U'}
+              </div>
+            )}
+            <div className="ml-2 flex flex-col items-center">
+              <button
+                onClick={() => {
+                  sessionStorage.removeItem('portfolio-session-start');
+                  signOut({ callbackUrl: '/login' });
+                }}
+                className="flex flex-col items-center justify-center p-1.5 rounded-lg text-[10px] uppercase font-bold text-slate-400 hover:text-white hover:bg-white/10 transition-all active:scale-95"
+              >
+                Logout
+                <span className="text-[15px] text-slate-200 dark:text-white tabular-nums mt-0.5">
+                  {Math.floor(totalTimeRemaining / 60000)}:
+                  {Math.floor((totalTimeRemaining % 60000) / 1000).toString().padStart(2, '0')}
+                </span>
+              </button>
+            </div>
+          </div>
+        )}
 
       </div>
     </header>
