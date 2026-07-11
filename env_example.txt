@@ -1,0 +1,16 @@
+# Google Sheets configuration
+GOOGLE_SHEET_ID=
+GOOGLE_SHEETS_API_KEY=your_google_sheets_api_key_here
+
+# Gemini AI (optional — only needed for AI Insights page)
+GEMINI_API_KEY=
+
+# Auth.js / NextAuth (Authentication)
+# Generate a secret: npx auth secret
+AUTH_SECRET=
+AUTH_URL=http://localhost:3000
+
+# Google OAuth Credentials
+# https://console.cloud.google.com/apis/credentials
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
