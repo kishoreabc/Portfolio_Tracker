@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Topbar } from '@/components/layout/Topbar';
 import { usePortfolioData } from '@/hooks/usePortfolioData';
+import { format } from 'date-fns';
 import {
   BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell,
   PieChart, Pie, Legend,
@@ -25,11 +26,44 @@ const RATING_COLORS: Record<string, string> = {
   'AA+': 'hsl(142 71% 50%)',
   AA: 'hsl(142 71% 55%)',
   'AA-': 'hsl(180 60% 45%)',
+  'A+': 'hsl(221 83% 58%)',
   A: 'hsl(221 83% 53%)',
+  'A-': 'hsl(221 83% 48%)',
+  'BBB+': 'hsl(38 92% 55%)',
   BBB: 'hsl(38 92% 50%)',
-  BB: 'hsl(38 92% 55%)',
+  'BBB-': 'hsl(38 92% 45%)',
+  'BB+': 'hsl(20 90% 55%)',
+  BB: 'hsl(20 90% 50%)',
+  'BB-': 'hsl(20 90% 45%)',
   NR: 'hsla(72, 20%, 75%, 1.00)', // Brighter gray/silver for better visibility on dark background
 };
+
+function getRatingColor(rating: string, fallback = 'hsl(215 20% 45%)') {
+  if (!rating) return fallback;
+  const parts = rating.split(' ');
+  for (const part of parts) {
+    if (RATING_COLORS[part]) return RATING_COLORS[part];
+  }
+  return RATING_COLORS[parts[parts.length - 1]] || fallback;
+}
+
+const PAYOUT_TYPE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  monthly:    { bg: 'hsl(142 71% 45% / 0.12)', text: 'hsl(142 71% 55%)', border: 'hsl(142 71% 45% / 0.3)' },
+  quarterly:  { bg: 'hsl(180 60% 45% / 0.12)', text: 'hsl(180 60% 55%)', border: 'hsl(180 60% 45% / 0.3)' },
+  'semi-annual': { bg: 'hsl(221 83% 53% / 0.12)', text: 'hsl(221 83% 68%)', border: 'hsl(221 83% 53% / 0.3)' },
+  'half-yearly':{ bg: 'hsl(221 83% 53% / 0.12)', text: 'hsl(221 83% 68%)', border: 'hsl(221 83% 53% / 0.3)' },
+  annual:     { bg: 'hsl(270 70% 55% / 0.12)', text: 'hsl(270 70% 70%)', border: 'hsl(270 70% 55% / 0.3)' },
+  yearly:     { bg: 'hsl(270 70% 55% / 0.12)', text: 'hsl(270 70% 70%)', border: 'hsl(270 70% 55% / 0.3)' },
+  'at maturity': { bg: 'hsl(215 20% 45% / 0.12)', text: 'hsl(215 20% 65%)', border: 'hsl(215 20% 45% / 0.3)' },
+};
+
+function getPayoutStyle(payoutType: string) {
+  const key = payoutType.toLowerCase().trim();
+  for (const [k, v] of Object.entries(PAYOUT_TYPE_COLORS)) {
+    if (key.includes(k)) return v;
+  }
+  return PAYOUT_TYPE_COLORS['at maturity'];
+}
 
 const RADIAN = Math.PI / 180;
 function CustomLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) {
@@ -46,6 +80,16 @@ function CustomLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent }: an
 
 export default function BondsPage() {
   const { bonds, bondLadder, creditRatingDistribution, bondMaturityEvents, isLoading, lastFetched, apiErrors } = usePortfolioData();
+
+  // Build a map of ISIN → next upcoming coupon payment
+  const nextPaymentMap = useMemo(() => {
+    const map = new Map<string, { date: Date; amount: number; isEstimated: boolean }>();
+    for (const e of bondMaturityEvents) {
+      const next = e.couponPayments[0];
+      if (next) map.set(e.isin, next);
+    }
+    return map;
+  }, [bondMaturityEvents]);
 
   const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' }>({ key: '', direction: 'asc' });
 
@@ -91,7 +135,8 @@ export default function BondsPage() {
                     <XAxis dataKey="year" tick={{ fontSize: 11, fill: 'hsl(215 20% 55%)' }} axisLine={false} tickLine={false} />
                     <YAxis tickFormatter={fmt} tick={{ fontSize: 10, fill: 'hsl(215 20% 55%)' }} axisLine={false} tickLine={false} />
                     <Tooltip formatter={((v: number) => [fmt(v), 'Maturing Value']) as never}
-                      contentStyle={{ background: 'hsl(222 47% 13%)', border: '1px solid hsl(222 47% 20%)', borderRadius: '8px', color: 'white', fontSize: 12 }} />
+                      contentStyle={{ background: 'hsl(222 47% 13%)', border: '1px solid hsl(222 47% 20%)', borderRadius: '8px', color: 'white', fontSize: 12 }} 
+                      itemStyle={{ color: 'white', fontWeight: 500 }} />
                     <Bar dataKey="totalValue" radius={[4, 4, 0, 0]} maxBarSize={36} fill="hsl(142 71% 45%)" />
                   </BarChart>
                 </ResponsiveContainer>
@@ -112,11 +157,12 @@ export default function BondsPage() {
                       cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={2}
                       labelLine={false} label={CustomLabel as never}>
                       {creditRatingDistribution.map((entry, i) => (
-                        <Cell key={i} fill={RATING_COLORS[entry.rating] ?? 'hsl(215 20% 45%)'} stroke="transparent" />
+                        <Cell key={i} fill={getRatingColor(entry.rating)} stroke="transparent" />
                       ))}
                     </Pie>
                     <Tooltip formatter={((v: number, name: string) => [fmt(v), name]) as never}
-                      contentStyle={{ background: 'hsl(222 47% 13%)', border: '1px solid hsl(222 47% 20%)', borderRadius: '8px', color: 'white', fontSize: 12 }} />
+                      contentStyle={{ background: 'hsl(222 47% 13%)', border: '1px solid hsl(222 47% 20%)', borderRadius: '8px', color: 'white', fontSize: 12 }} 
+                      itemStyle={{ color: 'white', fontWeight: 500 }} />
                     <Legend iconType="circle" iconSize={8}
                       formatter={(value, entry: any) => <span style={{ color: entry.color || 'hsl(215 20% 65%)', fontSize: 11, fontWeight: 500 }}>{value}</span>} />
                   </PieChart>
@@ -135,7 +181,7 @@ export default function BondsPage() {
             <Table>
               <TableHeader>
                 <TableRow className="border-border/50 hover:bg-transparent">
-                  {['Security', 'ISIN', 'Issuer', 'Rating', 'Maturity', 'Value', 'YTM', 'Coupon'].map(h => (
+                  {['Security', 'ISIN', 'Issuer', 'Rating', 'Maturity', 'Payout Type', 'Upcoming Interest', 'Value', 'YTM', 'Coupon'].map(h => (
                     <TableHead key={h} className="text-base font-semibold text-muted-foreground">{h}</TableHead>
                   ))}
                 </TableRow>
@@ -155,11 +201,46 @@ export default function BondsPage() {
                     <TableCell className="text-xs text-muted-foreground max-w-[100px] truncate">{b.issuer}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className="text-[10px] px-1.5"
-                        style={{ borderColor: `${RATING_COLORS[b.creditRating] ?? 'gray'}40`, color: RATING_COLORS[b.creditRating] ?? 'gray' }}>
+                        style={{ borderColor: `${getRatingColor(b.creditRating, 'gray')}40`, color: getRatingColor(b.creditRating, 'gray') }}>
                         {b.creditRating}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs tabular-nums">{b.maturityDate ?? '—'}</TableCell>
+                    {/* Payout Type column */}
+                    <TableCell>
+                      {b.payoutType ? (
+                        <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium"
+                          style={{
+                            background: getPayoutStyle(b.payoutType).bg,
+                            color: getPayoutStyle(b.payoutType).text,
+                            border: `1px solid ${getPayoutStyle(b.payoutType).border}`,
+                          }}>
+                          {b.payoutType}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground/50">—</span>
+                      )}
+                    </TableCell>
+                    {/* Upcoming Interest column */}
+                    <TableCell>
+                      {(() => {
+                        const next = nextPaymentMap.get(b.isin);
+                        if (!next) return <span className="text-xs text-muted-foreground/50">—</span>;
+                        return (
+                          <div className="flex flex-col gap-0.5">
+                            <span className={`text-xs font-semibold tabular-nums ${
+                              next.isEstimated ? 'text-amber-400' : 'text-green-400'
+                            }`}>
+                              {next.isEstimated ? '~' : ''}{fmt(next.amount)}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground tabular-nums">
+                              {format(next.date, 'dd MMM yyyy')}
+                              {next.isEstimated && <span className="ml-1 text-amber-400/60">est.</span>}
+                            </span>
+                          </div>
+                        );
+                      })()}
+                    </TableCell>
                     <TableCell className="text-sm font-medium tabular-nums">{fmt(b.totalValue)}</TableCell>
                     <TableCell className="text-xs tabular-nums text-blue-400">{b.ytm ? `${(b.ytm * 100).toFixed(2)}%` : '—'}</TableCell>
                     <TableCell className="text-xs tabular-nums text-amber-400">{b.couponRate ? `${(b.couponRate * 100).toFixed(2)}%` : '—'}</TableCell>

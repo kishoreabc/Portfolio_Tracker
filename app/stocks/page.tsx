@@ -21,7 +21,12 @@ function fmt(v: number) {
 }
 
 function fmtPrice(v: number) {
-  return `₹${v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `₹${Math.abs(v).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function fmtChange(v: number) {
+  const sign = v > 0 ? '+' : v < 0 ? '-' : '';
+  return `${sign}₹${Math.abs(v).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export default function StocksPage() {
@@ -139,15 +144,15 @@ export default function StocksPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-border/50 hover:bg-transparent">
-                    <TableHead className="text-base font-semibold text-muted-foreground hover:text-foreground cursor-pointer select-none" onClick={() => handleSort('ticker')}>Symbol <SortIcon columnKey="ticker" /></TableHead>
-                    <TableHead className="text-base font-semibold text-muted-foreground hover:text-foreground cursor-pointer select-none" onClick={() => handleSort('name')}>Name <SortIcon columnKey="name" /></TableHead>
-                    <TableHead className="text-base font-semibold text-muted-foreground hover:text-foreground cursor-pointer select-none" onClick={() => handleSort('sector')}>Sector <SortIcon columnKey="sector" /></TableHead>
-                    <TableHead className="text-base font-semibold text-muted-foreground hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('shares')}>Shares <SortIcon columnKey="shares" /></TableHead>
-                    <TableHead className="text-base font-semibold text-muted-foreground hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('currentPrice')}>CMP <SortIcon columnKey="currentPrice" /></TableHead>
-                    <TableHead className="text-base font-semibold text-muted-foreground hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('currentValue')}>Value <SortIcon columnKey="currentValue" /></TableHead>
-                    <TableHead className="text-base font-semibold text-muted-foreground hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('allocationPercent')}>Alloc % <SortIcon columnKey="allocationPercent" /></TableHead>
-                    <TableHead className="text-base font-semibold text-muted-foreground hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('priceChange')}>Price Chg <SortIcon columnKey="priceChange" /></TableHead>
-                    <TableHead className="text-base font-semibold text-muted-foreground hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('percentChange')}>Change % <SortIcon columnKey="percentChange" /></TableHead>
+                    <TableHead className="text-m font-semibold text-muted-foreground hover:text-foreground cursor-pointer select-none" onClick={() => handleSort('ticker')}>Symbol <SortIcon columnKey="ticker" /></TableHead>
+                    <TableHead className="text-m font-semibold text-muted-foreground hover:text-foreground cursor-pointer select-none" onClick={() => handleSort('name')}>Name <SortIcon columnKey="name" /></TableHead>
+                    <TableHead className="text-m font-semibold text-muted-foreground hover:text-foreground cursor-pointer select-none" onClick={() => handleSort('sector')}>Sector <SortIcon columnKey="sector" /></TableHead>
+                    <TableHead className="text-m font-semibold text-muted-foreground hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('shares')}>Shares <SortIcon columnKey="shares" /></TableHead>
+                    <TableHead className="text-m font-semibold text-muted-foreground hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('currentPrice')}>CMP <SortIcon columnKey="currentPrice" /></TableHead>
+                    <TableHead className="text-m font-semibold text-muted-foreground hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('currentValue')}>Value <SortIcon columnKey="currentValue" /></TableHead>
+                    <TableHead className="text-m font-semibold text-muted-foreground hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('allocationPercent')}>Alloc % <SortIcon columnKey="allocationPercent" /></TableHead>
+                    <TableHead className="text-m font-semibold text-muted-foreground hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('priceChange')}>Price Chg <SortIcon columnKey="priceChange" /></TableHead>
+                    <TableHead className="text-m font-semibold text-muted-foreground hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('percentChange')}>Change % <SortIcon columnKey="percentChange" /></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -171,12 +176,12 @@ export default function StocksPage() {
                       </TableCell>
                       <TableCell className="text-right text-xs tabular-nums">
                         <span className={h.priceChange >= 0 ? 'text-emerald-400' : 'text-red-400'}>
-                          {h.priceChange >= 0 ? '+' : ''}{fmtPrice(h.priceChange)}
+                          {fmtChange(h.priceChange)}
                         </span>
                       </TableCell>
                       <TableCell className="text-right text-xs tabular-nums">
                         <span className={h.percentChange >= 0 ? 'text-emerald-400' : 'text-red-400'}>
-                          {h.percentChange >= 0 ? '+' : ''}{(h.percentChange * 100).toFixed(2)}%
+                          {h.percentChange >= 0 ? '+' : '-'}{Math.abs(h.percentChange * 100).toFixed(2)}%
                         </span>
                       </TableCell>
                     </motion.tr>

@@ -12,6 +12,10 @@ import { AssetAllocationPie } from '@/components/charts/AssetAllocationPie';
 import { SectorAllocationChart } from '@/components/charts/SectorAllocationChart';
 import { CashFlowChart } from '@/components/charts/CashFlowChart';
 import { usePortfolioData } from '@/hooks/usePortfolioData';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table';
 
 function formatINR(value: number): string {
   if (value >= 1e7) return `₹${(value / 1e7).toFixed(2)} Cr`;
@@ -116,6 +120,117 @@ export default function DashboardPage() {
             isLoading={isLoading}
             note={cashFlowStats.monthlySummaries.length === 0 ? 'No expense data' : undefined}
           />
+        </motion.div>
+
+        {/* Asset Breakdown Table */}
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+          <Card className="border-border/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold">Asset Breakdown</CardTitle>
+              <p className="text-xs text-muted-foreground">Allocation computed from portfolio totals</p>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border/50 hover:bg-transparent">
+                    <TableHead className="text-lg font-semibold text-muted-foreground">Asset Class</TableHead>
+                    <TableHead className="text-lg font-semibold text-muted-foreground text-right">Holdings</TableHead>
+                    <TableHead className="text-lg font-semibold text-muted-foreground text-right">Value</TableHead>
+                    <TableHead className="text-lg font-semibold text-muted-foreground text-right">Allocation %</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    [0, 1, 2].map((i) => (
+                      <TableRow key={i} className="border-border/30">
+                        {[0, 1, 2, 3].map((j) => (
+                          <TableCell key={j}><Skeleton className="h-4 bg-white/5" /></TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : (() => {
+                    const total = equityTotal + bondTotal;
+                    const rows = [
+                      {
+                        id: 'equity',
+                        label: 'Equity',
+                        icon: TrendingUp,
+                        color: 'text-blue-400',
+                        bg: 'bg-blue-500/10',
+                        count: equityCount,
+                        unit: 'stocks',
+                        value: equityTotal,
+                        alloc: total > 0 ? (equityTotal / total) * 100 : 0,
+                      },
+                      {
+                        id: 'bonds',
+                        label: 'Bonds',
+                        icon: Building2,
+                        color: 'text-purple-400',
+                        bg: 'bg-purple-500/10',
+                        count: bondCount,
+                        unit: 'bonds',
+                        value: bondTotal,
+                        alloc: total > 0 ? (bondTotal / total) * 100 : 0,
+                      },
+                    ];
+                    return (
+                      <>
+                        {rows.map((r, i) => (
+                          <motion.tr key={r.id}
+                            initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.2 + i * 0.05 }}
+                            className="border-border/30 hover:bg-white/[0.02] transition-colors"
+                          >
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <div className={`w-7 h-7 rounded-lg ${r.bg} flex items-center justify-center flex-shrink-0`}>
+                                  <r.icon className={`w-3.5 h-3.5 ${r.color}`} />
+                                </div>
+                                <span className={`text-sm font-semibold ${r.color}`}>{r.label}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right text-xs text-muted-foreground tabular-nums">
+                              {r.count} {r.unit}
+                            </TableCell>
+                            <TableCell className="text-right text-sm font-medium tabular-nums">
+                              {formatINR(r.value)}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <div className="w-20 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full transition-all duration-700 ${
+                                      r.id === 'equity' ? 'bg-blue-400' : 'bg-purple-400'
+                                    }`}
+                                    style={{ width: `${r.alloc}%` }}
+                                  />
+                                </div>
+                                <span className={`text-sm font-semibold tabular-nums ${r.color}`}>
+                                  {r.alloc.toFixed(2)}%
+                                </span>
+                              </div>
+                            </TableCell>
+                          </motion.tr>
+                        ))}
+                        {/* Total row */}
+                        <TableRow className="border-border/50 border-t-2 bg-white/[0.015]">
+                          <TableCell className="text-sm font-bold text-foreground">Total Portfolio</TableCell>
+                          <TableCell className="text-right text-xs text-muted-foreground tabular-nums">
+                            {equityCount + bondCount} holdings
+                          </TableCell>
+                          <TableCell className="text-right text-sm font-bold tabular-nums text-foreground">
+                            {formatINR(total)}
+                          </TableCell>
+                          <TableCell className="text-right text-sm font-bold tabular-nums text-foreground">100.00%</TableCell>
+                        </TableRow>
+                      </>
+                    );
+                  })()}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </motion.div>
 
         {/* Charts row 1 */}

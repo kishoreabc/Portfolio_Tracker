@@ -22,6 +22,8 @@ export function mapBondHoldings(sheet: ParsedSheet | null): BondHolding[] {
       unitsHeld: Number(row.shares ?? row.unitsHeld ?? 0),
       totalValue: Number(row.currentValue ?? row.totalValue ?? 0),
       portfolioPercent: Number(row.portfolioPercent ?? row.allocationPercent ?? 0),
+      payoutType: String(row.payoutType ?? '').trim(),
+      payoutDate: row.payoutDate ? String(row.payoutDate).trim() : null,
     }))
     .filter((b) => b.totalValue > 0 || b.isin);
 }

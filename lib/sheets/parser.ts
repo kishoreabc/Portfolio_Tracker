@@ -31,6 +31,8 @@ const HEADER_SYNONYMS: Record<string, string[]> = {
   faceValue: ['face value', 'par value', 'nominal value'],
   buyPrice: ['buy price', 'purchase price', 'cost price', 'avg price'],
   portfolioPercent: ['portfolio %'],
+  payoutType: ['payout type', 'payment type', 'frequency', 'coupon frequency', 'payout frequency'],
+  payoutDate: ['payout date', 'payment date', 'coupon date', 'next payment date', 'next payout date'],
   // Transaction-specific
   date: ['date'],
   foodAndEntertainment: ['food & entertainment', 'food and entertainment', 'food & ent', 'food'],

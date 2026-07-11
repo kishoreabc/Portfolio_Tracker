@@ -4,10 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Topbar } from '@/components/layout/Topbar';
 import { CashFlowChart } from '@/components/charts/CashFlowChart';
-import { EmptyState } from '@/components/shared/EmptyState';
 import { usePortfolioData } from '@/hooks/usePortfolioData';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DollarSign } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 function fmt(v: number) {
@@ -52,22 +50,6 @@ export default function CashFlowPage() {
           </CardHeader>
           <CardContent>
             {isLoading ? <Skeleton className="h-[280px] bg-white/5" /> : <CashFlowChart data={summaries} />}
-          </CardContent>
-        </Card>
-
-        {/* Income — honest empty state */}
-        <Card className="border-border/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Income Sources</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <EmptyState
-              title="No income data source"
-              description="The current Google Sheet has no income column. Only expense data (Food & Entertainment, Others) is available from the Daily Transaction tab."
-              reason="v1 gap: income source not present in sheet — not fabricated"
-              icon={DollarSign}
-              className="py-10"
-            />
           </CardContent>
         </Card>
 

@@ -31,21 +31,27 @@ export default function CalendarPage() {
     );
   }, [bondMaturityEvents]);
 
-  // All upcoming estimated coupon dates
+  // All upcoming real/estimated coupon payments
   const upcomingCoupons = useMemo(() => {
     const today = new Date();
     return bondMaturityEvents
-      .flatMap((e) => e.estimatedCouponDates.map((d) => ({
-        date: d,
+      .flatMap((e) => e.couponPayments.map((p) => ({
+        date: p.date,
+        amount: p.amount,
+        isEstimated: p.isEstimated,
         name: e.securityName,
         isin: e.isin,
         couponRate: e.couponRate,
-        value: e.totalValue * e.couponRate / 2, // semi-annual estimate
+        payoutType: e.payoutType,
       })))
       .filter((c) => c.date > today)
       .sort((a, b) => a.date.getTime() - b.date.getTime())
-      .slice(0, 10);
+      .slice(0, 12);
   }, [bondMaturityEvents]);
+
+  // Whether any upcoming coupon is estimated (for header badge)
+  const hasEstimated = upcomingCoupons.some((c) => c.isEstimated);
+  const allReal = upcomingCoupons.length > 0 && !hasEstimated;
 
   return (
     <>
@@ -107,11 +113,20 @@ export default function CalendarPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <Banknote className="w-4 h-4 text-amber-400" /> Upcoming Coupon Payments
-              <Badge variant="outline" className="text-[10px] border-amber-500/30 text-amber-400 ml-auto">
-                Estimated
-              </Badge>
+              {hasEstimated && !allReal && (
+                <Badge variant="outline" className="text-[10px] border-amber-500/30 text-amber-400 ml-auto">
+                  Some Estimated
+                </Badge>
+              )}
+              {allReal && (
+                <Badge variant="outline" className="text-[10px] border-green-500/30 text-green-400 ml-auto">
+                  From Sheet
+                </Badge>
+              )}
             </CardTitle>
-            <p className="text-xs text-amber-400/70">⚠️ Estimated from semi-annual coupon frequency — not actual payment dates from sheet</p>
+            {hasEstimated && (
+              <p className="text-xs text-amber-400/70">⚠️ Bonds without a Payout Date use estimated dates from maturity</p>
+            )}
           </CardHeader>
           <CardContent>
             {isLoading ? <Skeleton className="h-40 bg-white/5" /> :
@@ -121,14 +136,28 @@ export default function CalendarPage() {
                 <div className="space-y-2">
                   {upcomingCoupons.map((c, i) => (
                     <motion.div key={`${c.isin}-${i}`} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
-                      className="flex items-center justify-between p-3 rounded-lg border border-amber-500/10 bg-amber-500/5">
+                      className={`flex items-center justify-between p-3 rounded-lg border ${
+                        c.isEstimated
+                          ? 'border-amber-500/10 bg-amber-500/5'
+                          : 'border-green-500/10 bg-green-500/5'
+                      }`}>
                       <div>
-                        <p className="text-xs font-medium text-foreground truncate max-w-[200px]">{c.name}</p>
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <p className="text-xs font-medium text-foreground truncate max-w-[200px]">{c.name}</p>
+                          {c.payoutType && (
+                            <span className="text-[10px] text-muted-foreground border border-border/50 rounded px-1 py-px">{c.payoutType}</span>
+                          )}
+                          {c.isEstimated && (
+                            <span className="text-[10px] text-amber-400/70">est.</span>
+                          )}
+                        </div>
                         <p className="text-[11px] text-muted-foreground">{format(c.date, 'dd MMM yyyy')} · {(c.couponRate * 100).toFixed(2)}% coupon</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-semibold text-amber-400">~{fmt(c.value)}</p>
-                        <p className="text-[11px] text-muted-foreground">est. payment</p>
+                        <p className={`text-sm font-semibold ${c.isEstimated ? 'text-amber-400' : 'text-green-400'}`}>
+                          {c.isEstimated ? '~' : ''}{fmt(c.amount)}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">{c.isEstimated ? 'est. payment' : 'payment'}</p>
                       </div>
                     </motion.div>
                   ))}
