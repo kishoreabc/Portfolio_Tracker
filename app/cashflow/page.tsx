@@ -21,7 +21,7 @@ export default function CashFlowPage() {
   return (
     <>
       <Topbar lastFetched={lastFetched} pageTitle="Cash Flow" apiErrors={apiErrors} />
-      <div className="p-6 space-y-4 animate-fade-in-up">
+      <div className="p-3 sm:p-4 md:p-6 space-y-4 animate-fade-in-up">
         {/* Summary KPIs */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[

@@ -91,11 +91,11 @@ export default function PortfolioPage() {
   return (
     <>
       <Topbar lastFetched={lastFetched} pageTitle="Portfolio" apiErrors={apiErrors} />
-      <div className="p-6 space-y-5 animate-fade-in-up">
+      <div className="p-3 sm:p-4 md:p-6 space-y-5 animate-fade-in-up">
         {/* ── Equity Holdings ── */}
         <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
           <Card className="border-border/50">
-            <CardHeader className="pb-5 flex flex-row items-center gap-2 justify-between">
+            <CardHeader className="pb-5 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
                   <TrendingUp className="w-3.5 h-3.5 text-blue-400" />
@@ -109,7 +109,7 @@ export default function PortfolioPage() {
                   </CardTitle>
                 </div>
               </div>
-              <div className="relative w-64 flex-shrink-0">
+              <div className="relative w-full sm:w-64 flex-shrink-0">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Search stocks…"
@@ -178,7 +178,7 @@ export default function PortfolioPage() {
         {/* ── Bond Holdings ── */}
         <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <Card className="border-border/50">
-            <CardHeader className="pb-5 flex flex-row items-center gap-2 justify-between">
+            <CardHeader className="pb-5 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
                   <Building2 className="w-3.5 h-3.5 text-purple-400" />
@@ -192,7 +192,7 @@ export default function PortfolioPage() {
                   </CardTitle>
                 </div>
               </div>
-              <div className="relative w-64 flex-shrink-0">
+              <div className="relative w-full sm:w-64 flex-shrink-0">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Search bonds…"

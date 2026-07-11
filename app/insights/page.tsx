@@ -57,7 +57,7 @@ export default function InsightsPage() {
   return (
     <>
       <Topbar lastFetched={lastFetched} pageTitle="AI Insights" apiErrors={apiErrors} />
-      <div className="p-6 space-y-6 animate-fade-in-up">
+      <div className="p-3 sm:p-4 md:p-6 space-y-6 animate-fade-in-up">
         
         {/* Generate Header */}
         {!insights && !insightLoading && !error && (

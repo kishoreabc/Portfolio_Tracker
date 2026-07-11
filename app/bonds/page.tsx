@@ -120,7 +120,7 @@ export default function BondsPage() {
   return (
     <>
       <Topbar lastFetched={lastFetched} pageTitle="Bonds" apiErrors={apiErrors} />
-      <div className="p-6 space-y-4 animate-fade-in-up">
+      <div className="p-3 sm:p-4 md:p-6 space-y-4 animate-fade-in-up">
         {/* Bond Ladder + Rating Distribution */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card className="border-border/50">
@@ -178,6 +178,7 @@ export default function BondsPage() {
             <CardTitle>Upcoming Maturities</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="border-border/50 hover:bg-transparent">
@@ -248,6 +249,7 @@ export default function BondsPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
       </div>

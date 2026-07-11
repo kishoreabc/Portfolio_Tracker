@@ -149,10 +149,15 @@ button:not(:disabled):hover {
 
 /* Sidebar width */
 :root {
-  --sidebar-width: 240px;
+  --sidebar-width: 0px; /* Mobile default: sidebar is a drawer overlay */
   --sidebar-collapsed-width: 60px;
   --topbar-height: 60px;
 }
+
+/* On desktop (md+), LayoutWrapper's AppShell overrides --sidebar-width
+   via an inline style (64px collapsed, 240px expanded). The @media rule
+   below ensures mobile always gets 0px regardless of that inline style,
+   because CSS specificity: element style > media query on :root. */
 
 /* Animated gradient border for selected nav item */
 @keyframes gradient-border {

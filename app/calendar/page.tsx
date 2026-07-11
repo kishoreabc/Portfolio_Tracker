@@ -56,7 +56,7 @@ export default function CalendarPage() {
   return (
     <>
       <Topbar lastFetched={lastFetched} pageTitle="Calendar" apiErrors={apiErrors} />
-      <div className="p-6 space-y-4 animate-fade-in-up">
+      <div className="p-3 sm:p-4 md:p-6 space-y-4 animate-fade-in-up">
         {/* Bond Maturities */}
         <Card className="border-border/50">
           <CardHeader className="pb-2">

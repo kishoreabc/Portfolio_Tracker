@@ -56,13 +56,13 @@ export default function DashboardPage() {
     <>
       <Topbar lastFetched={lastFetched} pageTitle="Dashboard" apiErrors={apiErrors} />
 
-      <div className="p-6 space-y-6 animate-fade-in-up">
+      <div className="p-3 sm:p-4 md:p-6 space-y-6 animate-fade-in-up">
         {/* KPI Row */}
         <motion.div
           variants={container}
           initial="hidden"
           animate="show"
-          className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4"
+          className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4"
         >
           <KpiCard
             id="kpi-net-worth"

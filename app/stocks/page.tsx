@@ -69,7 +69,7 @@ export default function StocksPage() {
   return (
     <>
       <Topbar lastFetched={lastFetched} pageTitle="Stocks" apiErrors={apiErrors} />
-      <div className="p-6 space-y-4 animate-fade-in-up">
+      <div className="p-3 sm:p-4 md:p-6 space-y-4 animate-fade-in-up">
         {/* Winners / Losers */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card className="border-border/50">
@@ -131,9 +131,9 @@ export default function StocksPage() {
 
         {/* Holdings table */}
         <Card className="border-border/50">
-          <CardHeader className="pb-5 flex flex-row items-center justify-between">
+          <CardHeader className="pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <CardTitle>Equity Holdings ({equity.length})</CardTitle>
-            <div className="relative w-64">
+            <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <Input id="stocks-search" placeholder="Search stocks…" value={search}
                 onChange={(e) => setSearch(e.target.value)} className="pl-8 h-8 text-small bg-card border-border/50 placeholder:text-body text-body" />

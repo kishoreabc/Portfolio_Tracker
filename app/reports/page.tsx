@@ -143,7 +143,7 @@ export default function ReportsPage() {
   return (
     <>
       <Topbar lastFetched={lastFetched} pageTitle="Reports" apiErrors={apiErrors} />
-      <div className="p-6 space-y-4 animate-fade-in-up">
+      <div className="p-3 sm:p-4 md:p-6 space-y-4 animate-fade-in-up">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {reports.map((report, i) => (
             <motion.div key={report.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
