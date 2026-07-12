@@ -1,5 +1,6 @@
 import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
+import Credentials from 'next-auth/providers/credentials';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -12,6 +13,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         },
       },
     }),
+    Credentials({
+      credentials: {
+        username: { label: "Username", type: "text" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials) {
+        const validUsername = process.env.LOGIN_USERNAME;
+        const validPassword = process.env.LOGIN_PASSWORD;
+        
+        if (credentials?.username === validUsername && credentials?.password === validPassword) {
+          return { id: 'test-user', name: 'Test User', email: 'test@example.com' };
+        }
+        return null;
+      }
+    })
   ],
   session: {
     strategy: 'jwt',
@@ -22,7 +38,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     error: '/login',
   },
   callbacks: {
-    async signIn({ user }) {
+    async signIn({ user, account }) {
+      if (account?.provider === 'credentials') {
+        return true;
+      }
+      
       const allowedEmailsStr = process.env.ALLOWED_EMAILS;
       if (allowedEmailsStr) {
         const allowedEmails = allowedEmailsStr.split(',').map(e => e.trim().toLowerCase());
