@@ -99,15 +99,27 @@ const NetworkNodes = () => (
 
 const FloatingTickers = () => {
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const [tickers, setTickers] = useState<any[]>([]);
 
-  const tickers = [
-    { symbol: "RELIANCE", value: "+2.4%", color: "text-emerald-400", top: "15%", left: "10%", delay: 0 },
-    { symbol: "TCS", value: "-1.2%", color: "text-rose-400", top: "45%", left: "80%", delay: 2 },
-    { symbol: "HDFCBANK", value: "+1.1%", color: "text-emerald-400", top: "75%", left: "15%", delay: 4 },
-    { symbol: "INFY", value: "+3.8%", color: "text-blue-400", top: "25%", left: "70%", delay: 1 },
-    { symbol: "ZOMATO", value: "+4.2%", color: "text-emerald-400", top: "60%", left: "5%", delay: 3 },
-  ];
+  useEffect(() => {
+    setMounted(true);
+    fetch('/api/market-data')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          // Give each fetched ticker a random position and delay for the animation
+          const positionedTickers = data.map((t) => ({
+            ...t,
+            color: t.value.startsWith('+') ? "text-emerald-400" : "text-rose-400",
+            top: `${10 + Math.random() * 75}%`,
+            left: `${5 + Math.random() * 80}%`,
+            delay: Math.random() * 8
+          }));
+          setTickers(positionedTickers);
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   if (!mounted) return null;
 
@@ -115,7 +127,7 @@ const FloatingTickers = () => {
     <div className="absolute inset-0 z-0 overflow-hidden hidden md:block pointer-events-none">
       {tickers.map((t, i) => (
         <motion.div
-          key={i}
+          key={t.symbol}
           className={`absolute flex flex-col items-center gap-1 font-mono text-sm font-bold opacity-0 shadow-lg ${t.color}`}
           style={{ top: t.top, left: t.left }}
           animate={{
@@ -123,8 +135,8 @@ const FloatingTickers = () => {
             opacity: [0, 0.6, 0.6, 0],
           }}
           transition={{
-            y: { duration: 10 + i, repeat: Infinity, ease: "easeInOut", delay: t.delay },
-            opacity: { duration: 12 + i, repeat: Infinity, ease: "linear", delay: t.delay },
+            y: { duration: 10 + (i % 5), repeat: Infinity, ease: "easeInOut", delay: t.delay },
+            opacity: { duration: 12 + (i % 5), repeat: Infinity, ease: "linear", delay: t.delay },
           }}
         >
           <div className="bg-slate-900/60 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700/50 flex items-center gap-2 shadow-[0_0_15px_rgba(0,0,0,0.5)]">
