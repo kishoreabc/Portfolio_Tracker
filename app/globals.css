@@ -182,7 +182,11 @@ button:not(:disabled):hover {
 
 /* Number counter animation */
 @keyframes count-up {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(0); }
 }
 .animate-count-up { animation: count-up 0.4s ease-out forwards; }
+
+/* Remove default focus outlines on Recharts SVG elements */
+.recharts-wrapper *:focus {
+  outline: none !important;
+}

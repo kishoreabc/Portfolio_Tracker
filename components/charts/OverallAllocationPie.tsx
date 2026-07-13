@@ -44,6 +44,7 @@ export function OverallAllocationPie({ data }: Props) {
     <ResponsiveContainer width="100%" height={320}>
       <PieChart>
         <Pie
+          stroke="none"
           data={data}
           cx="50%"
           cy="50%"
@@ -56,7 +57,7 @@ export function OverallAllocationPie({ data }: Props) {
           label={CustomOuterLabel as any}
         >
           {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={entry.color} stroke="rgba(0,0,0,0.1)" strokeWidth={1} />
+            <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
           ))}
         </Pie>
         <Tooltip

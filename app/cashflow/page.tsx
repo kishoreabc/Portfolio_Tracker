@@ -147,9 +147,9 @@ export default function CashFlowPage() {
               <div className="flex-1 min-h-[200px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart onMouseMove={() => setShowTooltip(true)} onMouseLeave={() => setShowTooltip(false)}>
-                    <Pie isAnimationActive={false} data={pieData} dataKey="value" nameKey="name" cx="40%" cy="50%" innerRadius={0} outerRadius={80} labelLine={false} label={CustomLabel as any}>
+                    <Pie stroke="none" isAnimationActive={false} data={pieData} dataKey="value" nameKey="name" cx="40%" cy="50%" innerRadius={0} outerRadius={80} labelLine={false} label={CustomLabel as any}>
                       {pieData.map((entry, idx) => (
-                        <Cell key={idx} fill={entry.color} stroke="rgba(0,0,0,0.1)" strokeWidth={1} />
+                        <Cell key={idx} fill={entry.color} stroke="none" />
                       ))}
                     </Pie>
                     {showTooltip && (

@@ -153,7 +153,7 @@ export default function BondsPage() {
               {isLoading ? <Skeleton className="h-[220px] bg-white/5" /> : (
                 <ResponsiveContainer width="100%" height={220}>
                   <PieChart>
-                    <Pie data={creditRatingDistribution} dataKey="totalValue" nameKey="rating"
+                    <Pie stroke="none" data={creditRatingDistribution} dataKey="totalValue" nameKey="rating"
                       cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={2}
                       labelLine={false} label={CustomLabel as never}>
                       {creditRatingDistribution.map((entry, i) => (

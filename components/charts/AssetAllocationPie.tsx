@@ -38,6 +38,7 @@ export function AssetAllocationPie({ data }: Props) {
     <ResponsiveContainer width="100%" height={280}>
       <PieChart>
         <Pie
+          stroke="none"
           data={data}
           cx="50%"
           cy="50%"
