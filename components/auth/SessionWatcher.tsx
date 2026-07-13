@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState, createContext, useContext } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 
-const TIMEOUT_MS = 3 * 60 * 1000; // Inactivity timeout
-const TOTAL_SESSION_MS = 11 * 60 * 1000; // 11 minutes total active session limit
+const TIMEOUT_MS = 5 * 60 * 1000; // Inactivity timeout
+const TOTAL_SESSION_MS = 31 * 60 * 1000; // 11 minutes total active session limit
 
 interface SessionWatcherContextType {
   remainingTime: number; // in milliseconds

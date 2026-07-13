@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { RefreshCw, Clock, Wifi, WifiOff, ALargeSmall, Menu } from 'lucide-react';
+import { RefreshCw, Clock, Wifi, WifiOff, ALargeSmall, Menu, XCircle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import { useRefreshData } from '@/hooks/useRefreshData';
@@ -27,7 +27,7 @@ function applyFontSize(px: number) {
 }
 
 export function Topbar({ lastFetched, pageTitle = 'Dashboard', apiErrors = [] }: TopbarProps) {
-  const { refresh, isRefreshing } = useRefreshData();
+  const { refresh, isRefreshing, error, clearError } = useRefreshData();
   const { data: session } = useSession();
   const { totalTimeRemaining } = useSessionWatcher();
   const { toggleMobileSidebar, isCollapsed } = useSidebar();
@@ -202,7 +202,7 @@ export function Topbar({ lastFetched, pageTitle = 'Dashboard', apiErrors = [] }:
 
         {/* ── User Profile ── */}
         {session?.user && (
-          <div className="flex items-center gap-2 ml-1 border-l border-white/10 pl-2 sm:pl-4 py-1">
+          <div className="relative flex items-center gap-2 ml-1 border-l border-white/10 pl-2 sm:pl-4 py-1">
             {/* Name + email — hidden on mobile */}
             <div className="hidden lg:flex flex-col items-end">
               <span className="text-xs font-semibold text-foreground leading-tight">{session.user.name}</span>
@@ -234,10 +234,39 @@ export function Topbar({ lastFetched, pageTitle = 'Dashboard', apiErrors = [] }:
                 </span>
               </button>
             </div>
+
+            {/* ── Floating Error Notification (Speech Bubble) ── */}
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8, y: -10, x: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
+                  exit={{ opacity: 0, scale: 0.8, y: -10, x: 20 }}
+                  style={{ transformOrigin: "top right" }}
+                  className="absolute top-[calc(100%+12px)] right-[60px] z-50 flex items-start gap-3 p-3 bg-red-950/95 border border-red-500/50 rounded-2xl rounded-tr-sm shadow-xl shadow-red-900/20 backdrop-blur-md w-72"
+                >
+                  <div className="absolute -top-[7px] right-2 w-3 h-3 bg-red-950/95 border-l border-t border-red-500/50 transform rotate-45" />
+                  
+                  <div className="relative z-10 flex-1 text-sm text-red-200 leading-snug">
+                    <p className="font-semibold text-red-300 mb-0.5">Refresh failed!</p>
+                    <p className="text-xs text-red-200/80">{error}</p>
+                  </div>
+                  <button
+                    onClick={clearError}
+                    className="relative z-10 text-red-400 hover:text-white hover:bg-red-500/20 p-1 rounded-full transition-colors flex-shrink-0"
+                    aria-label="Close error message"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
 
       </div>
+
+
     </header>
   );
 }

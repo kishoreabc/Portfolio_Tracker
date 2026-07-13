@@ -5,6 +5,7 @@ import { TrendingUp, TrendingDown, Minus, LucideIcon } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 interface KpiCardProps {
   title: string;
@@ -17,6 +18,7 @@ interface KpiCardProps {
   isLoading?: boolean;
   note?: string;
   id?: string;
+  href?: string;
 }
 
 const ACCENT_STYLES = {
@@ -58,6 +60,7 @@ export function KpiCard({
   isLoading = false,
   note,
   id,
+  href,
 }: KpiCardProps) {
   const accent = ACCENT_STYLES[accentColor];
 
@@ -74,20 +77,13 @@ export function KpiCard({
     );
   }
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      id={id}
-      className="h-full"
-    >
+  const content = (
       <Card className={cn(
         'p-5 border-border/50 hover:border-border transition-all duration-200',
         'hover:shadow-lg h-full flex flex-col justify-between',
         accent.glow,
         accent.border,
-        'group cursor-default'
+        href ? 'cursor-pointer hover:bg-white/[0.02]' : 'group cursor-default'
       )}>
         <div>
           <div className="flex items-start justify-between mb-3">
@@ -138,6 +134,23 @@ export function KpiCard({
           <p className="text-caption text-muted-foreground/70 mt-2 italic">{note}</p>
         )}
       </Card>
+  );
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      id={id}
+      className="h-full"
+    >
+      {href ? (
+        <Link href={href} className="block h-full outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl">
+          {content}
+        </Link>
+      ) : (
+        content
+      )}
     </motion.div>
   );
 }

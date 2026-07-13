@@ -72,6 +72,7 @@ export default function DashboardPage() {
             icon={Wallet}
             accentColor="blue"
             isLoading={isLoading}
+            href="/portfolio"
           />
           <KpiCard
             id="kpi-equity"
@@ -81,6 +82,7 @@ export default function DashboardPage() {
             icon={TrendingUp}
             accentColor="green"
             isLoading={isLoading}
+            href="/stocks"
           />
           <KpiCard
             id="kpi-bonds"
@@ -90,6 +92,7 @@ export default function DashboardPage() {
             icon={Building2}
             accentColor="purple"
             isLoading={isLoading}
+            href="/bonds"
           />
           <KpiCard
             id="kpi-today-change"
@@ -100,6 +103,7 @@ export default function DashboardPage() {
             icon={Activity}
             accentColor={todaysChange >= 0 ? 'green' : 'red'}
             isLoading={isLoading}
+            href="/stocks"
           />
           <KpiCard
             id="kpi-monthly-investment"
@@ -109,6 +113,7 @@ export default function DashboardPage() {
             icon={ArrowUpDown}
             accentColor="amber"
             isLoading={isLoading}
+            href="/cashflow"
           />
           <KpiCard
             id="kpi-monthly-expenses"
@@ -119,6 +124,7 @@ export default function DashboardPage() {
             accentColor="red"
             isLoading={isLoading}
             note={cashFlowStats.monthlySummaries.length === 0 ? 'No expense data' : undefined}
+            href="/cashflow"
           />
         </motion.div>
 

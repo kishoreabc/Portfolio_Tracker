@@ -36,6 +36,9 @@ const MONTH_LABELS: Record<number, string> = {
 export function mapTransactions(sheet: ParsedSheet | null): Transaction[] {
   if (!sheet || !sheet.rows.length) return [];
 
+  const today = new Date();
+  today.setHours(23, 59, 59, 999); // Include all of today
+
   return sheet.rows
     .map((row) => {
       const date = parseDate(row.date as string);
@@ -48,7 +51,7 @@ export function mapTransactions(sheet: ParsedSheet | null): Transaction[] {
         dailyTotal: Number(row.dailyTotal ?? 0),
       } satisfies Transaction;
     })
-    .filter((t): t is Transaction => t !== null)
+    .filter((t): t is Transaction => t !== null && t.date <= today)
     .sort((a, b) => a.date.getTime() - b.date.getTime());
 }
 

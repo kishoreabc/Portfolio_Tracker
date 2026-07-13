@@ -44,7 +44,7 @@ export default function CalendarPage() {
         couponRate: e.couponRate,
         payoutType: e.payoutType,
       })))
-      .filter((c) => c.date > today)
+      .filter((c) => c.date >= today)
       .sort((a, b) => a.date.getTime() - b.date.getTime())
       .slice(0, 12);
   }, [bondMaturityEvents]);
