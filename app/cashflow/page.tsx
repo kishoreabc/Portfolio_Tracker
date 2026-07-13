@@ -164,8 +164,8 @@ export default function CashFlowPage() {
             </div>
 
             {/* Daily Table */}
-            <div className="flex-1 overflow-auto border border-border/40 rounded-xl bg-background/50">
-              <Table>
+            <div className="flex-1 min-h-0 border border-border/40 rounded-xl bg-background/50 flex flex-col">
+              <Table wrapperClassName="flex-1 overflow-auto rounded-xl">
                 <TableHeader className="sticky top-0 bg-surface-100 z-10 shadow-sm">
                   <TableRow className="border-border/50 hover:bg-transparent">
                     {['Date', 'Food & Ent.', 'Investment', 'Others', 'Total'].map(h => (

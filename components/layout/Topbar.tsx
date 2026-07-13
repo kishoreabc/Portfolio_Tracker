@@ -221,7 +221,7 @@ export function Topbar({ lastFetched, pageTitle = 'Dashboard', apiErrors = [] }:
             <div className="flex flex-col items-center">
               <button
                 onClick={() => {
-                  sessionStorage.removeItem('portfolio-session-start');
+                  localStorage.removeItem('portfolio-session-start');
                   signOut({ callbackUrl: '/login' });
                 }}
                 className="flex flex-col items-center justify-center p-1.5 rounded-lg text-[10px] uppercase font-bold text-slate-400 hover:text-white hover:bg-white/10 transition-all active:scale-95"

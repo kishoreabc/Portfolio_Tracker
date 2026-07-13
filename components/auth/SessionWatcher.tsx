@@ -29,10 +29,10 @@ export function SessionWatcher({ children }: { children?: React.ReactNode }) {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      let start = sessionStorage.getItem('portfolio-session-start');
+      let start = localStorage.getItem('portfolio-session-start');
       if (!start) {
         start = Date.now().toString();
-        sessionStorage.setItem('portfolio-session-start', start);
+        localStorage.setItem('portfolio-session-start', start);
       }
       sessionStartRef.current = parseInt(start, 10);
     }
@@ -56,7 +56,7 @@ export function SessionWatcher({ children }: { children?: React.ReactNode }) {
 
       if (actualRemaining === 0) {
         if (intervalRef.current) clearInterval(intervalRef.current);
-        sessionStorage.removeItem('portfolio-session-start');
+        localStorage.removeItem('portfolio-session-start');
         // Redirect to login page with expired flag
         signOut({ callbackUrl: '/login?expired=true' });
       }
