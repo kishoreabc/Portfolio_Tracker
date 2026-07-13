@@ -197,9 +197,9 @@ export default function BondsPage() {
                 )) : sortedBonds.map((b, i) => (
                   <motion.tr key={b.isin || i} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.02 }} className="border-border/30 hover:bg-white/[0.02] transition-colors">
-                    <TableCell className="text-body font-semibold text-foreground max-w-[160px] truncate">{b.securityName}</TableCell>
+                    <TableCell className="text-body font-semibold text-foreground max-w-[160px] truncate" title={b.securityName}>{b.securityName}</TableCell>
                     <TableCell className="text-small font-mono text-muted-foreground/80 font-medium">{b.isin}</TableCell>
-                    <TableCell className="text-small text-muted-foreground/80 max-w-[100px] truncate">{b.issuer}</TableCell>
+                    <TableCell className="text-small text-muted-foreground/80 max-w-[100px] truncate" title={b.issuer}>{b.issuer}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className="text-caption px-1.5 font-semibold"
                         style={{ borderColor: `${getRatingColor(b.creditRating, 'gray')}40`, color: getRatingColor(b.creditRating, 'gray') }}>

@@ -18,8 +18,7 @@ interface TopbarProps {
 const FONT_STEP = 1;     // px per click
 const FONT_MIN  = 11;    // px minimum
 const FONT_MAX  = 30;    // px maximum
-const FONT_DEFAULT = 18; // px — body/content base
-const FONT_DEFAULT_HEADER_REM = 36 / 18; // 2rem → 36px at default scale
+const FONT_DEFAULT = 15; // px — body/content base
 const STORAGE_KEY = 'portfolio-font-size';
 
 function applyFontSize(px: number) {
@@ -82,7 +81,7 @@ export function Topbar({ lastFetched, pageTitle = 'Dashboard', apiErrors = [] }:
       {/* Left: hamburger (mobile) + sidebar offset (desktop) + title */}
       <div
         className={[
-          "flex items-center gap-2 min-w-0 transition-[padding-left] duration-300 ease-in-out",
+          "flex items-center gap-2 min-w-0 transition-[padding-left] duration-300 ease-in-out flex-1",
           "pl-0", // mobile
           isCollapsed ? "md:pl-16" : "md:pl-60" // desktop
         ].join(' ')}
@@ -96,7 +95,7 @@ export function Topbar({ lastFetched, pageTitle = 'Dashboard', apiErrors = [] }:
           <Menu className="w-5 h-5" />
         </button>
 
-        <h1 className="font-bold text-white leading-[1.2] truncate" style={{ fontSize: `${FONT_DEFAULT_HEADER_REM}rem` }}>
+        <h1 className="font-bold text-white leading-[1.2] truncate text-base md:text-xl lg:text-2xl xl:text-[2rem]">
           {pageTitle}
         </h1>
         {apiErrors.length > 0 && (
