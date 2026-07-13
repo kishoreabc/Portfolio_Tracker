@@ -11,6 +11,7 @@ import { Topbar } from '@/components/layout/Topbar';
 import { AssetAllocationPie } from '@/components/charts/AssetAllocationPie';
 import { SectorAllocationChart } from '@/components/charts/SectorAllocationChart';
 import { CashFlowChart } from '@/components/charts/CashFlowChart';
+import { OverallAllocationPie } from '@/components/charts/OverallAllocationPie';
 import { usePortfolioData } from '@/hooks/usePortfolioData';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -38,6 +39,7 @@ export default function DashboardPage() {
     todaysChangePct,
     cashFlowStats,
     assetAllocation,
+    overallAllocation,
     sectorAllocation,
     lastFetched,
     apiErrors,
@@ -239,6 +241,19 @@ export default function DashboardPage() {
           </Card>
         </motion.div>
 
+        {/* Sector Allocation Row */}
+        <div className="grid grid-cols-1 gap-4 mb-4">
+          <Card className="border-border/50">
+            <CardHeader className="pb-5">
+              <CardTitle>Sector Allocation</CardTitle>
+              <CardDescription>Total equity value by sector</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SectorAllocationChart data={dashboardSectors} />
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Charts row 1 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card className="border-border/50">
@@ -253,11 +268,11 @@ export default function DashboardPage() {
 
           <Card className="border-border/50">
             <CardHeader className="pb-5">
-              <CardTitle>Sector Allocation</CardTitle>
-              <CardDescription>Total value by sector</CardDescription>
+              <CardTitle>Overall Allocation</CardTitle>
+              <CardDescription>Bonds, Gold, and Equity Sectors</CardDescription>
             </CardHeader>
             <CardContent>
-              <SectorAllocationChart data={dashboardSectors} />
+              <OverallAllocationPie data={overallAllocation} />
             </CardContent>
           </Card>
         </div>

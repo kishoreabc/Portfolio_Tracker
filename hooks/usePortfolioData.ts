@@ -7,7 +7,7 @@ import { mapEquityHoldings } from '@/lib/mappers/equity';
 import { mapBondHoldings } from '@/lib/mappers/bonds';
 import { mapTransactions, buildCashFlowStats } from '@/lib/mappers/cashflow';
 import { buildUnifiedPortfolio } from '@/lib/mappers/unified';
-import { computeAssetAllocation, computeSectorAllocation } from '@/lib/calc/allocation';
+import { computeAssetAllocation, computeSectorAllocation, computeOverallAllocation } from '@/lib/calc/allocation';
 import { computeConcentrationRisk, computeWinnersLosers } from '@/lib/calc/risk';
 import { buildBondMaturityEvents, buildBondLadder, buildCreditRatingDistribution } from '@/lib/calc/forecast';
 import { useMemo } from 'react';
@@ -35,6 +35,7 @@ export function usePortfolioData(force = false) {
   const cashFlowStats = useMemo(() => buildCashFlowStats(transactions), [transactions]);
   const portfolio = useMemo(() => buildUnifiedPortfolio(equity, bonds), [equity, bonds]);
   const assetAllocation = useMemo(() => computeAssetAllocation(equity, bonds), [equity, bonds]);
+  const overallAllocation = useMemo(() => computeOverallAllocation(equity, bonds), [equity, bonds]);
   const sectorAllocation = useMemo(() => computeSectorAllocation(equity, bonds), [equity, bonds]);
   const concentrationRisk = useMemo(() => computeConcentrationRisk(equity, bonds), [equity, bonds]);
   const { winners, losers } = useMemo(() => computeWinnersLosers(equity), [equity]);
@@ -75,6 +76,7 @@ export function usePortfolioData(force = false) {
     // Analytics
     cashFlowStats,
     assetAllocation,
+    overallAllocation,
     sectorAllocation,
     concentrationRisk,
     winners,
