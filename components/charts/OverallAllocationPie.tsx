@@ -60,7 +60,7 @@ export function OverallAllocationPie({ data }: Props) {
           ))}
         </Pie>
         <Tooltip
-          formatter={(value: number) => `₹${value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          formatter={(value: any) => `₹${Number(value).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           contentStyle={{
             background: 'hsl(222 47% 11%)',
             border: '1px solid hsl(222 47% 20%)',
