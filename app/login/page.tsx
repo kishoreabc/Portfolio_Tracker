@@ -19,6 +19,8 @@ function LoginContent() {
   useEffect(() => {
     if (status === 'authenticated') {
       router.push('/');
+    } else if (status === 'unauthenticated') {
+      localStorage.removeItem('portfolio-session-start');
     }
   }, [status, router]);
 
@@ -29,6 +31,7 @@ function LoginContent() {
   const handleCredentialsLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    localStorage.removeItem('portfolio-session-start');
     await signIn('credentials', {
       username,
       password,
@@ -38,6 +41,7 @@ function LoginContent() {
   };
 
   const handleLogin = () => {
+    localStorage.removeItem('portfolio-session-start');
     signIn('google', { callbackUrl: '/' });
   };
 

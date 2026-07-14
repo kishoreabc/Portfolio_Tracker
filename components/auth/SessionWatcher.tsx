@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, createContext, useContext } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 
-const TIMEOUT_MS = 5 * 60 * 1000; // Inactivity timeout
+const TIMEOUT_MS = 10 * 60 * 1000; // Inactivity timeout
 const TOTAL_SESSION_MS = 30.1 * 60 * 1000; // 11 minutes total active session limit
 
 interface SessionWatcherContextType {
@@ -28,6 +28,8 @@ export function SessionWatcher({ children }: { children?: React.ReactNode }) {
   const sessionStartRef = useRef<number>(Date.now());
 
   useEffect(() => {
+    if (!session) return;
+
     if (typeof window !== 'undefined') {
       let start = localStorage.getItem('portfolio-session-start');
       if (!start) {
@@ -36,10 +38,6 @@ export function SessionWatcher({ children }: { children?: React.ReactNode }) {
       }
       sessionStartRef.current = parseInt(start, 10);
     }
-  }, []);
-
-  useEffect(() => {
-    if (!session) return;
 
     const checkTimeout = () => {
       const now = Date.now();
