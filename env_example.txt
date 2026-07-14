@@ -1,5 +1,5 @@
 # Google Sheets configuration
-GOOGLE_SHEET_ID=
+GOOGLE_SHEET_ID=[GCP_API_KEY]
 GOOGLE_SHEETS_API_KEY=your_google_sheets_api_key_here
 
 # Gemini AI (optional — only needed for AI Insights page)
@@ -14,3 +14,5 @@ AUTH_URL=http://localhost:3000
 # https://console.cloud.google.com/apis/credentials
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
+# Comma-separated list of emails allowed to log in
+ALLOWED_EMAILS="exammple-1@gmail.com, exammple-2@gmail.com"
