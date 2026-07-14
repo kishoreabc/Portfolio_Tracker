@@ -124,10 +124,7 @@ The "Database" is purely read-only via Google Sheets. No write operations (`APPE
 ## Folder Structure
 
 ```
-project/
-│
-├── PORTFOLIO_DASHBOARD_ARCHITECTURE.md
-└── dashboard/
+── dashboard/
     ├── app/                  # Next.js App Router (Pages, Layouts, API Routes)
     │   ├── analytics/        # Analytics view
     │   ├── api/              # Route Handlers (sheets, insights)

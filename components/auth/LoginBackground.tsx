@@ -1,20 +1,20 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { delay, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { CandlestickChart, Activity, Wallet, Banknote, Briefcase, TrendingUp, TrendingDown, DollarSign, Bitcoin } from 'lucide-react';
 
 const GridBackground = () => (
   <div className="absolute inset-0 w-full h-full opacity-[0.03] pointer-events-none z-0 mix-blend-screen"
-       style={{
-         backgroundImage: `
+    style={{
+      backgroundImage: `
            linear-gradient(to right, rgba(255,255,255,1) 1px, transparent 1px),
            linear-gradient(to bottom, rgba(255,255,255,1) 1px, transparent 1px)
          `,
-         backgroundSize: '40px 40px'
-       }}
+      backgroundSize: '40px 40px'
+    }}
   >
-    <motion.div 
+    <motion.div
       className="w-full h-full bg-gradient-to-tr from-transparent via-blue-500 to-transparent opacity-30"
       animate={{ x: ['-100%', '100%'] }}
       transition={{ duration: 15, ease: "linear", repeat: Infinity }}
@@ -34,20 +34,20 @@ const UpwardParticles = () => {
         <motion.div
           key={i}
           className="absolute w-1 h-1 rounded-full bg-emerald-500/40 shadow-[0_0_8px_2px_rgba(16,185,129,0.3)]"
-          initial={{ 
-            x: `${Math.random() * 100}vw`, 
-            y: "110vh", 
-            opacity: 0 
+          initial={{
+            x: `${Math.random() * 100}vw`,
+            y: "110vh",
+            opacity: 0
           }}
-          animate={{ 
-            y: "-10vh", 
-            opacity: [0, 1, 0] 
+          animate={{
+            y: "-10vh",
+            opacity: [0, 1, 0]
           }}
-          transition={{ 
-            duration: Math.random() * 15 + 15, 
-            repeat: Infinity, 
-            ease: "linear", 
-            delay: Math.random() * 10 
+          transition={{
+            duration: Math.random() * 15 + 15,
+            repeat: Infinity,
+            ease: "linear",
+            delay: Math.random() * 10
           }}
         />
       ))}
@@ -57,28 +57,28 @@ const UpwardParticles = () => {
 
 const NetworkNodes = () => (
   <svg className="absolute inset-0 w-full h-full pointer-events-none z-0 hidden lg:block opacity-25" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
-    <motion.path 
-      d="M100 800 L300 500 L600 700 L900 200" 
-      fill="none" 
-      stroke="url(#grad)" 
+    <motion.path
+      d="M100 800 L300 500 L600 700 L900 200"
+      fill="none"
+      stroke="url(#grad)"
       strokeWidth="2"
       initial={{ pathLength: 0, opacity: 0 }}
       animate={{ pathLength: 1, opacity: [0, 0.8, 0] }}
       transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
     />
-    <motion.path 
-      d="M200 900 L400 400 L700 800 L1000 100" 
-      fill="none" 
-      stroke="url(#grad2)" 
+    <motion.path
+      d="M200 900 L400 400 L700 800 L1000 100"
+      fill="none"
+      stroke="url(#grad2)"
       strokeWidth="1.5"
       initial={{ pathLength: 0, opacity: 0 }}
       animate={{ pathLength: 1, opacity: [0, 0.6, 0] }}
       transition={{ duration: 18, repeat: Infinity, ease: "easeInOut", delay: 2 }}
     />
-    <motion.path 
-      d="M50 300 L250 600 L550 400 L850 600" 
-      fill="none" 
-      stroke="url(#grad)" 
+    <motion.path
+      d="M50 300 L250 600 L550 400 L850 600"
+      fill="none"
+      stroke="url(#grad)"
       strokeWidth="1"
       initial={{ pathLength: 0, opacity: 0 }}
       animate={{ pathLength: 1, opacity: [0, 0.4, 0] }}
@@ -112,7 +112,7 @@ const FloatingTickers = () => {
             ...t,
             color: t.value.startsWith('+') ? "text-emerald-400" : "text-rose-400",
             top: `${10 + Math.random() * 75}%`,
-            left: `${5 + Math.random() * 80}%`,
+            left: `${5 + Math.random() * 90}%`,
             delay: Math.random() * 8
           }));
           setTickers(positionedTickers);
@@ -198,7 +198,7 @@ export default function LoginBackground() {
       <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] bg-indigo-900/30 rounded-full blur-[140px] pointer-events-none" />
       <div className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[70%] bg-emerald-900/20 rounded-full blur-[140px] pointer-events-none" />
       <div className="absolute top-[20%] right-[20%] w-[35%] h-[35%] bg-blue-900/20 rounded-full blur-[120px] pointer-events-none" />
-      
+
       <GridBackground />
       <NetworkNodes />
       <UpwardParticles />

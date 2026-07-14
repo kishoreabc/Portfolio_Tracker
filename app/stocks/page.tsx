@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Topbar } from '@/components/layout/Topbar';
 import { SectorAllocationChart } from '@/components/charts/SectorAllocationChart';
 import { usePortfolioData } from '@/hooks/usePortfolioData';
+import { useStockModal } from '@/lib/stock-modal-context';
 import {
   BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell,
 } from 'recharts';
@@ -33,6 +34,7 @@ export default function StocksPage() {
   const { equity, winners, losers, isLoading, lastFetched, apiErrors, sectorAllocation } = usePortfolioData();
   const [search, setSearch] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' }>({ key: '', direction: 'asc' });
+  const { openStock } = useStockModal();
 
   const handleSort = (key: string) => {
     let direction: 'asc' | 'desc' = 'asc';
@@ -165,8 +167,15 @@ export default function StocksPage() {
                   )) : filteredAndSorted.map((h, i) => (
                     <motion.tr key={h.ticker} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.015 }} className="border-border/30 hover:bg-white/[0.02] transition-colors">
-                      <TableCell className="font-mono text-small font-semibold text-blue-400">{h.ticker}</TableCell>
-                      <TableCell className="text-body font-semibold text-foreground max-w-[160px] truncate" title={h.name}>{h.name}</TableCell>
+                      <TableCell
+                        className="font-mono text-small font-semibold text-blue-400 cursor-pointer hover:text-blue-300 hover:underline transition-colors"
+                        onClick={() => openStock(h.ticker)}
+                      >{h.ticker}</TableCell>
+                      <TableCell
+                        className="text-body font-semibold text-foreground max-w-[160px] truncate cursor-pointer hover:text-blue-300 transition-colors"
+                        title={h.name}
+                        onClick={() => openStock(h.ticker)}
+                      >{h.name}</TableCell>
                       <TableCell className="text-small text-muted-foreground/80 font-normal">{h.sector}</TableCell>
                       <TableCell className="text-right text-body font-medium tabular-nums text-foreground/90">{h.shares.toLocaleString()}</TableCell>
                       <TableCell className="text-right text-body font-medium tabular-nums text-foreground/90">{fmtPrice(h.currentPrice)}</TableCell>

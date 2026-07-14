@@ -3,6 +3,7 @@ import './globals.css';
 import { Providers } from './providers';
 import { LayoutWrapper } from '@/components/layout/LayoutWrapper';
 import { SessionWatcher } from '@/components/auth/SessionWatcher';
+import { StockDetailsModal } from '@/components/stocks/StockDetailsModal';
 
 export const metadata: Metadata = {
   title: {
@@ -26,6 +27,7 @@ export default function RootLayout({
             <LayoutWrapper>
               {children}
             </LayoutWrapper>
+            <StockDetailsModal />
           </SessionWatcher>
         </Providers>
       </body>

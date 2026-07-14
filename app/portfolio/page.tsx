@@ -12,6 +12,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Topbar } from '@/components/layout/Topbar';
 import { usePortfolioData } from '@/hooks/usePortfolioData';
+import { useStockModal } from '@/lib/stock-modal-context';
 
 function fmt(v: number) {
   if (v >= 1e7) return `₹${(v / 1e7).toFixed(2)}Cr`;
@@ -27,6 +28,7 @@ export default function PortfolioPage() {
   const [bondSearch, setBondSearch] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('currentValue');
   const [sortAsc, setSortAsc] = useState(false);
+  const { openStock } = useStockModal();
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortAsc(!sortAsc);
@@ -144,8 +146,14 @@ export default function PortfolioPage() {
                         transition={{ delay: i * 0.015 }}
                         className="border-border/30 hover:bg-white/[0.02] transition-colors"
                       >
-                        <TableCell className="text-body font-semibold text-foreground max-w-[200px] truncate">{row.name}</TableCell>
-                        <TableCell className="text-small font-mono text-blue-400 font-semibold">{row.ticker}</TableCell>
+                        <TableCell
+                          className="text-body font-semibold text-foreground max-w-[200px] truncate cursor-pointer hover:text-blue-300 transition-colors"
+                          onClick={() => openStock(row.ticker)}
+                        >{row.name}</TableCell>
+                        <TableCell
+                          className="text-small font-mono text-blue-400 font-semibold cursor-pointer hover:text-blue-300 hover:underline transition-colors"
+                          onClick={() => openStock(row.ticker)}
+                        >{row.ticker}</TableCell>
                         <TableCell className="text-small text-muted-foreground/80 font-normal">{row.sector}</TableCell>
                         <TableCell className="text-right text-body font-medium tabular-nums text-foreground">{fmt(row.currentValue)}</TableCell>
                         <TableCell className="text-right">

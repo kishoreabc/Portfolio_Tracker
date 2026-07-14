@@ -5,6 +5,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { SessionProvider } from 'next-auth/react';
 import { useState } from 'react';
+import { StockModalProvider } from '@/lib/stock-modal-context';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -24,9 +25,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <SessionProvider>
-        <TooltipProvider>
-          {children}
-        </TooltipProvider>
+        <StockModalProvider>
+          <TooltipProvider>
+            {children}
+          </TooltipProvider>
+        </StockModalProvider>
       </SessionProvider>
       {process.env.NODE_ENV === 'development' && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>

@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const indexMap: Record<string, string> = {
     'NIFTY 50': '^NSEI',
@@ -17,11 +19,30 @@ export async function GET() {
     'INDIA VIX': '^INDIAVIX'
   };
 
-  const symbols = [
-    'ITC.NS', 'SOUTHBANK.NS', 'KTKBANK.NS', 'TCS.NS', 'GOLDBEES.NS',
+  const allIndianStocks = [
+    'RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'ICICIBANK.NS', 'INFY.NS',
+    'SBIN.NS', 'BHARTIARTL.NS', 'ITC.NS', 'HINDUNILVR.NS', 'LT.NS',
+    'BAJFINANCE.NS', 'HCLTECH.NS', 'MARUTI.NS', 'SUNPHARMA.NS', 'TATAMOTORS.NS',
+    'M&M.NS', 'ASIANPAINT.NS', 'KOTAKBANK.NS', 'TITAN.NS', 'POWERGRID.NS',
+    'NTPC.NS', 'BAJAJFINSV.NS', 'ADANIENT.NS', 'WIPRO.NS', 'NESTLEIND.NS',
+    'ONGC.NS', 'JSWSTEEL.NS', 'HINDALCO.NS', 'TATASTEEL.NS', 'GRASIM.NS',
+    'CIPLA.NS', 'TECHM.NS', 'BRITANNIA.NS', 'SBILIFE.NS', 'DRREDDY.NS',
+    'APOLLOHOSP.NS', 'EICHERMOT.NS', 'DIVISLAB.NS', 'BAJAJ-AUTO.NS', 'HEROMOTOCO.NS',
+    'COALINDIA.NS', 'LTIM.NS', 'UPL.NS', 'BPCL.NS', 'INDUSINDBK.NS',
+    'HDFCLIFE.NS', 'ADANIPORTS.NS', 'TATACONSUM.NS', 'ZOMATO.NS', 'JIOFIN.NS',
+    'SOUTHBANK.NS', 'KTKBANK.NS', 'TCS.NS', 'GOLDBEES.NS',
     'NATCOPHARM.NS', 'DRREDDY.NS', 'TMCV.NS', 'TMPV.NS', 'IDFCFIRSTB.NS',
     'INDUSINDBK.NS', 'WIPRO.NS', 'HEROMOTOCO.NS', 'ZYDUSLIFE.NS', 'JYOTHYLAB.NS',
-    'CIPLA.NS', 'ITCHOTELS.NS', 'MANAPPURAM.NS', 'MUTHOOTFIN.NS',
+    'CIPLA.NS', 'ITCHOTELS.NS', 'MANAPPURAM.NS', 'MUTHOOTFIN.NS'
+  ];
+
+  // Remove duplicates that might exist in the combined list
+  const uniqueIndianStocks = Array.from(new Set(allIndianStocks));
+  const shuffledStocks = [...uniqueIndianStocks].sort(() => 0.5 - Math.random());
+  const selectedStocks = shuffledStocks.slice(0, 15);
+
+  const symbols = [
+    ...selectedStocks,
     ...Object.keys(indexMap)
   ];
 
