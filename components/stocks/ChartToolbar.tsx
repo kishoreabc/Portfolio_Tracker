@@ -39,17 +39,17 @@ export const ChartToolbar = memo(function ChartToolbar({
   return (
     <div className="flex items-center justify-between gap-2 flex-wrap">
       {/* Time range */}
-      <div className="flex items-center gap-0.5 bg-white/[0.04] rounded-lg p-0.5 border border-border/30">
+      <div className="flex w-full items-center gap-0.5 bg-white/[0.04] rounded-lg p-0.5 border border-border/30">
         {TIME_RANGES.map(({ label, value }) => (
           <button
             key={value}
             onClick={() => onTimeRangeChange(value)}
             disabled={isLoading}
-            className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
-              timeRange === value
-                ? 'bg-white/10 text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
-            } disabled:opacity-50`}
+            className={`flex-1 min-w-0 px-1.5 sm:px-2.5 py-1 text-[10px] sm:text-xs font-medium rounded-md transition-all ${
+  timeRange === value
+    ? 'bg-white/10 text-foreground shadow-sm'
+    : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+} disabled:opacity-50`}
           >
             {label}
           </button>

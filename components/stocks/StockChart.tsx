@@ -115,6 +115,7 @@ export const StockChart = memo(function StockChart({
         borderColor: 'rgba(255,255,255,0.1)',
         timeVisible: true,
         secondsVisible: false,
+        minBarSpacing: 0.001,
         tickMarkFormatter: (time: number, tickMarkType: number) => {
           const d = new Date(time * 1000);
           if (tickMarkType === 0) return d.getFullYear().toString();
@@ -145,12 +146,12 @@ export const StockChart = memo(function StockChart({
 
       const lastTime = sorted[sorted.length - 1].time;
       if (lastTime < endTime) {
-         let nextTime = lastTime + 300;
-         nextTime = Math.ceil(nextTime / 300) * 300;
-         while (nextTime <= endTime) {
-           sorted.push({ time: nextTime } as any);
-           nextTime += 300;
-         }
+        let nextTime = lastTime + 300;
+        nextTime = Math.ceil(nextTime / 300) * 300;
+        while (nextTime <= endTime) {
+          sorted.push({ time: nextTime } as any);
+          nextTime += 300;
+        }
       }
     }
 
@@ -181,7 +182,7 @@ export const StockChart = memo(function StockChart({
       const volumeSeries = chart.addSeries(HistogramSeries, {
         color: '#26a69a',
         priceFormat: { type: 'volume' },
-        priceScaleId: '', 
+        priceScaleId: '',
         visible: showVolume,
         lastValueVisible: false,
         priceLineVisible: false,
@@ -300,7 +301,7 @@ export const StockChart = memo(function StockChart({
       const x = e.clientX - rect.left;
       const chart = chartRef.current;
       if (!chart) return;
-      
+
       const logical = chart.timeScale().coordinateToLogical(x);
       if (logical === null) return;
 
@@ -314,10 +315,10 @@ export const StockChart = memo(function StockChart({
       const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
       const chart = chartRef.current;
       if (!chart) return;
-      
+
       const logical = chart.timeScale().coordinateToLogical(x);
       if (logical === null) return;
-      
+
       setMeasure(prev => prev ? { ...prev, endX: x, endLogical: logical } : null);
     };
 
@@ -337,7 +338,7 @@ export const StockChart = memo(function StockChart({
       const x = touch.clientX - rect.left;
       const chart = chartRef.current;
       if (!chart) return;
-      
+
       const logical = chart.timeScale().coordinateToLogical(x);
       if (logical === null) return;
 
@@ -352,10 +353,10 @@ export const StockChart = memo(function StockChart({
       const x = Math.max(0, Math.min(touch.clientX - rect.left, rect.width));
       const chart = chartRef.current;
       if (!chart) return;
-      
+
       const logical = chart.timeScale().coordinateToLogical(x);
       if (logical === null) return;
-      
+
       setMeasure(prev => prev ? { ...prev, endX: x, endLogical: logical } : null);
     };
 
@@ -371,7 +372,7 @@ export const StockChart = memo(function StockChart({
     container.addEventListener('mousedown', handleMouseDown, { capture: true });
     window.addEventListener('mousemove', handleMouseMove, { capture: true });
     window.addEventListener('mouseup', handleMouseUp, { capture: true });
-    
+
     return () => {
       container.removeEventListener('mousedown', handleMouseDown, { capture: true });
       window.removeEventListener('mousemove', handleMouseMove, { capture: true });
@@ -397,30 +398,30 @@ export const StockChart = memo(function StockChart({
 
     const sIndex = Math.max(0, Math.min(candles.length - 1, Math.round(startLogical)));
     const eIndex = Math.max(0, Math.min(candles.length - 1, Math.round(endLogical)));
-    
+
     const startC = candles[Math.min(sIndex, eIndex)];
     const endC = candles[Math.max(sIndex, eIndex)];
     if (!startC || !endC) return null;
-    
+
     const change = endC.close - startC.close;
     const changePct = (change / startC.close) * 100;
     const isPos = change >= 0;
 
     const fmtTime = (t: number) => {
-       const d = new Date(t * 1000);
-       return d.toLocaleString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+      const d = new Date(t * 1000);
+      return d.toLocaleString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
     };
 
     return (
       <div className="absolute top-0 bottom-0 pointer-events-none" style={{ left: minX, width, zIndex: 10 }}>
         <div className="absolute inset-0 bg-blue-500/10 border-x border-blue-500/50 border-dashed" />
         <div className="absolute top-12 left-1/2 -translate-x-1/2 bg-[#1e2329] border border-white/10 rounded px-3 py-1.5 shadow-xl whitespace-nowrap flex items-center gap-2 text-xs">
-           <span className={`font-semibold ${isPos ? 'text-emerald-400' : 'text-rose-400'}`}>
-             {isPos ? '+' : ''}{change.toFixed(2)} ({isPos ? '+' : ''}{changePct.toFixed(2)}%)
-           </span>
-           <span className="text-muted-foreground">
-             {fmtTime(startC.time)} - {fmtTime(endC.time)}
-           </span>
+          <span className={`font-semibold ${isPos ? 'text-emerald-400' : 'text-rose-400'}`}>
+            {isPos ? '+' : ''}{change.toFixed(2)} ({isPos ? '+' : ''}{changePct.toFixed(2)}%)
+          </span>
+          <span className="text-muted-foreground">
+            {fmtTime(startC.time)} - {fmtTime(endC.time)}
+          </span>
         </div>
       </div>
     );
@@ -431,12 +432,12 @@ export const StockChart = memo(function StockChart({
 
     let activeCandle = hoverData?.candle;
     if (!activeCandle) {
-       for (let i = candles.length - 1; i >= 0; i--) {
-         if (candles[i].close !== undefined) {
-           activeCandle = candles[i];
-           break;
-         }
-       }
+      for (let i = candles.length - 1; i >= 0; i--) {
+        if (candles[i].close !== undefined) {
+          activeCandle = candles[i];
+          break;
+        }
+      }
     }
     if (!activeCandle) return null;
 
@@ -450,13 +451,13 @@ export const StockChart = memo(function StockChart({
       const d = new Date(candle.time * 1000);
       let topLabel = '';
       if (chartType === 'candlestick') {
-         topLabel = d.toLocaleString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+        topLabel = d.toLocaleString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
       } else {
-         if (timeRange === '1d') {
-            topLabel = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) + ' • ₹' + candle.close.toFixed(2);
-         } else {
-            topLabel = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) + ' • ₹' + candle.close.toFixed(2);
-         }
+        if (timeRange === '1d') {
+          topLabel = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) + ' • ₹' + candle.close.toFixed(2);
+        } else {
+          topLabel = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) + ' • ₹' + candle.close.toFixed(2);
+        }
       }
 
       const leftPos = Math.max(40, Math.min(x, cw - 40));
@@ -480,7 +481,7 @@ export const StockChart = memo(function StockChart({
           }
         }
         if (timeBadgeTop === undefined) {
-           timeBadgeTop = Math.max(10, hoverData.y - 40);
+          timeBadgeTop = Math.max(10, hoverData.y - 40);
         }
       }
 
@@ -490,11 +491,11 @@ export const StockChart = memo(function StockChart({
 
       timeBadgeNode = (
         <>
-          <div 
+          <div
             className="absolute top-0 bottom-0 border-l border-white/20 border-dashed pointer-events-none z-10"
             style={{ left: x }}
           />
-          <div 
+          <div
             className={timeBadgeClass}
             style={{ left: leftPos, top: timeBadgeTop }}
           >
@@ -508,30 +509,30 @@ export const StockChart = memo(function StockChart({
       <>
         {timeBadgeNode}
         {chartType === 'candlestick' && (
-          <div 
+          <div
             className="absolute top-2 right-14 md:right-20 flex flex-col items-end gap-1.5 text-[11px] z-30 pointer-events-auto"
             onMouseEnter={() => { isHoveringLegend.current = true; }}
             onMouseLeave={() => { isHoveringLegend.current = false; }}
           >
-             <div className="flex flex-wrap justify-end gap-x-2 md:gap-x-3 gap-y-1 bg-[#1e2329]/80 backdrop-blur border border-white/5 rounded px-2 md:px-2.5 py-1 text-muted-foreground shadow-sm max-w-[220px] md:max-w-none">
-               <span>Price</span>
-               <span className="whitespace-nowrap">O <span className={colorClass}>{activeCandle.open.toFixed(2)}</span></span>
-               <span className="whitespace-nowrap">H <span className={colorClass}>{activeCandle.high.toFixed(2)}</span></span>
-               <span className="whitespace-nowrap">L <span className={colorClass}>{activeCandle.low.toFixed(2)}</span></span>
-               <span className="whitespace-nowrap">C <span className={colorClass}>{activeCandle.close.toFixed(2)}</span></span>
-             </div>
-             {activeCandle.volume > 0 && (
-               <div 
-                 className="flex items-center gap-2 bg-[#1e2329]/80 backdrop-blur border border-white/5 rounded px-2.5 py-1 text-muted-foreground shadow-sm cursor-pointer hover:bg-white/5 transition-colors"
-                 onClick={() => setShowVolume(!showVolume)}
-               >
-                 <div className={`w-3.5 h-3.5 rounded flex items-center justify-center transition-colors ${showVolume ? 'bg-emerald-500 text-white' : 'border border-white/20'}`}>
-                   {showVolume && <Check className="w-2.5 h-2.5" strokeWidth={3} />}
-                 </div>
-                 <span>Volume</span>
-                 <span className="text-foreground font-medium">{activeCandle.volume.toLocaleString('en-IN')}</span>
-               </div>
-             )}
+            <div className="flex flex-wrap justify-end gap-x-2 md:gap-x-3 gap-y-1 bg-[#1e2329]/80 backdrop-blur border border-white/5 rounded px-2 md:px-2.5 py-1 text-muted-foreground shadow-sm max-w-[220px] md:max-w-none">
+              <span>Price</span>
+              <span className="whitespace-nowrap">O <span className={colorClass}>{activeCandle.open.toFixed(2)}</span></span>
+              <span className="whitespace-nowrap">H <span className={colorClass}>{activeCandle.high.toFixed(2)}</span></span>
+              <span className="whitespace-nowrap">L <span className={colorClass}>{activeCandle.low.toFixed(2)}</span></span>
+              <span className="whitespace-nowrap">C <span className={colorClass}>{activeCandle.close.toFixed(2)}</span></span>
+            </div>
+            {activeCandle.volume > 0 && (
+              <div
+                className="flex items-center gap-2 bg-[#1e2329]/80 backdrop-blur border border-white/5 rounded px-2.5 py-1 text-muted-foreground shadow-sm cursor-pointer hover:bg-white/5 transition-colors"
+                onClick={() => setShowVolume(!showVolume)}
+              >
+                <div className={`w-3.5 h-3.5 rounded flex items-center justify-center transition-colors ${showVolume ? 'bg-emerald-500 text-white' : 'border border-white/20'}`}>
+                  {showVolume && <Check className="w-2.5 h-2.5" strokeWidth={3} />}
+                </div>
+                <span>Volume</span>
+                <span className="text-foreground font-medium">{activeCandle.volume.toLocaleString('en-IN')}</span>
+              </div>
+            )}
           </div>
         )}
       </>

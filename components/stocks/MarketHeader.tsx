@@ -23,10 +23,9 @@ function formatPrice(v: number) {
 }
 
 function formatLargeNumber(v: number): string {
-  if (v >= 1e12) return `₹${(v / 1e12).toFixed(2)}T`;
-  if (v >= 1e9) return `₹${(v / 1e9).toFixed(2)}B`;
-  if (v >= 1e7) return `₹${(v / 1e7).toFixed(2)}Cr`;
-  if (v >= 1e5) return `₹${(v / 1e5).toFixed(2)}L`;
+  if (v >= 1e12) return `₹${(v / 1e12).toFixed(2)}L Cr`;
+  if (v >= 1e7) return `₹${(v / 1e7).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}Cr`;
+  if (v >= 1e5) return `₹${(v / 1e5).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}L`;
   return `₹${v.toLocaleString('en-IN')}`;
 }
 

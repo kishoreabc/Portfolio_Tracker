@@ -136,11 +136,10 @@ export default function CalendarPage() {
                 <div className="space-y-2">
                   {upcomingCoupons.map((c, i) => (
                     <motion.div key={`${c.isin}-${i}`} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
-                      className={`flex items-center justify-between p-3 rounded-lg border ${
-                        c.isEstimated
+                      className={`flex items-center justify-between p-3 rounded-lg border ${c.isEstimated
                           ? 'border-amber-500/10 bg-amber-500/5'
                           : 'border-green-500/10 bg-green-500/5'
-                      }`}>
+                        }`}>
                       <div>
                         <div className="flex items-center gap-2 mb-0.5">
                           <p className="text-xs font-medium text-foreground truncate max-w-[200px]">{c.name}</p>
@@ -169,13 +168,13 @@ export default function CalendarPage() {
         {/* Dividend dates — honest empty state */}
         <Card className="border-border/50">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Dividend Dates</CardTitle>
+            <CardTitle className="text-sm font-semibold">Events</CardTitle>
           </CardHeader>
           <CardContent>
             <EmptyState
-              title="No dividend data source"
-              description="There is no dividend schedule in the current Google Sheet. This section will be populated once a dividend/distribution data source is added."
-              reason="v1 gap: dividend dates have no source — not fabricated"
+              title="No event data source"
+              description="There is no dividend/distribution data in the current Google Sheet. This section will be populated once a dividend/distribution data source is added."
+              reason="v1 gap: dividend/distribution data have no source — not fabricated"
               icon={AlertCircle}
               className="py-8"
             />
