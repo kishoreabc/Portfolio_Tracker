@@ -27,7 +27,13 @@ function getInterval(range: string): string {
   switch (range) {
     case '1d':  return '5m';
     case '5d':  return '15m';
-    case '1mo': return '1d';
+    case '1mo': return '1h';
+    case '3mo': return '1d';
+    case '6mo': return '1d';
+    case '1y':  return '1d';
+    case '3y':  return '1wk';
+    case '5y':  return '1wk';
+    case 'max': return '1mo';
     default:    return '1d';
   }
 }
@@ -58,7 +64,7 @@ export async function GET(
       const yahooFinance = new (YahooFinance as any)();
 
       const period1 = getPeriod1(range);
-      const interval = getInterval(range) as '5m' | '15m' | '1d';
+      const interval = getInterval(range);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const historical = await (yahooFinance.chart as any)(yahooSymbol, {

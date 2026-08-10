@@ -9,7 +9,9 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { Topbar } from '@/components/layout/Topbar';
 import { usePortfolioData } from '@/hooks/usePortfolioData';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarIcon, Banknote, AlertCircle } from 'lucide-react';
+import { CalendarIcon, Banknote, AlertCircle, CalendarSearch } from 'lucide-react';
+import { BondCashflowDialog } from '@/components/bonds/BondCashflowDialog';
+import { useState, useEffect } from 'react';
 
 function fmt(v: number) {
   if (v >= 1e7) return `₹${(v / 1e7).toFixed(2)}Cr`;
@@ -19,39 +21,116 @@ function fmt(v: number) {
 
 export default function CalendarPage() {
   const { bondMaturityEvents, isLoading, lastFetched, apiErrors } = usePortfolioData();
+  const [selectedIsin, setSelectedIsin] = useState<{ isin: string; name: string; units?: number } | null>(null);
+
+  const [upcomingCoupons, setUpcomingCoupons] = useState<any[]>([]);
+  const [nsdlMaturities, setNsdlMaturities] = useState<any[]>([]);
+  const [isNsdlLoading, setIsNsdlLoading] = useState(true);
 
   const grouped = useMemo(() => {
-    const map = new Map<string, typeof bondMaturityEvents>();
-    for (const e of bondMaturityEvents) {
+    const map = new Map<string, any[]>();
+    for (const e of nsdlMaturities) {
       const key = format(e.maturityDate, 'MMM yyyy');
       map.set(key, [...(map.get(key) ?? []), e]);
     }
     return Array.from(map.entries()).sort(
       ([a], [b]) => new Date(a).getTime() - new Date(b).getTime()
     );
+  }, [nsdlMaturities]);
+
+  useEffect(() => {
+    async function fetchNsdl() {
+      if (bondMaturityEvents.length === 0) {
+        setIsNsdlLoading(false);
+        return;
+      }
+      setIsNsdlLoading(true);
+      
+      const uniqueIsins = Array.from(new Set(bondMaturityEvents.filter(e => e.isin).map(e => e.isin)));
+      const promises = uniqueIsins.map(async (isin) => {
+        try {
+          const res = await fetch(`/api/bonds/cashflow?isin=${isin}`);
+          if (!res.ok) return null;
+          const data = await res.json();
+          return { isin, data };
+        } catch { return null; }
+      });
+      
+      const results = await Promise.all(promises);
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const upcoming: any[] = [];
+      const maturities: any[] = [];
+      
+      for (const res of results) {
+        if (!res || !res.data?.cashFlowSchedule) continue;
+        const bond = bondMaturityEvents.find(e => e.isin === res.isin);
+        if (!bond) continue;
+        
+        let bondMaturityDate: Date | null = null;
+        let bondTotalAmount = 0;
+        
+        for (const item of res.data.cashFlowSchedule) {
+          const dateStr = item.dueDate || item.paymentDate;
+          if (!dateStr || dateStr === '-' || dateStr === 'NA') continue;
+          
+          let d: Date | null = null;
+          const parts = dateStr.split(/[-/]/);
+          if (parts.length === 3) {
+            if (parts[0].length === 4) {
+              d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+            } else {
+              d = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+            }
+          }
+          
+          if (d && !isNaN(d.getTime()) && d >= today) {
+            const amtPerUnit = typeof item.amountPayable === 'number'
+              ? item.amountPayable
+              : parseFloat(String(item.amountPayable || '0').replace(/,/g, '')) || 0;
+            
+            upcoming.push({
+              date: d,
+              amount: amtPerUnit * bond.unitsHeld,
+              isEstimated: false,
+              name: bond.securityName,
+              isin: bond.isin,
+              couponRate: bond.couponRate,
+              payoutType: item.cashFlowsEvent || 'Coupon',
+              unitsHeld: bond.unitsHeld,
+            });
+          }
+          
+          if (item.cashFlowsEvent?.toLowerCase().includes('redemption') && d && !isNaN(d.getTime())) {
+            bondMaturityDate = d;
+            const amtPerUnit = typeof item.amountPayable === 'number'
+              ? item.amountPayable
+              : parseFloat(String(item.amountPayable || '0').replace(/,/g, '')) || 0;
+            bondTotalAmount = amtPerUnit * bond.unitsHeld;
+          }
+        }
+        
+        maturities.push({
+          maturityDate: bondMaturityDate || bond.maturityDate, // fallback to sheet if missing
+          totalValue: bondTotalAmount || bond.totalValue, // fallback to sheet if missing
+          securityName: bond.securityName,
+          isin: bond.isin,
+          issuer: bond.issuer,
+          creditRating: bond.creditRating,
+          unitsHeld: bond.unitsHeld
+        });
+      }
+      
+      upcoming.sort((a,b) => a.date.getTime() - b.date.getTime());
+      setUpcomingCoupons(upcoming.slice(0, 15));
+      setNsdlMaturities(maturities);
+      setIsNsdlLoading(false);
+    }
+    fetchNsdl();
   }, [bondMaturityEvents]);
 
-  // All upcoming real/estimated coupon payments
-  const upcomingCoupons = useMemo(() => {
-    const today = new Date();
-    return bondMaturityEvents
-      .flatMap((e) => e.couponPayments.map((p) => ({
-        date: p.date,
-        amount: p.amount,
-        isEstimated: p.isEstimated,
-        name: e.securityName,
-        isin: e.isin,
-        couponRate: e.couponRate,
-        payoutType: e.payoutType,
-      })))
-      .filter((c) => c.date >= today)
-      .sort((a, b) => a.date.getTime() - b.date.getTime())
-      .slice(0, 12);
-  }, [bondMaturityEvents]);
-
-  // Whether any upcoming coupon is estimated (for header badge)
-  const hasEstimated = upcomingCoupons.some((c) => c.isEstimated);
-  const allReal = upcomingCoupons.length > 0 && !hasEstimated;
+  const hasEstimated = false;
+  const allReal = upcomingCoupons.length > 0;
 
   return (
     <>
@@ -63,11 +142,11 @@ export default function CalendarPage() {
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <CalendarIcon className="w-4 h-4 text-blue-400" /> Bond Maturities
             </CardTitle>
-            <p className="text-xs text-muted-foreground">Real data from Maturity Date column in Bond Folio</p>
+            <p className="text-xs text-muted-foreground">Fetched from official NSDL API</p>
           </CardHeader>
           <CardContent>
-            {isLoading ? <Skeleton className="h-40 bg-white/5" /> :
-              bondMaturityEvents.length === 0 ? (
+            {isLoading || isNsdlLoading ? <Skeleton className="h-40 bg-white/5" /> :
+              nsdlMaturities.length === 0 ? (
                 <EmptyState title="No maturity data" description="Bond maturity dates will appear here when bonds with valid Maturity Date values are loaded." />
               ) : (
                 <div className="space-y-4">
@@ -118,18 +197,14 @@ export default function CalendarPage() {
                   Some Estimated
                 </Badge>
               )}
-              {allReal && (
-                <Badge variant="outline" className="text-[10px] border-green-500/30 text-green-400 ml-auto">
-                  From Sheet
-                </Badge>
-              )}
+            
             </CardTitle>
             {hasEstimated && (
               <p className="text-xs text-amber-400/70">⚠️ Bonds without a Payout Date use estimated dates from maturity</p>
             )}
           </CardHeader>
           <CardContent>
-            {isLoading ? <Skeleton className="h-40 bg-white/5" /> :
+            {isLoading || isNsdlLoading ? <Skeleton className="h-40 bg-white/5" /> :
               upcomingCoupons.length === 0 ? (
                 <EmptyState title="No coupon data" description="No upcoming estimated coupon payments found." />
               ) : (
@@ -152,11 +227,20 @@ export default function CalendarPage() {
                         </div>
                         <p className="text-[11px] text-muted-foreground">{format(c.date, 'dd MMM yyyy')} · {(c.couponRate * 100).toFixed(2)}% coupon</p>
                       </div>
-                      <div className="text-right">
-                        <p className={`text-sm font-semibold ${c.isEstimated ? 'text-amber-400' : 'text-green-400'}`}>
-                          {c.isEstimated ? '~' : ''}{fmt(c.amount)}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground">{c.isEstimated ? 'est. payment' : 'payment'}</p>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => setSelectedIsin({ isin: c.isin, name: c.name, units: c.unitsHeld })}
+                          className="p-1.5 rounded text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition-colors"
+                          title="View NSDL Cashflow Schedule"
+                        >
+                          <CalendarSearch className="w-4 h-4" />
+                        </button>
+                        <div className="text-right">
+                          <p className={`text-sm font-semibold ${c.isEstimated ? 'text-amber-400' : 'text-green-400'}`}>
+                            {c.isEstimated ? '~' : ''}{fmt(c.amount)}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground">{c.isEstimated ? 'est. payment' : 'payment'}</p>
+                        </div>
                       </div>
                     </motion.div>
                   ))}
@@ -181,6 +265,16 @@ export default function CalendarPage() {
           </CardContent>
         </Card>
       </div>
+
+      <BondCashflowDialog
+        open={Boolean(selectedIsin)}
+        onOpenChange={(open) => {
+          if (!open) setSelectedIsin(null);
+        }}
+        isin={selectedIsin?.isin ?? ''}
+        securityName={selectedIsin?.name ?? ''}
+        unitsHeld={selectedIsin?.units ?? 0}
+      />
     </>
   );
 }

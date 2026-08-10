@@ -14,6 +14,9 @@ import {
   BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell,
   PieChart, Pie, Legend,
 } from 'recharts';
+import { BondCashflowDialog } from '@/components/bonds/BondCashflowDialog';
+import { Button } from '@/components/ui/button';
+import { CalendarSearch } from 'lucide-react';
 
 function fmt(v: number) {
   if (v >= 1e7) return `₹${(v / 1e7).toFixed(2)}Cr`;
@@ -80,6 +83,8 @@ function CustomLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent }: an
 
 export default function BondsPage() {
   const { bonds, bondLadder, creditRatingDistribution, bondMaturityEvents, isLoading, lastFetched, apiErrors } = usePortfolioData();
+
+  const [selectedBond, setSelectedBond] = useState<{ isin: string; securityName: string; unitsHeld: number; faceValue: number } | null>(null);
 
   // Build a map of ISIN → next upcoming coupon payment
   const nextPaymentMap = useMemo(() => {
@@ -182,7 +187,7 @@ export default function BondsPage() {
             <Table>
               <TableHeader>
                 <TableRow className="border-border/50 hover:bg-transparent">
-                  {['Security', 'ISIN', 'Issuer', 'Rating', 'Maturity', 'Payout Type', 'Upcoming Interest', 'Value', 'YTM', 'Coupon'].map(h => (
+                  {['Security', 'ISIN', 'Issuer', 'Rating', 'Maturity', 'Payout Type', 'Upcoming Interest', 'Value', 'YTM', 'Coupon', 'Cashflow'].map(h => (
                     <TableHead key={h} className="text-body-lg font-semibold text-foreground/90 tracking-wide">{h}</TableHead>
                   ))}
                 </TableRow>
@@ -190,23 +195,23 @@ export default function BondsPage() {
               <TableBody>
                 {isLoading ? Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i} className="border-border/30">
-                    {Array.from({ length: 10 }).map((_, j) => (
+                    {Array.from({ length: 11 }).map((_, j) => (
                       <TableCell key={j}><Skeleton className="h-4 bg-white/5" /></TableCell>
                     ))}
                   </TableRow>
                 )) : sortedBonds.map((b, i) => (
                   <motion.tr key={b.isin || i} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.02 }} className="border-border/30 hover:bg-white/[0.02] transition-colors">
-                    <TableCell className="text-body font-semibold text-foreground max-w-[160px] truncate" title={b.securityName}>{b.securityName}</TableCell>
-                    <TableCell className="text-small font-mono text-muted-foreground/80 font-medium">{b.isin}</TableCell>
-                    <TableCell className="text-small text-muted-foreground/80 max-w-[100px] truncate" title={b.issuer}>{b.issuer}</TableCell>
+                    <TableCell className="text-caption text-muted-foreground/80 whitespace-normal break-words max-w-[350px]">{b.securityName}</TableCell>
+                    <TableCell className="text-caption font-mono text-muted-foreground/80 font-medium">{b.isin}</TableCell>
+                    <TableCell className="text-caption text-muted-foreground/80 whitespace-normal break-words max-w-[150px]">{b.issuer}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className="text-caption px-1.5 font-semibold"
                         style={{ borderColor: `${getRatingColor(b.creditRating, 'gray')}40`, color: getRatingColor(b.creditRating, 'gray') }}>
                         {b.creditRating}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-body tabular-nums text-foreground/90">{b.maturityDate ?? '—'}</TableCell>
+                    <TableCell className="text-caption tabular-nums text-foreground/90">{b.maturityDate ?? '—'}</TableCell>
                     {/* Payout Type column */}
                     <TableCell>
                       {b.payoutType ? (
@@ -219,17 +224,17 @@ export default function BondsPage() {
                           {b.payoutType}
                         </span>
                       ) : (
-                        <span className="text-body text-muted-foreground/50">—</span>
+                        <span className="text-caption text-muted-foreground/50">—</span>
                       )}
                     </TableCell>
                     {/* Upcoming Interest column */}
                     <TableCell>
                       {(() => {
                         const next = nextPaymentMap.get(b.isin);
-                        if (!next) return <span className="text-body text-muted-foreground/50">—</span>;
+                        if (!next) return <span className="text-caption text-muted-foreground/50">—</span>;
                         return (
                           <div className="flex flex-col gap-0.5">
-                            <span className={`text-body font-bold tabular-nums ${
+                            <span className={`text-caption font-bold tabular-nums ${
                               next.isEstimated ? 'text-amber-400' : 'text-green-400'
                             }`}>
                               {next.isEstimated ? '~' : ''}{fmt(next.amount)}
@@ -242,9 +247,20 @@ export default function BondsPage() {
                         );
                       })()}
                     </TableCell>
-                    <TableCell className="text-body font-semibold tabular-nums text-foreground">{fmt(b.totalValue)}</TableCell>
-                    <TableCell className="text-body font-medium tabular-nums text-blue-400">{b.ytm ? `${(b.ytm * 100).toFixed(2)}%` : '—'}</TableCell>
-                    <TableCell className="text-body font-medium tabular-nums text-amber-400">{b.couponRate ? `${(b.couponRate * 100).toFixed(2)}%` : '—'}</TableCell>
+                    <TableCell className="text-caption font-semibold tabular-nums text-foreground">{fmt(b.totalValue)}</TableCell>
+                    <TableCell className="text-caption font-medium tabular-nums text-blue-400">{b.ytm ? `${(b.ytm * 100).toFixed(2)}%` : '—'}</TableCell>
+                    <TableCell className="text-caption font-medium tabular-nums text-amber-400">{b.couponRate ? `${(b.couponRate * 100).toFixed(2)}%` : '—'}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs gap-1 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 px-2"
+                        onClick={() => setSelectedBond({ isin: b.isin, securityName: b.securityName, unitsHeld: b.unitsHeld, faceValue: b.faceValue })}
+                      >
+                        <CalendarSearch className="w-3.5 h-3.5" />
+                        Schedule
+                      </Button>
+                    </TableCell>
                   </motion.tr>
                 ))}
               </TableBody>
@@ -253,6 +269,17 @@ export default function BondsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <BondCashflowDialog
+        open={Boolean(selectedBond)}
+        onOpenChange={(open) => {
+          if (!open) setSelectedBond(null);
+        }}
+        isin={selectedBond?.isin ?? ''}
+        securityName={selectedBond?.securityName ?? ''}
+        unitsHeld={selectedBond?.unitsHeld}
+        faceValue={selectedBond?.faceValue}
+      />
     </>
   );
 }

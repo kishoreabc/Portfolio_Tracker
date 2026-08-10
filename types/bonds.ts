@@ -56,3 +56,30 @@ export interface CreditRatingBucket {
   totalValue: number;
   percent: number;
 }
+
+export interface NsdlCashFlowItem {
+  isin: string;
+  isinDesc?: string;
+  cashFlowsEvent: string; // 'Interest', 'Full Redemption', 'Partial Redemption', etc.
+  recordDate: string;
+  dueDate: string;
+  amountPayable: number | string;
+  paymentDate: string;
+  actualPaymentDate?: string;
+  amountRedeem?: number | string;
+  amntOutstanding?: number | string;
+  chngFreqPayment?: string;
+  detailChngFreqPayment?: string;
+  reasonDelayPayment?: string;
+  actualRecordDate?: string;
+}
+
+export interface NsdlCashFlowResponse {
+  isin: string;
+  status: number;
+  message: string;
+  description?: string | null;
+  cashFlowSchedule: NsdlCashFlowItem[];
+  fetchedAt?: string;
+}
+
