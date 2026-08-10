@@ -13,9 +13,9 @@ import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recha
 import type { MonthlySummary } from '@/types/transactions';
 
 function fmt(v: number) {
-  if (v >= 1e7) return `₹${(v / 1e7).toFixed(2)}Cr`;
-  if (v >= 1e5) return `₹${(v / 1e5).toFixed(2)}L`;
-  return `₹${v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (v >= 1e7) return `₹${Number((v / 1e7).toFixed(2))}Cr`;
+  if (v >= 1e5) return `₹${Number((v / 1e5).toFixed(2))}L`;
+  return `₹${Math.round(v).toLocaleString('en-IN')}`;
 }
 
 const RADIAN = Math.PI / 180;
