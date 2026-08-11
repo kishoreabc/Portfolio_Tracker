@@ -19,6 +19,7 @@ interface KpiCardProps {
   note?: string;
   id?: string;
   href?: string;
+  valueClassName?: string;
 }
 
 const ACCENT_STYLES = {
@@ -61,6 +62,7 @@ export function KpiCard({
   note,
   id,
   href,
+  valueClassName,
 }: KpiCardProps) {
   const accent = ACCENT_STYLES[accentColor];
 
@@ -97,7 +99,7 @@ export function KpiCard({
 
           <div className="space-y-1">
             <motion.p
-              className="text-h1 font-bold text-foreground tabular-nums"
+              className={`text-h2 font-bold tabular-nums ${valueClassName || 'text-foreground'}`}
               key={value}
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
@@ -109,26 +111,26 @@ export function KpiCard({
             {subValue && (
               <p className="text-small text-muted-foreground">{subValue}</p>
             )}
+
+            {change !== undefined && (
+              <div className="flex items-center gap-1 mt-1.5">
+                {isPositive && <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />}
+                {isNegative && <TrendingDown className="w-3.5 h-3.5 text-red-400" />}
+                {!isPositive && !isNegative && <Minus className="w-3.5 h-3.5 text-slate-500" />}
+                <span className={cn(
+                  'text-small font-semibold',
+                  isPositive && 'text-emerald-400',
+                  isNegative && 'text-red-400',
+                  !isPositive && !isNegative && 'text-slate-500'
+                )}>
+                  {isPositive && '+'}
+                  {(change * 100).toFixed(2)}%
+                </span>
+                {changeLabel && <span className="text-small text-muted-foreground">{changeLabel}</span>}
+              </div>
+            )}
           </div>
         </div>
-
-        {change !== undefined && (
-          <div className="flex items-center gap-1 mt-3">
-            {isPositive && <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />}
-            {isNegative && <TrendingDown className="w-3.5 h-3.5 text-red-400" />}
-            {!isPositive && !isNegative && <Minus className="w-3.5 h-3.5 text-slate-500" />}
-            <span className={cn(
-              'text-small font-semibold',
-              isPositive && 'text-emerald-400',
-              isNegative && 'text-red-400',
-              !isPositive && !isNegative && 'text-slate-500'
-            )}>
-              {isPositive && '+'}
-              {(change * 100).toFixed(2)}%
-            </span>
-            {changeLabel && <span className="text-small text-muted-foreground">{changeLabel}</span>}
-          </div>
-        )}
 
         {note && (
           <p className="text-caption text-muted-foreground/70 mt-2 italic">{note}</p>

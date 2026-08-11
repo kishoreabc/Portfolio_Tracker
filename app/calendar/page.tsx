@@ -187,17 +187,10 @@ export default function CalendarPage() {
           </CardContent>
         </Card>
 
-        {/* Estimated Coupon Dates */}
         <Card className="border-border/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <Banknote className="w-4 h-4 text-amber-400" /> Upcoming Coupon Payments
-              {hasEstimated && !allReal && (
-                <Badge variant="outline" className="text-[10px] border-amber-500/30 text-amber-400 ml-auto">
-                  Some Estimated
-                </Badge>
-              )}
-            
             </CardTitle>
             {hasEstimated && (
               <p className="text-xs text-amber-400/70">⚠️ Bonds without a Payout Date use estimated dates from maturity</p>
@@ -228,6 +221,12 @@ export default function CalendarPage() {
                         <p className="text-[11px] text-muted-foreground">{format(c.date, 'dd MMM yyyy')} · {(c.couponRate * 100).toFixed(2)}% coupon</p>
                       </div>
                       <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <p className={`text-sm font-semibold ${c.isEstimated ? 'text-amber-400' : 'text-green-400'}`}>
+                            {c.isEstimated ? '~' : ''}{fmt(c.amount)}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground">{c.isEstimated ? 'est. payment' : 'payment'}</p>
+                        </div>
                         <button
                           onClick={() => setSelectedIsin({ isin: c.isin, name: c.name, units: c.unitsHeld })}
                           className="p-1.5 rounded text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition-colors"
@@ -235,12 +234,6 @@ export default function CalendarPage() {
                         >
                           <CalendarSearch className="w-4 h-4" />
                         </button>
-                        <div className="text-right">
-                          <p className={`text-sm font-semibold ${c.isEstimated ? 'text-amber-400' : 'text-green-400'}`}>
-                            {c.isEstimated ? '~' : ''}{fmt(c.amount)}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground">{c.isEstimated ? 'est. payment' : 'payment'}</p>
-                        </div>
                       </div>
                     </motion.div>
                   ))}
