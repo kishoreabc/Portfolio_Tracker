@@ -9,11 +9,15 @@ import { formatDistanceToNow } from 'date-fns';
 import { ExternalLink, Briefcase, ArrowLeft, Building2, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
-import { use } from 'react';
+import { use, useEffect } from 'react';
 
 export default function ArticlePage({ params }: { params: Promise<{ id: string }> }) {
   const { id: idString } = use(params);
   const { data: article, isLoading, error } = useNewsArticle(parseInt(idString, 10));
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [idString]);
 
   if (error) {
     return (
@@ -54,12 +58,23 @@ export default function ArticlePage({ params }: { params: Promise<{ id: string }
   const paragraphs = content.split('\n\n').filter(p => p.trim().length > 0);
 
   return (
-    <div className="min-h-screen p-4 md:p-8 pt-20 md:pt-8 w-full max-w-[1600px] mx-auto pb-24">
+    <div className="min-h-screen p-4 md:p-8 pt-6 md:pt-8 w-full max-w-[1600px] mx-auto pb-24">
       
-      {/* Back button */}
+      {/* Mobile Back Button Header (Fixed) */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-[60px] bg-[hsl(222,47%,11%)]/85 backdrop-blur-[12px] border-b border-white/5 z-30 flex items-center px-4">
+        <Link 
+          href="/news"
+          className="inline-flex items-center gap-2 text-sm font-medium text-slate-200 hover:text-white transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Back to News Feed
+        </Link>
+      </div>
+
+      {/* Desktop Back button */}
       <Link 
         href="/news"
-        className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors mb-6"
+        className="hidden md:inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors mb-6"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to News Feed

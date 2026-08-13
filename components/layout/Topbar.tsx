@@ -13,6 +13,9 @@ interface TopbarProps {
   lastFetched?: string | null;
   pageTitle?: string;
   apiErrors?: string[];
+  hideRefresh?: boolean;
+  customAction?: React.ReactNode;
+  customStatus?: React.ReactNode;
 }
 
 const FONT_STEP = 1;     // px per click
@@ -25,7 +28,7 @@ function applyFontSize(px: number) {
   document.documentElement.style.fontSize = `${px}px`;
 }
 
-export function Topbar({ lastFetched, pageTitle = 'Dashboard', apiErrors = [] }: TopbarProps) {
+export function Topbar({ lastFetched, pageTitle = 'Dashboard', apiErrors = [], hideRefresh, customAction, customStatus }: TopbarProps) {
   const { refresh, isRefreshing, error, clearError } = useRefreshData();
   const { data: session } = useSession();
   const { totalTimeRemaining } = useSessionWatcher();
@@ -111,7 +114,11 @@ export function Topbar({ lastFetched, pageTitle = 'Dashboard', apiErrors = [] }:
         {/* ── Online / Wifi status ── */}
         <div className="flex items-center gap-1.5 text-xs">
           <AnimatePresence mode="wait">
-            {!isOnline ? (
+            {customStatus ? (
+              <motion.div key="custom-status" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}>
+                {customStatus}
+              </motion.div>
+            ) : !isOnline ? (
               <motion.div key="offline"
                 initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
                 className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500/15 border border-red-500/30"
@@ -152,25 +159,27 @@ export function Topbar({ lastFetched, pageTitle = 'Dashboard', apiErrors = [] }:
           </AnimatePresence>
         </div>
 
-        {/* ── Refresh button ── disabled when offline ── */}
-        <motion.button
-          onClick={refresh}
-          disabled={isRefreshing || !isOnline}
-          whileHover={isOnline ? { scale: 1.05 } : {}}
-          whileTap={isOnline ? { scale: 0.95 } : {}}
-          className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          aria-label={!isOnline ? 'Refresh unavailable — you are offline' : 'Refresh data'}
-          title={!isOnline ? 'Refresh unavailable while offline' : 'Refresh data from Google Sheets'}
-          id="refresh-data-btn"
-        >
-          <motion.div animate={{ rotate: isRefreshing ? 360 : 0 }}
-            transition={{ repeat: isRefreshing ? Infinity : 0, duration: 0.8, ease: 'linear' }}>
-            <RefreshCw className="w-3.5 h-3.5" />
-          </motion.div>
-          <span className="hidden sm:inline">
-            {!isOnline ? 'Offline' : isRefreshing ? 'Refreshing…' : 'Refresh'}
-          </span>
-        </motion.button>
+        {/* ── Refresh button / Custom Action ── */}
+        {customAction ? customAction : !hideRefresh ? (
+          <motion.button
+            onClick={refresh}
+            disabled={isRefreshing || !isOnline}
+            whileHover={isOnline ? { scale: 1.05 } : {}}
+            whileTap={isOnline ? { scale: 0.95 } : {}}
+            className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            aria-label={!isOnline ? 'Refresh unavailable — you are offline' : 'Refresh data'}
+            title={!isOnline ? 'Refresh unavailable while offline' : 'Refresh data from Google Sheets'}
+            id="refresh-data-btn"
+          >
+            <motion.div animate={{ rotate: isRefreshing ? 360 : 0 }}
+              transition={{ repeat: isRefreshing ? Infinity : 0, duration: 0.8, ease: 'linear' }}>
+              <RefreshCw className="w-3.5 h-3.5" />
+            </motion.div>
+            <span className="hidden sm:inline">
+              {!isOnline ? 'Offline' : isRefreshing ? 'Refreshing…' : 'Refresh'}
+            </span>
+          </motion.button>
+        ) : null}
 
         {/* ── Font size controls — hidden on mobile ── */}
         <div className="hidden md:flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2 py-1 ml-1"

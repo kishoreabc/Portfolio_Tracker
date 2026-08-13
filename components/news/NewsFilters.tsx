@@ -26,7 +26,7 @@ export function NewsFilters() {
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-3 py-4 border-b border-white/5">
+    <div className="flex flex-wrap items-center justify-center gap-3 py-4">
       <button
         onClick={() => updateFilter('portfolioRelevant', isPortfolioRelevant ? null : 'true')}
         className={cn(
