@@ -39,3 +39,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# IDE / Editor Files
+.vscode/
+.idea/
+
+# Scratch/Temporary Scripts
+scratch_*
+scratch.js
+scratch.ts
+
+# Explicitly allow example env files
+!.env.example
+!env_example.txt

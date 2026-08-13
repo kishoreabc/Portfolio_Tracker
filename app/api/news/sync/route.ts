@@ -24,13 +24,13 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json().catch(() => ({}));
-    const portfolioSymbols = body.portfolioSymbols || [];
+    const portfolioCompanies = body.portfolioCompanies || [];
     
     // In a real scenario, you might fetch portfolio symbols from Google Sheets 
     // here if triggered by cron and not passing them in the body.
     // For now, we take them from the body if triggered from the UI.
     
-    const result = await syncNews(portfolioSymbols);
+    const result = await syncNews(portfolioCompanies);
     return NextResponse.json(result);
   } catch (error) {
     console.error('[api/news/sync] POST Error:', error);

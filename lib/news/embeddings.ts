@@ -25,34 +25,16 @@ export async function generateQueryEmbedding(query: string): Promise<number[]> {
 }
 
 async function fetchEmbedding(input: string, inputType: 'passage' | 'query'): Promise<number[]> {
-  const url = process.env.NVIDIA_BASE_URL ?? 'https://integrate.api.nvidia.com/v1';
-  const apiKey = process.env.NVIDIA_API_KEY;
-  if (!apiKey) throw new Error('NVIDIA_API_KEY is required');
-
   let lastError: Error | null = null;
+  const embeddings = getEmbeddings();
+
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
-      const res = await fetch(`${url}/embeddings`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          input,
-          model: 'nvidia/nv-embed-v1',
-          input_type: inputType,
-          encoding_format: 'float'
-        })
-      });
-
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`NVIDIA API Error ${res.status}: ${errText}`);
+      if (inputType === 'query') {
+        return await embeddings.embedQuery(input);
+      } else {
+        return (await embeddings.embedDocuments([input]))[0];
       }
-
-      const data = await res.json();
-      return data.data[0].embedding;
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
       console.error(`[news/embeddings] Attempt ${attempt} failed: ${lastError.message}`);

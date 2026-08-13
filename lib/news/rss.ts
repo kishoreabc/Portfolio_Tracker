@@ -10,7 +10,7 @@ const parser = new RssParser({
   },
 });
 
-const RSS_URL = process.env.MONEYPECHU_RSS_URL ?? 'https://moneypechu.com/feed/';
+const RSS_URL = process.env.RSS_URL ?? 'https://moneypechu.com/feed/';
 const MAX_RETRIES = 3;
 
 async function sleep(ms: number) {

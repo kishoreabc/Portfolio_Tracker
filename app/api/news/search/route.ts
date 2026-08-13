@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const results = isSemantic
-      ? await semanticSearch(query, 0.45, limit)
+      ? await semanticSearch(query, 0.65, limit)
       : await keywordSearch(query, limit);
 
     return NextResponse.json({ articles: results });

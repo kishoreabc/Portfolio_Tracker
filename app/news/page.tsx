@@ -39,9 +39,6 @@ function NewsContent() {
             <Newspaper className="w-8 h-8 text-blue-500" />
             Financial News
           </h1>
-          <p className="text-slate-400 text-sm md:text-base max-w-xl">
-            Real-time market news translated into English and analyzed using NVIDIA AI.
-          </p>
         </div>
         <SyncButton />
       </div>

@@ -1,5 +1,5 @@
 import { fetchRssFeed } from './rss';
-import { cleanHtml, cleanTitle } from './normalize';
+import { cleanHtml, cleanTitle, translateCategory } from './normalize';
 import { detectLanguage } from './language';
 import { translateArticle } from './translator';
 import { summarizeArticle } from './summarizer';
@@ -45,7 +45,7 @@ async function pLimit<T>(
  */
 async function processItem(
   item: Awaited<ReturnType<typeof fetchRssFeed>>[0],
-  portfolioSymbols: string[]
+  portfolioCompanies: { name: string; symbol: string }[]
 ): Promise<ProcessedArticle> {
   const sourceId = item.guid || item.link;
   const rawContent = item.content || item.description || '';
@@ -63,8 +63,8 @@ async function processItem(
     originalContent: cleanContent,
     translatedContent: lang === 'en' ? cleanContent : null,
     originalLanguage: lang === 'unknown' ? 'en' : lang,
-    category: item.categories[0] ?? null,
-    categories: item.categories,
+    category: translateCategory(item.categories[0] ?? null),
+    categories: item.categories.map(c => translateCategory(c) ?? c),
     author: item.creator,
     publishedAt: item.pubDate ? new Date(item.pubDate).toISOString() : null,
     summary: null,
@@ -114,12 +114,23 @@ async function processItem(
 
   // ── Step 3: Company extraction & portfolio matching ────────────────────────
   const textToSearch = `${titleForAI} ${contentForAI}`;
-  article.companies = extractCompanies(textToSearch, portfolioSymbols);
-  article.portfolioRelevant = isPortfolioRelevant(article.companies, portfolioSymbols);
+  article.companies = extractCompanies(textToSearch, portfolioCompanies);
+  article.portfolioRelevant = isPortfolioRelevant(article.companies, portfolioCompanies.map(c => c.symbol));
 
   // ── Step 4: Generate embedding ─────────────────────────────────────────────
   const embeddingTitle = article.translatedTitle ?? cleanedTitle;
-  const embeddingContent = article.summary ?? contentForAI;
+  let embeddingContent = article.summary ?? contentForAI;
+  
+  const badges = [
+    article.category ? `Category: ${article.category}` : null,
+    article.portfolioRelevant ? 'Portfolio Relevant' : null,
+    article.sentiment ? `Sentiment: ${article.sentiment}` : null,
+    article.impact ? `Impact: ${article.impact}` : null,
+  ].filter(Boolean).join(', ');
+
+  if (badges) {
+    embeddingContent = `[Tags: ${badges}]\n\n${embeddingContent}`;
+  }
 
   if (embeddingContent.length > 20) {
     try {
@@ -131,16 +142,20 @@ async function processItem(
     }
   }
 
+  // ── Step 5: Pace out requests to avoid rate limits ─────────────────────────
+  console.log(`[news/sync] Sleeping 5 seconds before next article to respect rate limits...`);
+  await new Promise(resolve => setTimeout(resolve, 5000));
+
   return article;
 }
 
 /**
  * Main sync function: fetch RSS → process all new articles → store in Supabase.
  *
- * @param portfolioSymbols - NSE/BSE symbols from the user's portfolio (from Google Sheets)
+ * @param portfolioCompanies - NSE/BSE companies from the user's portfolio (from Google Sheets)
  */
 export async function syncNews(
-  portfolioSymbols: string[] = []
+  portfolioCompanies: { name: string; symbol: string }[] = []
 ): Promise<NewsSyncResult> {
   const startTime = Date.now();
   const result: NewsSyncResult = {
@@ -187,37 +202,32 @@ export async function syncNews(
     return result;
   }
 
-  // ── 3. Process articles in batches with controlled concurrency ─────────────
-  const batches: typeof items[] = [];
-  for (let i = 0; i < newItems.length; i += BATCH_SIZE) {
-    batches.push(newItems.slice(i, i + BATCH_SIZE));
-  }
+  // ── 3. Process articles with controlled concurrency and immediate DB insertion ─────────────
+  const tasks = newItems.map((item) => async () => {
+    // 1. Process the item
+    const processed = await processItem(item, portfolioCompanies);
+    
+    // 2. Insert into DB immediately
+    try {
+      await newsRepo.insert(processed);
+      result.newArticles++;
 
-  for (const batch of batches) {
-    const tasks = batch.map((item) => () => processItem(item, portfolioSymbols));
-    const settled = await pLimit(tasks, MAX_CONCURRENCY);
+      if (processed.translationStatus === 'completed') result.translated++;
+      if (processed.embeddingStatus === 'completed') result.embedded++;
 
-    for (let i = 0; i < batch.length; i++) {
-      const settledResult = settled[i];
-      if (settledResult.status === 'rejected') {
-        console.error(`[news/sync] Article failed: ${settledResult.reason}`);
-        result.failed++;
-        continue;
-      }
+      console.log(`[news/sync] Inserted: ${processed.originalTitle.slice(0, 60)}`);
+    } catch (err) {
+      console.error(`[news/sync] DB insert failed for ${processed.originalTitle}: ${(err as Error).message}`);
+      throw err; // bubble up so pLimit marks it as rejected
+    }
+  });
 
-      const processed = settledResult.value;
-      try {
-        await newsRepo.insert(processed);
-        result.newArticles++;
+  const settled = await pLimit(tasks, MAX_CONCURRENCY);
 
-        if (processed.translationStatus === 'completed') result.translated++;
-        if (processed.embeddingStatus === 'completed') result.embedded++;
-
-        console.log(`[news/sync] Inserted: ${processed.originalTitle.slice(0, 60)}`);
-      } catch (err) {
-        console.error(`[news/sync] DB insert failed: ${(err as Error).message}`);
-        result.failed++;
-      }
+  for (const settledResult of settled) {
+    if (settledResult.status === 'rejected') {
+      console.error(`[news/sync] Article failed during processing or insertion: ${settledResult.reason}`);
+      result.failed++;
     }
   }
 
@@ -274,7 +284,19 @@ export async function reprocessArticle(id: number): Promise<void> {
   try {
     const reFetched = await newsRepo.getArticle(id);
     const embTitle = reFetched?.translatedTitle ?? titleForAI;
-    const embContent = reFetched?.summary ?? contentForAI;
+    let embContent = reFetched?.summary ?? contentForAI;
+    
+    const badges = [
+      reFetched?.category ? `Category: ${reFetched.category}` : null,
+      reFetched?.portfolioRelevant ? 'Portfolio Relevant' : null,
+      reFetched?.sentiment ? `Sentiment: ${reFetched.sentiment}` : null,
+      reFetched?.impact ? `Impact: ${reFetched.impact}` : null,
+    ].filter(Boolean).join(', ');
+  
+    if (badges) {
+      embContent = `[Tags: ${badges}]\n\n${embContent}`;
+    }
+
     const embedding = await generateEmbedding(embTitle, embContent);
     await newsRepo.updateEmbedding(id, embedding);
   } catch (err) {

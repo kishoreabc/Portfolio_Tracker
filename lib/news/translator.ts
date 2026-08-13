@@ -1,6 +1,6 @@
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { StringOutputParser } from '@langchain/core/output_parsers';
-import { getLLM } from './nvidia';
+import { getTranslationLLM } from './nvidia';
 
 const TRANSLATION_SYSTEM_PROMPT = `You are a professional Indian financial news translator.
 
@@ -57,7 +57,7 @@ async function retryTranslate(
         `[news/translator] ${label} attempt ${attempt} failed: ${lastError.message}`
       );
       if (attempt < MAX_RETRIES) {
-        await sleep(1000 * attempt);
+        await sleep(5000* attempt);
       }
     }
   }
@@ -80,7 +80,7 @@ export async function translateArticle(
   title: string,
   content: string
 ): Promise<TranslationResult> {
-  const llm = getLLM({ temperature: 0.05 });
+  const llm = getTranslationLLM({ temperature: 0.1 });
   const outputParser = new StringOutputParser();
 
   const titleChain = TITLE_PROMPT.pipe(llm).pipe(outputParser);

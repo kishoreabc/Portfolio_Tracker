@@ -68,3 +68,33 @@ export function cleanTitle(title: string): string {
     .replace(/&nbsp;/g, ' ')
     .trim();
 }
+
+/**
+ * Translate known Tamil categories into English
+ */
+export function translateCategory(category: string | null): string | null {
+  if (!category) return null;
+
+  const categoryMap: Record<string, string> = {
+    'சர்வதேச செய்திகள்': 'International News',
+    'உள்நாட்டு செய்திகள்': 'Domestic News',
+    'பிரீமியம் - தமிழ்': 'Premium',
+    'பங்குச்சந்தை': 'Stock Market',
+    'பங்கு சந்தை': 'Stock Market',
+    'முக்கிய செய்திகள்': 'Breaking News',
+    'வணிகம்': 'Business',
+    'கிரிப்டோ': 'Crypto',
+    'தங்கம்': 'Gold',
+    'ரிலையன்ஸ்': 'Reliance',
+    'டாடா': 'Tata',
+    'இந்திய பொருளாதாரம்': 'Indian Economy',
+    'பொருளாதாரம்': 'Economy',
+    'கார் & பைக்': 'Auto',
+    'ரியல் எஸ்டேட்': 'Real Estate',
+    'மியூச்சுவல் ஃபண்ட்': 'Mutual Funds',
+    'வங்கி': 'Banking',
+    'Premium – English':'Premium'
+  };
+
+  return categoryMap[category.trim()] || category.trim();
+}

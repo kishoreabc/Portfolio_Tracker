@@ -1,16 +1,16 @@
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { StringOutputParser } from '@langchain/core/output_parsers';
-import { getLLM } from './nvidia';
+import { getSummarizationLLM } from './nvidia';
 import type { NewsSentiment, NewsImpact } from '@/types/news';
 
 const SUMMARIZE_SYSTEM = `You are a financial news analyst. 
 Given an English financial news article, return a JSON object with exactly these fields:
 
-{
+{{
   "summary": "2-4 sentence factual summary preserving all key numbers, company names, and events. No investment recommendations.",
   "sentiment": "positive" | "negative" | "neutral" | "mixed",
   "impact": "low" | "medium" | "high"
-}
+}}
 
 Sentiment guidelines:
 - positive: good earnings, growth, positive announcements
@@ -47,19 +47,31 @@ export async function summarizeArticle(
   title: string,
   content: string
 ): Promise<SummarizationResult> {
-  const llm = getLLM({ temperature: 0.1, maxTokens: 512 });
+  const llm = getSummarizationLLM({ temperature: 0.1});
   const chain = SUMMARIZE_PROMPT.pipe(llm).pipe(new StringOutputParser());
 
   // Truncate to avoid token limits
   const truncatedContent = content.slice(0, 4000);
 
-  let raw: string;
-  try {
-    raw = await chain.invoke({ title, content: truncatedContent });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error(`[news/summarizer] Failed: ${msg}`);
-    throw err;
+  const MAX_RETRIES = 3;
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  let raw: string | undefined;
+  let lastError: Error | null = null;
+  
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      raw = await chain.invoke({ title, content: truncatedContent });
+      break;
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      console.warn(`[news/summarizer] attempt ${attempt} failed: ${lastError.message}`);
+      if (attempt < MAX_RETRIES) await sleep(2000 * attempt);
+    }
+  }
+
+  if (!raw) {
+    throw new Error(`Summarization failed after ${MAX_RETRIES} attempts: ${lastError?.message}`);
   }
 
   // Extract JSON from response (handle possible markdown wrapping)

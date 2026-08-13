@@ -5,7 +5,7 @@ import { ExternalLink, Briefcase } from 'lucide-react';
 import type { NewsArticle } from '@/types/news';
 import { NewsSentimentBadge } from './NewsSentimentBadge';
 import { NewsImpactBadge } from './NewsImpactBadge';
-import { formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 
 interface NewsCardProps {
   article: NewsArticle;
@@ -54,9 +54,7 @@ export function NewsCard({ article }: NewsCardProps) {
       {/* Footer */}
       <div className="flex items-center justify-between mt-auto pt-2">
         <div className="flex items-center gap-2 text-xs text-slate-500">
-          <span>{article.source}</span>
-          <span>•</span>
-          <span>{article.publishedAt ? formatDistanceToNow(new Date(article.publishedAt), { addSuffix: true }) : 'Unknown date'}</span>
+          <span>{article.publishedAt ? format(new Date(article.publishedAt), "MMM d, yyyy, h:mm a") : 'Unknown date'}</span>
         </div>
         
         <a 

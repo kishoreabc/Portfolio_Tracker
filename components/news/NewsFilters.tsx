@@ -47,11 +47,11 @@ export function NewsFilters() {
         onChange={(e) => updateFilter('category', e.target.value)}
         className="px-3 py-1.5 rounded-lg text-sm font-medium bg-white/5 border border-white/10 text-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
       >
-        <option value="">All Categories</option>
-        <option value="Domestic News">Domestic News</option>
-        <option value="Corporate">Corporate</option>
-        <option value="Earnings">Earnings</option>
-        <option value="Economy">Economy</option>
+        <option className="bg-slate-900" value="">All Categories</option>
+        <option className="bg-slate-900" value="Domestic News">Domestic News</option>
+        <option className="bg-slate-900" value="Corporate">Corporate</option>
+        <option className="bg-slate-900" value="Earnings">Earnings</option>
+        <option className="bg-slate-900" value="Economy">Economy</option>
       </select>
 
       {/* Sentiment */}
@@ -60,11 +60,11 @@ export function NewsFilters() {
         onChange={(e) => updateFilter('sentiment', e.target.value)}
         className="px-3 py-1.5 rounded-lg text-sm font-medium bg-white/5 border border-white/10 text-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
       >
-        <option value="">All Sentiment</option>
-        <option value="positive">Positive</option>
-        <option value="negative">Negative</option>
-        <option value="mixed">Mixed</option>
-        <option value="neutral">Neutral</option>
+        <option className="bg-slate-900" value="">All Sentiment</option>
+        <option className="bg-slate-900" value="positive">Positive</option>
+        <option className="bg-slate-900" value="negative">Negative</option>
+        <option className="bg-slate-900" value="mixed">Mixed</option>
+        <option className="bg-slate-900" value="neutral">Neutral</option>
       </select>
 
       {/* Impact */}
@@ -73,10 +73,10 @@ export function NewsFilters() {
         onChange={(e) => updateFilter('impact', e.target.value)}
         className="px-3 py-1.5 rounded-lg text-sm font-medium bg-white/5 border border-white/10 text-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
       >
-        <option value="">All Impact</option>
-        <option value="high">High Impact</option>
-        <option value="medium">Medium Impact</option>
-        <option value="low">Low Impact</option>
+        <option className="bg-slate-900" value="">All Impact</option>
+        <option className="bg-slate-900" value="high">High Impact</option>
+        <option className="bg-slate-900" value="medium">Medium Impact</option>
+        <option className="bg-slate-900" value="low">Low Impact</option>
       </select>
       
       {(currentCategory || currentSentiment || currentImpact || isPortfolioRelevant) && (

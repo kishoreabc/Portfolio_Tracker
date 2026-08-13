@@ -1,39 +1,39 @@
 # Google Sheets configuration
-GOOGLE_SHEET_ID=[GCP_API_KEY]
-GOOGLE_SHEETS_API_KEY=your_google_sheets_api_key_here
+GOOGLE_SHEET_ID=""
+GOOGLE_SHEETS_API_KEY=""
 
 # Gemini AI (optional — only needed for AI Insights page)
-GEMINI_API_KEY=
+GEMINI_API_KEY=""
+GEMINI_EMBEDDING_API_KEY=""
+GROQ_API_KEY = ""
 
-# Auth.js / NextAuth (Authentication)
-# Generate a secret: npx auth secret
-AUTH_SECRET=
-AUTH_URL=http://localhost:3000
+AUTH_SECRET=""
 
-# Google OAuth Credentials
-# https://console.cloud.google.com/apis/credentials
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
+AUTH_URL=""
+
+GOOGLE_CLIENT_ID=""
+
+GOOGLE_CLIENT_SECRET=""
+
 # Comma-separated list of emails allowed to log in
-ALLOWED_EMAILS="exammple-1@gmail.com, exammple-2@gmail.com"
+ALLOWED_EMAILS=
 
-# ── NVIDIA NIM API ─────────────────────────────────────────────────────────────
-# Get your key at: https://build.nvidia.com/
-NVIDIA_API_KEY=
-NVIDIA_BASE_URL=https://integrate.api.nvidia.com/v1
-NVIDIA_LLM_MODEL=nvidia/llama-3.1-nemotron-70b-instruct
-NVIDIA_EMBEDDING_MODEL=nvidia/nv-embedqa-e5-v5
+LOGIN_USERNAME=
+LOGIN_PASSWORD=
+
+# ── Financial News Platform ───────────────────────────────────────────────────
+GEMINI_MODEL="gemini-3.5-flash-lite,gemini:gemini-3.1-flash-lite,gemini:gemini-2.5-flash,gemini:gemini-2.5-flash-lite,gemini:gemini-3-flash,gemini:gemini-3.6-flash"
+FALLBACK_MODELS="groq:llama-3.3-70b-versatile,groq:mixtral-8x7b-32768"
+CRON_SECRET=
+
+
 
 # ── Supabase (News module only) ────────────────────────────────────────────────
-# Create a project at: https://supabase.com/
 SUPABASE_URL=
 SUPABASE_SERVICE_ROLE_KEY=
 
-# ── News Sync ─────────────────────────────────────────────────────────────────
-MONEYPECHU_RSS_URL=https://moneypechu.com/feed/
+# ── News Sync Config ───────────────────────────────────────────────────────────
+RSS_URL=
 NEWS_SYNC_BATCH_SIZE=5
 MAX_NVIDIA_CONCURRENCY=2
 NEWS_SEARCH_TOP_K=20
-
-# ── Vercel Cron protection ─────────────────────────────────────────────────────
-CRON_SECRET=

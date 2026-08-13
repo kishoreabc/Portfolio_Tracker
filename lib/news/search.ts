@@ -18,7 +18,7 @@ export async function keywordSearch(query: string, limit = TOP_K): Promise<NewsS
  */
 export async function semanticSearch(
   query: string,
-  matchThreshold = 0.45,
+  matchThreshold = 0.65,
   matchCount = TOP_K
 ): Promise<NewsSearchResult[]> {
   const embedding = await generateQueryEmbedding(query);

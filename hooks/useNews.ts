@@ -95,15 +95,19 @@ export function useNewsSync() {
   const queryClient = useQueryClient();
   const { equity } = usePortfolioData();
   
-  // Extract unique symbols from portfolio
-  const portfolioSymbols = Array.from(new Set(equity.map(h => h.ticker).filter(Boolean)));
+  // Extract unique companies from portfolio
+  const portfolioCompanies = Array.from(
+    new Map(
+      equity.filter(h => h.ticker && h.name).map(h => [h.ticker, { name: h.name, symbol: h.ticker }])
+    ).values()
+  );
 
   return useMutation<NewsSyncResult, Error, void>({
     mutationFn: async () => {
       const res = await fetch('/api/news/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ portfolioSymbols }),
+        body: JSON.stringify({ portfolioCompanies }),
       });
       if (!res.ok) throw new Error('Sync failed');
       return res.json();

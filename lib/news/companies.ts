@@ -7,6 +7,7 @@ const COMPANY_ALIASES: Record<string, { name: string; symbol: string }> = {
   'tata consultancy': { name: 'Tata Consultancy Services', symbol: 'TCS' },
   'tata consultancy services': { name: 'Tata Consultancy Services', symbol: 'TCS' },
   'tata motors': { name: 'Tata Motors', symbol: 'TATAMOTORS' },
+  'tata motors cv': { name: 'Tata Motors', symbol: 'TATAMOTORS' },
   'tata steel': { name: 'Tata Steel', symbol: 'TATASTEEL' },
   'tata power': { name: 'Tata Power', symbol: 'TATAPOWER' },
   'titan': { name: 'Titan Company', symbol: 'TITAN' },
@@ -64,6 +65,8 @@ const COMPANY_ALIASES: Record<string, { name: string; symbol: string }> = {
   "dr reddy's": { name: "Dr. Reddy's Laboratories", symbol: 'DRREDDY' },
   cipla: { name: 'Cipla', symbol: 'CIPLA' },
   divi: { name: "Divi's Laboratories", symbol: 'DIVISLAB' },
+  zydus: { name: 'Zydus Lifesciences', symbol: 'ZYDUSLIFE' },
+  'zydus lifesciences': { name: 'Zydus Lifesciences', symbol: 'ZYDUSLIFE' },
 
   // Auto
   'maruti': { name: 'Maruti Suzuki', symbol: 'MARUTI' },
@@ -86,6 +89,9 @@ const COMPANY_ALIASES: Record<string, { name: string; symbol: string }> = {
   zomato: { name: 'Zomato', symbol: 'ZOMATO' },
   nykaa: { name: 'FSN E-Commerce Ventures (Nykaa)', symbol: 'NYKAA' },
   paytm: { name: 'One 97 Communications (Paytm)', symbol: 'PAYTM' },
+  manappuram: { name: 'Manappuram Finance', symbol: 'MANAPPURAM' },
+  'jyothy labs': { name: 'Jyothy Labs', symbol: 'JYOTHYLAB' },
+  'jyothy laboratories': { name: 'Jyothy Labs', symbol: 'JYOTHYLAB' },
 };
 
 /**
@@ -94,12 +100,24 @@ const COMPANY_ALIASES: Record<string, { name: string; symbol: string }> = {
  */
 export function extractCompanies(
   text: string,
-  portfolioSymbols: string[] = []
+  portfolioCompanies: { name: string; symbol: string }[] = []
 ): NewsCompany[] {
   const lowerText = text.toLowerCase();
   const found = new Map<string, NewsCompany>();
+  const portfolioSymbols = portfolioCompanies.map(c => c.symbol);
 
-  for (const [alias, { name, symbol }] of Object.entries(COMPANY_ALIASES)) {
+  // Build a combined aliases map (hardcoded + dynamic from portfolio)
+  const allAliases = { ...COMPANY_ALIASES };
+  for (const pc of portfolioCompanies) {
+    if (!pc.name || !pc.symbol) continue;
+    // Add exact full name match if not exists
+    const cleanName = pc.name.toLowerCase().trim();
+    if (cleanName && !allAliases[cleanName]) {
+      allAliases[cleanName] = { name: pc.name, symbol: pc.symbol };
+    }
+  }
+
+  for (const [alias, { name, symbol }] of Object.entries(allAliases)) {
     // Use word boundary matching to avoid partial matches
     const pattern = new RegExp(`\\b${escapeRegex(alias)}\\b`, 'i');
     if (pattern.test(lowerText)) {
