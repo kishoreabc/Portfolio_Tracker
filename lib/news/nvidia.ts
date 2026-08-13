@@ -1,5 +1,4 @@
 import { ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings } from '@langchain/google-genai';
-import { ChatOpenAI } from '@langchain/openai';
 import { ChatGroq } from '@langchain/groq';
 import { Embeddings } from '@langchain/core/embeddings';
 
@@ -9,11 +8,7 @@ function requireGeminiKey(): string {
   return key;
 }
 
-function requireNvidiaKey(): string {
-  const key = process.env.NVIDIA_API_KEY;
-  if (!key) throw new Error('NVIDIA_API_KEY environment variable is not set.');
-  return key;
-}
+
 
 function buildLlmFromSpec(spec: string, options?: { temperature?: number }) {
   let provider = 'gemini';

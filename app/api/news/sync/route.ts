@@ -3,22 +3,10 @@ import { auth } from '@/auth';
 import { syncNews } from '@/lib/news/sync';
 
 export async function POST(request: NextRequest) {
-  // Allow execution via Vercel cron OR authenticated user session
-  const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
+  // Only allow execution via authenticated user session
+  const session = await auth();
   
-  let isAuthorized = false;
-  
-  if (cronSecret && authHeader === `Bearer ${cronSecret}`) {
-    isAuthorized = true;
-  } else {
-    const session = await auth();
-    if (session) {
-      isAuthorized = true;
-    }
-  }
-
-  if (!isAuthorized) {
+  if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
