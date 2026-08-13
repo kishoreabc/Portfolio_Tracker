@@ -83,9 +83,7 @@ export default function StocksPage() {
             <CardContent className="space-y-2">
               {isLoading ? <Skeleton className="h-10 bg-white/5" /> :
                 winners.slice(0, 1).map((w) => (
-                  <motion.div key={w.ticker} whileHover={{ x: 4 }}
-                    onClick={() => openStock(w.ticker)}
-                    className="flex items-center justify-between px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10 cursor-pointer hover:bg-emerald-500/10 hover:shadow-sm transition-all duration-150">
+                  <div key={w.ticker} className="flex items-center justify-between px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
                     <div>
                       <p className="text-small font-semibold text-foreground">{w.ticker}</p>
                       <p className="text-caption text-muted-foreground truncate max-w-[140px]">{w.name}</p>
@@ -94,7 +92,7 @@ export default function StocksPage() {
                       <p className="text-body font-bold text-emerald-400">+{(w.percentChange * 100).toFixed(2)}%</p>
                       <p className="text-caption text-muted-foreground">{fmtPrice(w.currentPrice)}</p>
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
             </CardContent>
           </Card>
@@ -108,9 +106,7 @@ export default function StocksPage() {
             <CardContent className="space-y-2">
               {isLoading ? <Skeleton className="h-10 bg-white/5" /> :
                 losers.slice(0, 1).map((l) => (
-                  <motion.div key={l.ticker} whileHover={{ x: 4 }}
-                    onClick={() => openStock(l.ticker)}
-                    className="flex items-center justify-between px-3 py-2 rounded-lg bg-red-500/5 border border-red-500/10 cursor-pointer hover:bg-red-500/10 hover:shadow-sm transition-all duration-150">
+                  <div key={l.ticker} className="flex items-center justify-between px-3 py-2 rounded-lg bg-red-500/5 border border-red-500/10">
                     <div>
                       <p className="text-small font-semibold text-foreground">{l.ticker}</p>
                       <p className="text-caption text-muted-foreground truncate max-w-[140px]">{l.name}</p>
@@ -119,7 +115,7 @@ export default function StocksPage() {
                       <p className="text-body font-bold text-red-400">{(l.percentChange * 100).toFixed(2)}%</p>
                       <p className="text-caption text-muted-foreground">{fmtPrice(l.currentPrice)}</p>
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
             </CardContent>
           </Card>

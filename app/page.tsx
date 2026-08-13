@@ -2,9 +2,8 @@
 
 import { motion } from 'framer-motion';
 import {
-  Wallet, TrendingUp, Building2, Activity, ArrowUpDown, IndianRupee, Target
+  Wallet, TrendingUp, Building2, Activity, ArrowUpDown, IndianRupee,
 } from 'lucide-react';
-import { isWeekend, startOfMonth, endOfMonth, isSameDay } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { KpiCard } from '@/components/shared/KpiCard';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -20,17 +19,9 @@ import {
 } from '@/components/ui/table';
 
 function formatINR(value: number): string {
-  const isNegative = value < 0;
-  const absValue = Math.abs(value);
-  let formatted = '';
-  if (absValue >= 1e7) {
-    formatted = `${(absValue / 1e7).toFixed(2)} Cr`;
-  } else if (absValue >= 1e5) {
-    formatted = `${(absValue / 1e5).toFixed(2)} L`;
-  } else {
-    formatted = absValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
-  return `${isNegative ? '-' : ''}₹${formatted}`;
+  if (value >= 1e7) return `₹${(value / 1e7).toFixed(2)} Cr`;
+  if (value >= 1e5) return `₹${(value / 1e5).toFixed(2)} L`;
+  return `₹${value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 const container = {
@@ -54,7 +45,6 @@ export default function DashboardPage() {
     apiErrors,
     equity,
     bonds,
-    transactions,
   } = usePortfolioData();
 
   const equityCount = equity.length;
@@ -63,31 +53,6 @@ export default function DashboardPage() {
   const dashboardSectors = sectorAllocation
     .filter((s) => s.equityValue > 0)
     .map((s) => ({ ...s, totalValue: s.equityValue }));
-
-  // Targets logic
-  const DAILY_TARGET = 220;
-  const today = new Date();
-
-  // Today's target
-  const todayTransaction = transactions?.find(t => isSameDay(t.date, today));
-  const todaysInvestment = todayTransaction?.investment ?? 0;
-  const isTodayWeekend = isWeekend(today);
-  const todaysTarget = isTodayWeekend ? 0 : DAILY_TARGET;
-  const todayInvestmentChange = todaysTarget === 0 ? undefined : (todaysInvestment - todaysTarget) / todaysTarget;
-
-  // Month target
-  let workingDaysThisMonth = 0;
-  const start = startOfMonth(today);
-  const end = endOfMonth(today);
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    if (!isWeekend(d)) {
-      workingDaysThisMonth++;
-    }
-  }
-
-  const monthTarget = workingDaysThisMonth * DAILY_TARGET;
-  const thisMonthInvestment = cashFlowStats?.monthlySummaries?.slice(-1)[0]?.investment ?? 0;
-  const monthInvestmentChange = monthTarget === 0 ? undefined : (thisMonthInvestment - monthTarget) / monthTarget;
 
   return (
     <>
@@ -99,7 +64,7 @@ export default function DashboardPage() {
           variants={container}
           initial="hidden"
           animate="show"
-          className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4"
+          className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4"
         >
           <KpiCard
             id="kpi-net-worth"
@@ -144,8 +109,9 @@ export default function DashboardPage() {
           />
           <KpiCard
             id="kpi-monthly-investment"
-            title="Month Investment"
+            title="Monthly Investment"
             value={isLoading ? '—' : formatINR(cashFlowStats.monthlySummaries.slice(-1)[0]?.investment ?? 0)}
+            subValue="this month"
             icon={ArrowUpDown}
             accentColor="amber"
             isLoading={isLoading}
@@ -153,33 +119,14 @@ export default function DashboardPage() {
           />
           <KpiCard
             id="kpi-monthly-expenses"
-            title="Month Expenses"
+            title="Monthly Expenses"
             value={isLoading ? '—' : formatINR(cashFlowStats.monthlySummaries.slice(-1)[0]?.totalExpenses ?? 0)}
+            subValue="this month"
             icon={IndianRupee}
             accentColor="red"
             isLoading={isLoading}
             note={cashFlowStats.monthlySummaries.length === 0 ? 'No expense data' : undefined}
             href="/cashflow"
-          />
-          <KpiCard
-            id="kpi-today-target"
-            title="Today's Target"
-            value={isLoading ? '—' : formatINR(Math.abs(todaysTarget - todaysInvestment))}
-            subValue={isLoading ? undefined : `Target: ${formatINR(todaysTarget)}`}
-            icon={Target}
-            isLoading={isLoading}
-            href="/cashflow"
-            valueClassName={!isLoading && (todaysTarget - todaysInvestment) < 0 ? 'text-red-400' : ''}
-          />
-          <KpiCard
-            id="kpi-month-target"
-            title="Month Target"
-            value={isLoading ? '—' : formatINR(Math.abs(monthTarget - thisMonthInvestment))}
-            subValue={isLoading ? undefined : `Target: ${formatINR(monthTarget)}`}
-            icon={Target} 
-            isLoading={isLoading}
-            href="/cashflow"
-            valueClassName={!isLoading && (monthTarget - thisMonthInvestment) < 0 ? 'text-red-400' : ''}
           />
         </motion.div>
 
@@ -261,8 +208,9 @@ export default function DashboardPage() {
                               <div className="flex items-center justify-end gap-2">
                                 <div className="w-20 h-1.5 rounded-full bg-white/10 overflow-hidden">
                                   <div
-                                    className={`h-full rounded-full transition-all duration-700 ${r.id === 'equity' ? 'bg-blue-400' : 'bg-purple-400'
-                                      }`}
+                                    className={`h-full rounded-full transition-all duration-700 ${
+                                      r.id === 'equity' ? 'bg-blue-400' : 'bg-purple-400'
+                                    }`}
                                     style={{ width: `${r.alloc}%` }}
                                   />
                                 </div>

@@ -7,7 +7,6 @@ import { Topbar } from '@/components/layout/Topbar';
 import { usePortfolioData } from '@/hooks/usePortfolioData';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TrendingUp, TrendingDown, Shield } from 'lucide-react';
-import { useStockModal } from '@/lib/stock-modal-context';
 
 function fmt(v: number) {
   if (v >= 1e7) return `₹${(v / 1e7).toFixed(2)}Cr`;
@@ -17,7 +16,6 @@ function fmt(v: number) {
 
 export default function AnalyticsPage() {
   const { winners, losers, concentrationRisk, sectorAllocation, isLoading, lastFetched, apiErrors } = usePortfolioData();
-  const { openStock } = useStockModal();
 
   const diversificationColor =
     concentrationRisk.diversificationScore >= 70 ? 'text-emerald-400' :
@@ -104,8 +102,7 @@ export default function AnalyticsPage() {
               {isLoading ? Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 bg-white/5" />) :
                 winners.map((w) => (
                   <motion.div key={w.ticker} whileHover={{ x: 4 }}
-                    onClick={() => openStock(w.ticker)}
-                    className="flex items-center justify-between p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10 cursor-pointer hover:bg-emerald-500/10 hover:shadow-sm transition-all duration-150">
+                    className="flex items-center justify-between p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
                     <div>
                       <p className="text-small font-semibold">{w.ticker}</p>
                       <p className="text-caption text-muted-foreground max-w-[120px] truncate">{w.name}</p>
@@ -129,8 +126,7 @@ export default function AnalyticsPage() {
               {isLoading ? Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 bg-white/5" />) :
                 losers.map((l) => (
                   <motion.div key={l.ticker} whileHover={{ x: 4 }}
-                    onClick={() => openStock(l.ticker)}
-                    className="flex items-center justify-between p-3 rounded-lg bg-red-500/5 border border-red-500/10 cursor-pointer hover:bg-red-500/10 hover:shadow-sm transition-all duration-150">
+                    className="flex items-center justify-between p-3 rounded-lg bg-red-500/5 border border-red-500/10">
                     <div>
                       <p className="text-small font-semibold">{l.ticker}</p>
                       <p className="text-caption text-muted-foreground max-w-[120px] truncate">{l.name}</p>

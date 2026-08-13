@@ -19,13 +19,11 @@ export async function GET(req: Request) {
     );
   }
 
-  const force = searchParams.get('force') === 'true';
-
   const cleanIsin = isin.trim().toUpperCase();
   const now = Date.now();
 
   const cached = cache.get(cleanIsin);
-  if (!force && cached && now - cached.ts < CACHE_TTL_MS) {
+  if (cached && now - cached.ts < CACHE_TTL_MS) {
     return NextResponse.json(cached.data);
   }
 
