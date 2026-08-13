@@ -16,3 +16,24 @@ GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 # Comma-separated list of emails allowed to log in
 ALLOWED_EMAILS="exammple-1@gmail.com, exammple-2@gmail.com"
+
+# ── NVIDIA NIM API ─────────────────────────────────────────────────────────────
+# Get your key at: https://build.nvidia.com/
+NVIDIA_API_KEY=
+NVIDIA_BASE_URL=https://integrate.api.nvidia.com/v1
+NVIDIA_LLM_MODEL=nvidia/llama-3.1-nemotron-70b-instruct
+NVIDIA_EMBEDDING_MODEL=nvidia/nv-embedqa-e5-v5
+
+# ── Supabase (News module only) ────────────────────────────────────────────────
+# Create a project at: https://supabase.com/
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# ── News Sync ─────────────────────────────────────────────────────────────────
+MONEYPECHU_RSS_URL=https://moneypechu.com/feed/
+NEWS_SYNC_BATCH_SIZE=5
+MAX_NVIDIA_CONCURRENCY=2
+NEWS_SEARCH_TOP_K=20
+
+# ── Vercel Cron protection ─────────────────────────────────────────────────────
+CRON_SECRET=

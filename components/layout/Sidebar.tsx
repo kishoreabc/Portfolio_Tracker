@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Briefcase, TrendingUp, Building2,
   ArrowLeftRight, BarChart2, CalendarDays, FileText,
-  Sparkles, ChevronLeft, ChevronRight, X,
+  Sparkles, ChevronLeft, ChevronRight, X, Newspaper,
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -20,6 +20,7 @@ const NAV_ITEMS = [
   { href: '/cashflow', label: 'Cash Flow', icon: ArrowLeftRight },
   { href: '/analytics', label: 'Analytics', icon: BarChart2 },
   { href: '/calendar', label: 'Calendar', icon: CalendarDays },
+  { href: '/news', label: 'News', icon: Newspaper },
   { href: '/reports', label: 'Reports', icon: FileText },
   { href: '/insights', label: 'AI Insights', icon: Sparkles },
 ];
