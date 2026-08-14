@@ -52,3 +52,4 @@ scratch.ts
 # Explicitly allow example env files
 !.env.example
 !env_example.txt
+/scripts

@@ -7,11 +7,15 @@ import { NewsSearch } from '@/components/news/NewsSearch';
 import { NewsFilters } from '@/components/news/NewsFilters';
 import { NewsList } from '@/components/news/NewsList';
 import { SyncButton } from '@/components/news/SyncButton';
-import { Newspaper, Database } from 'lucide-react';
+import { RefreshDatabaseButton } from '@/components/news/RefreshDatabaseButton';
+import { Newspaper, Database, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Topbar } from '@/components/layout/Topbar';
+import { useRouter, usePathname } from 'next/navigation';
 
 function NewsContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const query = searchParams.get('q');
   const isSemantic = searchParams.get('semantic') === 'true';
 
@@ -24,24 +28,34 @@ function NewsContent() {
     category: searchParams.get('category') || undefined,
     sentiment: searchParams.get('sentiment') as any || undefined,
     impact: searchParams.get('impact') as any || undefined,
-    portfolioRelevant: searchParams.get('portfolioRelevant') === 'true' ? true : undefined,
   };
   const newsResult = useNews(filters);
 
   const activeResult = query ? searchResult : newsResult;
   const articles = query ? searchResult.data?.articles || [] : newsResult.data?.articles || [];
 
+  const total = !query ? (newsResult.data?.total || 0) : 0;
+  const limit = 20;
+  const totalPages = Math.ceil(total / limit);
+  const currentPage = filters.page;
+
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', newPage.toString());
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
   return (
     <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto">
-      {/* Actions */}
-      <div className="hidden">
-        {/* SyncButton moved to Topbar */}
-      </div>
-
       {/* Controls */}
-      <div className="flex flex-col items-center gap-4 border border-white/10 rounded-2xl bg-white/[0.02] p-4 md:p-6 overflow-hidden">
-        <NewsSearch />
-        {!query && <NewsFilters />}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 border border-white/10 rounded-2xl bg-white/[0.02] p-4 md:p-6 overflow-hidden w-full">
+        <div className="flex-1 w-full max-w-xl">
+          <NewsSearch />
+        </div>
+        <div className="flex items-center gap-4 w-full md:w-auto">
+          {!query && <NewsFilters />}
+          <RefreshDatabaseButton />
+        </div>
       </div>
 
       {/* Content */}
@@ -50,6 +64,36 @@ function NewsContent() {
         isLoading={activeResult.isLoading} 
         error={activeResult.error} 
       />
+      
+      {/* Pagination (only for non-search for now) */}
+      {!query && totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4 border border-white/10 rounded-2xl bg-white/[0.02] p-4">
+          <p className="text-xs text-slate-400">
+            Showing <span className="font-medium text-slate-200">{(currentPage - 1) * limit + 1}</span> to <span className="font-medium text-slate-200">{Math.min(currentPage * limit, total)}</span> of <span className="font-medium text-slate-200">{total}</span> articles
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage <= 1 || activeResult.isLoading}
+              className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg bg-white/5 text-slate-300 hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-white/10"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+              Previous
+            </button>
+            <span className="text-xs font-medium text-slate-400 px-2">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage >= totalPages || activeResult.isLoading}
+              className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg bg-white/5 text-slate-300 hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-white/10"
+            >
+              Next
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

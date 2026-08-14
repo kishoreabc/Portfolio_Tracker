@@ -54,7 +54,7 @@ create table if not exists public.news (
     embedding_status    text        not null default 'pending',
 
     -- NVIDIA nv-embed-v1 outputs 4096 dimensions
-    embedding           extensions.vector(4096),
+    embedding           extensions.vector(3072),
 
     created_at          timestamptz not null default now(),
     updated_at          timestamptz not null default now()

@@ -27,13 +27,7 @@ export function NewsCard({ article }: NewsCardProps) {
           </span>
         )}
         
-        {article.portfolioRelevant && (
-          <span className="flex items-center gap-1 text-[10px] font-semibold tracking-wider uppercase text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
-            <Briefcase className="w-3 h-3" />
-            Portfolio Relevant
-          </span>
-        )}
-        
+
         <div className="ml-auto flex items-center gap-2">
           <NewsSentimentBadge sentiment={article.sentiment} />
           <NewsImpactBadge impact={article.impact} />

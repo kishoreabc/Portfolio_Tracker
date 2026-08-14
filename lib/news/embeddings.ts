@@ -7,7 +7,7 @@ async function sleep(ms: number) {
 }
 
 /**
- * Generate a 1024-dimensional embedding vector for a news article.
+ * Generate a 3072-dimensional embedding vector for a news article.
  * Combines title + summary/content for richer semantic representation.
  *
  * Uses nvidia/nv-embedqa-e5-v5 via NVIDIA NIM API.

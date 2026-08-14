@@ -93,12 +93,6 @@ export default function ArticlePage({ params }: { params: Promise<{ id: string }
                   {article.category}
                 </span>
               )}
-              {article.portfolioRelevant && (
-                <span className="flex items-center gap-1.5 text-xs font-bold tracking-wider uppercase text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-md border border-indigo-500/20">
-                  <Briefcase className="w-3.5 h-3.5" />
-                  Portfolio Relevant
-                </span>
-              )}
             </div>
             
             <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white leading-tight md:leading-snug">

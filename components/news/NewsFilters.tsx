@@ -11,8 +11,6 @@ export function NewsFilters() {
   const currentCategory = searchParams.get('category');
   const currentSentiment = searchParams.get('sentiment');
   const currentImpact = searchParams.get('impact');
-  const isPortfolioRelevant = searchParams.get('portfolioRelevant') === 'true';
-
   const updateFilter = (key: string, value: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
     if (value) {
@@ -27,20 +25,6 @@ export function NewsFilters() {
 
   return (
     <div className="flex flex-wrap items-center justify-center gap-3 py-4">
-      <button
-        onClick={() => updateFilter('portfolioRelevant', isPortfolioRelevant ? null : 'true')}
-        className={cn(
-          "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border",
-          isPortfolioRelevant 
-            ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/30" 
-            : "bg-white/5 text-slate-400 border-white/10 hover:bg-white/10"
-        )}
-      >
-        Portfolio Only
-      </button>
-
-      <div className="h-4 w-px bg-white/10 mx-1" />
-
       {/* Category */}
       <select
         value={currentCategory || ''}
@@ -79,7 +63,7 @@ export function NewsFilters() {
         <option className="bg-slate-900" value="low">Low Impact</option>
       </select>
       
-      {(currentCategory || currentSentiment || currentImpact || isPortfolioRelevant) && (
+      {(currentCategory || currentSentiment || currentImpact) && (
         <button
           onClick={() => router.push('/news')}
           className="px-3 py-1.5 rounded-lg text-sm text-slate-400 hover:text-white transition-colors"

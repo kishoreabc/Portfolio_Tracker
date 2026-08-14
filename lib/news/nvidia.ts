@@ -85,7 +85,7 @@ function requireGeminiEmbeddingKey(): string {
 class GeminiPaddedEmbeddings extends Embeddings {
   private primaryEmbeddings: GoogleGenerativeAIEmbeddings;
   private fallbackEmbeddings: GoogleGenerativeAIEmbeddings;
-  private targetDimensions = 1024;
+  private targetDimensions = 3072;
 
   constructor() {
     super({});
