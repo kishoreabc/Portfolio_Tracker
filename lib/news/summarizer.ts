@@ -1,6 +1,6 @@
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { StringOutputParser } from '@langchain/core/output_parsers';
-import { getSummarizationLLM } from './nvidia';
+import { getSummarizationModelManager } from './nvidia';
 import type { NewsSentiment, NewsImpact } from '@/types/news';
 
 const SUMMARIZE_SYSTEM = `You are a financial news analyst. 
@@ -47,31 +47,39 @@ export async function summarizeArticle(
   title: string,
   content: string
 ): Promise<SummarizationResult> {
-  const llm = getSummarizationLLM({ temperature: 0.1});
-  const chain = SUMMARIZE_PROMPT.pipe(llm).pipe(new StringOutputParser());
-
+  const manager = getSummarizationModelManager({ temperature: 0.1 });
+  
   // Truncate to avoid token limits
   const truncatedContent = content.slice(0, 4000);
-
-  const MAX_RETRIES = 3;
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   let raw: string | undefined;
   let lastError: Error | null = null;
   
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+  // Loop up to 100 times to handle circular retries across all articles
+  for (let attempt = 1; attempt <= 100; attempt++) {
+    const { model, index, total } = await manager.getNextModel();
+    const chain = SUMMARIZE_PROMPT.pipe(model).pipe(new StringOutputParser());
+    
     try {
       raw = await chain.invoke({ title, content: truncatedContent });
-      break;
+      break; // Success! Break retry loop
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
-      console.warn(`[news/summarizer] attempt ${attempt} failed: ${lastError.message}`);
-      if (attempt < MAX_RETRIES) await sleep(2000 * attempt);
+      console.warn(`[news/summarizer] Model ${index+1}/${total} attempt ${attempt} failed: ${lastError.message}`);
+      
+      if (lastError.message.includes('429') || lastError.message.includes('404') || lastError.message.includes('400')) {
+         // Blacklist the model for 60 seconds so other requests don't use it
+         manager.blacklist(index, 60000);
+      } else {
+         // Unknown error, still wait a bit
+         await sleep(2000);
+      }
     }
   }
 
   if (!raw) {
-    throw new Error(`Summarization failed after ${MAX_RETRIES} attempts: ${lastError?.message}`);
+    throw new Error(`Summarization failed after trying all fallback models repeatedly. Last error: ${lastError?.message}`);
   }
 
   // Extract JSON from response (handle possible markdown wrapping)

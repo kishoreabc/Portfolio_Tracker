@@ -1,6 +1,7 @@
 import { ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings } from '@langchain/google-genai';
 import { ChatGroq } from '@langchain/groq';
 import { Embeddings } from '@langchain/core/embeddings';
+import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
 function requireGeminiKey(): string {
   const key = process.env.GEMINI_API_KEY;
@@ -25,12 +26,14 @@ function buildLlmFromSpec(spec: string, options?: { temperature?: number }) {
       apiKey: requireGeminiKey(),
       model: modelName,
       temperature: options?.temperature ?? 0.1,
+      maxRetries: 0,
     });
   } else if (provider === 'groq') {
     return new ChatGroq({
       apiKey: process.env.GROQ_API_KEY,
       model: modelName,
       temperature: options?.temperature ?? 0.1,
+      maxRetries: 0,
     });
   }
   throw new Error(`Unknown provider in fallback spec: ${provider}`);
@@ -43,7 +46,7 @@ function getLLMChain(options?: { temperature?: number }) {
     const geminiSpecs = process.env.GEMINI_MODEL.split(',').map(s => s.trim()).filter(Boolean);
     modelSpecs.push(...geminiSpecs);
   } else {
-    modelSpecs.push('gemini:gemini-1.5-flash');
+    modelSpecs.push('gemini:gemini-2.5-flash');
   }
 
   if (process.env.FALLBACK_MODELS) {
@@ -58,22 +61,61 @@ function getLLMChain(options?: { temperature?: number }) {
   }
 
   const llms = modelSpecs.map(spec => buildLlmFromSpec(spec, options));
-  const primaryLlm = llms[0];
-  const fallbacks = llms.slice(1);
+  return llms;
+}
 
-  if (fallbacks.length > 0) {
-    return primaryLlm.withFallbacks({ fallbacks });
+export class ModelManager {
+  private models: { llm: BaseChatModel; blacklistedUntil: number }[];
+
+  constructor(llms: BaseChatModel[]) {
+    this.models = llms.map(llm => ({ llm, blacklistedUntil: 0 }));
   }
-  
-  return primaryLlm;
+
+  async getNextModel(): Promise<{ model: BaseChatModel; index: number; total: number }> {
+    const total = this.models.length;
+    
+    // Check if ALL models are currently blacklisted
+    const allBlacklisted = this.models.every(m => m.blacklistedUntil > Date.now());
+    if (allBlacklisted) {
+      console.warn('[ModelManager] All models rate-limited. Waiting 10 seconds before circular retry...');
+      await new Promise(r => setTimeout(r, 10000));
+      // Reset all blacklists to force a circular retry
+      this.models.forEach(m => m.blacklistedUntil = 0);
+    }
+
+    // Always start checking from index 0 to prioritize earlier models
+    for (let index = 0; index < total; index++) {
+      const status = this.models[index];
+      
+      if (status.blacklistedUntil <= Date.now()) {
+        return { model: status.llm, index, total };
+      }
+    }
+    
+    return { model: this.models[0].llm, index: 0, total };
+  }
+
+  blacklist(index: number, durationMs: number = 60000) {
+    this.models[index].blacklistedUntil = Date.now() + durationMs;
+    console.warn(`[ModelManager] Model ${index + 1}/${this.models.length} blacklisted for ${durationMs/1000}s`);
+  }
 }
 
-export function getTranslationLLM(options?: { temperature?: number }) {
-  return getLLMChain(options);
+let translationManager: ModelManager | null = null;
+let summarizationManager: ModelManager | null = null;
+
+export function getTranslationModelManager(options?: { temperature?: number }) {
+  if (!translationManager) {
+    translationManager = new ModelManager(getLLMChain(options));
+  }
+  return translationManager;
 }
 
-export function getSummarizationLLM(options?: { temperature?: number }) {
-  return getLLMChain(options);
+export function getSummarizationModelManager(options?: { temperature?: number }) {
+  if (!summarizationManager) {
+    summarizationManager = new ModelManager(getLLMChain(options));
+  }
+  return summarizationManager;
 }
 
 function requireGeminiEmbeddingKey(): string {

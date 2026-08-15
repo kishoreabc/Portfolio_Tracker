@@ -1,6 +1,6 @@
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { StringOutputParser } from '@langchain/core/output_parsers';
-import { getTranslationLLM } from './nvidia';
+import { getTranslationModelManager } from './nvidia';
 
 const TRANSLATION_SYSTEM_PROMPT = `You are a professional Indian financial news translator.
 
@@ -34,38 +34,43 @@ const CONTENT_PROMPT = ChatPromptTemplate.fromMessages([
   ],
 ]);
 
-const MAX_RETRIES = 3;
-
 async function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function retryTranslate(
-  chain: ReturnType<typeof TITLE_PROMPT.pipe>,
+  promptBuilder: typeof TITLE_PROMPT | typeof CONTENT_PROMPT,
   input: Record<string, string>,
   label: string
 ): Promise<string> {
+  const manager = getTranslationModelManager({ temperature: 0.1 });
   let lastError: Error | null = null;
 
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+  for (let attempt = 1; attempt <= 100; attempt++) {
+    const { model, index, total } = await manager.getNextModel();
+    const chain = promptBuilder.pipe(model).pipe(new StringOutputParser());
+
     try {
-      const result = await chain.invoke(input);
-      return (result as string).trim();
+      const raw = await chain.invoke(input);
+      return (raw as string).trim();
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
       console.error(
-        `[news/translator] ${label} attempt ${attempt} failed: ${lastError.message}`
+        `[news/translator] ${label} Model ${index+1}/${total} attempt ${attempt} failed: ${lastError.message}`
       );
-      if (attempt < MAX_RETRIES) {
-        await sleep(5000* attempt);
+      if (lastError.message.includes('429') || lastError.message.includes('404') || lastError.message.includes('400')) {
+         // Blacklist the model for 60 seconds
+         manager.blacklist(index, 60000);
+      } else {
+         await sleep(2000);
       }
     }
   }
-
-  throw new Error(
-    `Translation failed after ${MAX_RETRIES} attempts: ${lastError?.message}`
-  );
+  
+  throw new Error(`${label} Translation failed after trying all fallback models repeatedly. Last error: ${lastError?.message}`);
 }
+
+
 
 export interface TranslationResult {
   translatedTitle: string;
@@ -80,18 +85,12 @@ export async function translateArticle(
   title: string,
   content: string
 ): Promise<TranslationResult> {
-  const llm = getTranslationLLM({ temperature: 0.1 });
-  const outputParser = new StringOutputParser();
-
-  const titleChain = TITLE_PROMPT.pipe(llm).pipe(outputParser);
-  const contentChain = CONTENT_PROMPT.pipe(llm).pipe(outputParser);
-
   console.log('[news/translator] Translating Tamil article...');
 
   // Translate title and content in parallel
   const [translatedTitle, translatedContent] = await Promise.all([
-    retryTranslate(titleChain, { title }, 'title'),
-    retryTranslate(contentChain, { content }, 'content'),
+    retryTranslate(TITLE_PROMPT, { title }, 'title'),
+    retryTranslate(CONTENT_PROMPT, { content }, 'content'),
   ]);
 
   console.log('[news/translator] Translation completed.');
