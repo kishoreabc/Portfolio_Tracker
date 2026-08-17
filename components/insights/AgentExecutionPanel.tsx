@@ -14,8 +14,12 @@ import {
   ShieldAlert,
   ArrowUpRight,
   TrendingDown,
-  Activity,
   Layers,
+  Activity,
+  ChevronRight,
+  FileCheck,
+  Target,
+  Compass,
 } from 'lucide-react';
 import {
   type PipelineState,
@@ -101,7 +105,7 @@ export function AgentExecutionPanel({
   const latestEvent = agentState?.activities?.slice(-1)[0];
   const currentTelemetry = latestEvent?.description;
   const currentTool = latestEvent?.tool;
-  const structuredData = agentState?.structuredData;
+  const data = agentState?.structuredData;
 
   const activeIndex = AGENT_ORDER.indexOf(runningAgentId) + 1;
 
@@ -114,15 +118,15 @@ export function AgentExecutionPanel({
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -10, scale: 0.98 }}
           transition={{ duration: 0.22, ease: 'easeOut' }}
-          className="relative rounded-2xl border border-indigo-500/30 bg-gradient-to-r from-indigo-950/50 via-card/85 to-purple-950/35 backdrop-blur-md p-4 sm:p-5 shadow-xl shadow-indigo-500/5 ring-1 ring-indigo-500/20 overflow-hidden"
+          className="relative rounded-2xl border border-indigo-500/30 bg-gradient-to-r from-indigo-950/50 via-card/90 to-purple-950/40 backdrop-blur-md p-4 sm:p-5 shadow-2xl shadow-indigo-500/5 ring-1 ring-indigo-500/20 overflow-hidden"
         >
           {/* Subtle animated background glow accent */}
-          <div className="absolute -top-12 -left-12 w-36 h-36 bg-indigo-500/15 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute -top-12 -left-12 w-40 h-40 bg-indigo-500/15 rounded-full blur-2xl pointer-events-none" />
 
-          {/* Top Row: Active Agent & Thinking Pulse */}
+          {/* ─── Top Header: Active Agent & Streaming Indicator ─────────────── */}
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3.5 min-w-0">
-              {/* Spinning/pulsing agent icon */}
+              {/* Pulsing agent icon */}
               <div className="relative flex items-center justify-center flex-shrink-0">
                 <span className="absolute inline-flex h-9 w-9 animate-ping rounded-xl bg-indigo-500/25 opacity-40" />
                 <div className={`p-2.5 rounded-xl border ${meta.bg} flex items-center justify-center shadow-inner`}>
@@ -165,14 +169,14 @@ export function AgentExecutionPanel({
               )}
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 text-[11px] font-medium shadow-sm">
                 <RotateCw className="w-3 h-3 animate-spin text-indigo-400" />
-                <span>Streaming...</span>
+                <span>Streaming live...</span>
               </div>
             </div>
           </div>
 
-          {/* ─── STREAMED STRUCTURED DATA CARDS ─────────────────────────────────── */}
-          <div className="mt-3.5 pt-3 border-t border-white/10 space-y-2.5">
-            {/* 1. Live Telemetry / Description Stream */}
+          {/* ─── STREAMED INTERMEDIATE AGENT OUTPUTS ─────────────────────────── */}
+          <div className="mt-3.5 pt-3 border-t border-white/10 space-y-3">
+            {/* Live Operational Action / Stage Banner */}
             {currentTelemetry && (
               <div className="flex items-start gap-2 p-2.5 rounded-xl bg-black/35 border border-white/5 text-xs">
                 <Activity className="w-3.5 h-3.5 text-indigo-400 mt-0.5 flex-shrink-0 animate-pulse" />
@@ -187,131 +191,287 @@ export function AgentExecutionPanel({
               </div>
             )}
 
-            {/* 2. Agent 1: Quantitative Findings (Score & Strengths/Weaknesses) */}
-            {runningAgentId === 'portfolio_analyst' && structuredData && (
-              <motion.div
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="grid grid-cols-1 sm:grid-cols-2 gap-2"
-              >
-                {structuredData.strengths && structuredData.strengths.length > 0 && (
-                  <div className="p-2 rounded-lg bg-emerald-950/20 border border-emerald-500/20 text-xs">
-                    <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1 mb-1">
-                      <CheckCircle2 className="w-3 h-3" /> Key Strength
-                    </span>
-                    <p className="text-[11px] text-foreground/90 leading-tight">
-                      {structuredData.strengths[0]}
+            {/* ══════════════════════════════════════════════════════════════════
+                1. AGENT 1: PORTFOLIO ANALYSER OUTPUT STREAM
+               ══════════════════════════════════════════════════════════════════ */}
+            {runningAgentId === 'portfolio_analyst' && data && (
+              <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-2.5">
+                {/* Health Score & Summary */}
+                {data.healthSummary && (
+                  <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                        <FileCheck className="w-3.5 h-3.5 text-indigo-400" />
+                        Portfolio Health Score:
+                        <span className="text-indigo-400 font-mono">{data.healthScore}/100</span>
+                        <span className="px-1.5 py-0.2 text-[10px] rounded bg-indigo-500/20 text-indigo-300 font-medium">
+                          {data.healthStatus}
+                        </span>
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {data.healthSummary}
                     </p>
                   </div>
                 )}
-                {structuredData.weaknesses && structuredData.weaknesses.length > 0 && (
-                  <div className="p-2 rounded-lg bg-amber-950/20 border border-amber-500/20 text-xs">
-                    <span className="text-[10px] font-bold text-amber-400 flex items-center gap-1 mb-1">
-                      <AlertTriangle className="w-3 h-3" /> Concentration Area
+
+                {/* Health Assessment Reasons */}
+                {data.healthReasons && data.healthReasons.length > 0 && (
+                  <div className="p-2.5 rounded-xl bg-black/20 border border-white/5 space-y-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+                      Core Diagnoses & Vulnerabilities:
                     </span>
-                    <p className="text-[11px] text-foreground/90 leading-tight">
-                      {structuredData.weaknesses[0]}
+                    <ul className="space-y-1 text-xs text-foreground/90">
+                      {data.healthReasons.map((reason, i) => (
+                        <li key={i} className="flex items-start gap-1.5 text-[11px] leading-relaxed">
+                          <span className="text-amber-400 font-bold mt-0.5">•</span>
+                          <span>{reason}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Strengths & Weaknesses Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {data.topStrengths && data.topStrengths.length > 0 && (
+                    <div className="p-2.5 rounded-xl bg-emerald-950/20 border border-emerald-500/20 space-y-1">
+                      <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" /> Portfolio Strengths
+                      </span>
+                      {data.topStrengths.map((str, i) => (
+                        <p key={i} className="text-[11px] text-foreground/90 leading-tight">
+                          • {str}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                  {data.topWeaknesses && data.topWeaknesses.length > 0 && (
+                    <div className="p-2.5 rounded-xl bg-amber-950/20 border border-amber-500/20 space-y-1">
+                      <span className="text-[10px] font-bold text-amber-400 flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3" /> Core Weaknesses
+                      </span>
+                      {data.topWeaknesses.map((wk, i) => (
+                        <p key={i} className="text-[11px] text-foreground/90 leading-tight">
+                          • {wk}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+
+            {/* ══════════════════════════════════════════════════════════════════
+                2. AGENT 2: MACRO & MARKET ANALYST OUTPUT STREAM
+               ══════════════════════════════════════════════════════════════════ */}
+            {runningAgentId === 'macro_market_analyst' && data && (
+              <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-2.5">
+                {/* Live Indices Ticker Bar */}
+                {data.marketQuotes && (
+                  <div className="p-2.5 rounded-xl bg-blue-950/25 border border-blue-500/30 flex items-center justify-between gap-2 text-xs">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1 whitespace-nowrap">
+                      <Activity className="w-3 h-3 animate-pulse" /> Live Market Ticker:
+                    </span>
+                    <span className="text-[11px] font-mono text-foreground font-semibold truncate">
+                      {data.marketQuotes}
+                    </span>
+                  </div>
+                )}
+
+                {/* Market Summary & Status */}
+                {data.marketSummary && (
+                  <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-foreground">Market Stance:</span>
+                      <span className="px-1.5 py-0.2 text-[10px] rounded bg-blue-500/20 text-blue-300 font-semibold border border-blue-500/30">
+                        {data.marketStatus || 'Active'}
+                      </span>
+                      {data.niftyTrend && (
+                        <span className="text-[11px] font-mono text-muted-foreground truncate">
+                          ({data.niftyTrend})
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {data.marketSummary}
                     </p>
                   </div>
                 )}
-              </motion.div>
-            )}
 
-            {/* 3. Agent 2: Live Market Ticker & Headlines */}
-            {runningAgentId === 'macro_market_analyst' && structuredData && (
-              <motion.div
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-2"
-              >
-                {structuredData.marketQuotes && (
-                  <div className="p-2 rounded-lg bg-blue-950/20 border border-blue-500/20 flex items-center gap-2 text-xs">
-                    <span className="text-[10px] font-bold text-blue-400 whitespace-nowrap">
-                      📊 Indices:
+                {/* Key Drivers */}
+                {data.keyDrivers && data.keyDrivers.length > 0 && (
+                  <div className="p-2.5 rounded-xl bg-black/20 border border-white/5 space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+                      Macro & Policy Drivers:
                     </span>
-                    <span className="text-[11px] font-mono text-foreground/90 truncate">
-                      {structuredData.marketQuotes}
-                    </span>
+                    <ul className="space-y-1 text-xs text-foreground/90">
+                      {data.keyDrivers.map((driver, i) => (
+                        <li key={i} className="flex items-start gap-1.5 text-[11px] leading-relaxed">
+                          <span className="text-blue-400 font-bold mt-0.5">•</span>
+                          <span>{driver}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
-                {structuredData.topHeadline && (
-                  <div className="p-2 rounded-lg bg-white/5 border border-white/10 flex items-center gap-2 text-xs">
-                    <span className="text-[10px] font-bold text-indigo-300 whitespace-nowrap">
-                      📰 Tavily News:
-                    </span>
-                    <span className="text-[11px] text-muted-foreground italic truncate">
-                      &quot;{structuredData.topHeadline}&quot;
-                    </span>
-                  </div>
-                )}
-              </motion.div>
-            )}
 
-            {/* 4. Agent 3: Opportunities, Risks & Stress Scenarios */}
-            {runningAgentId === 'risk_strategy_engine' && structuredData && (
-              <motion.div
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-2"
-              >
-                {/* Opportunities & Risks row */}
-                {(structuredData.opportunities || structuredData.risks) && (
+                {/* Sector Outlook Grid */}
+                {data.sectorOutlook && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {structuredData.opportunities && structuredData.opportunities.length > 0 && (
-                      <div className="p-2 rounded-lg bg-emerald-950/20 border border-emerald-500/20">
-                        <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1 mb-0.5">
-                          <Flame className="w-3 h-3" /> Top Opportunity
+                    {Object.entries(data.sectorOutlook).map(([sector, outlook], i) => (
+                      <div key={i} className="p-2 rounded-lg bg-white/[0.02] border border-white/5 text-xs">
+                        <span className="text-[10px] font-bold text-indigo-300 block mb-0.5">
+                          {sector} Sector:
                         </span>
-                        <span className="text-[11px] text-foreground font-medium block truncate">
-                          {structuredData.opportunities[0].title}
-                        </span>
-                      </div>
-                    )}
-                    {structuredData.risks && structuredData.risks.length > 0 && (
-                      <div className="p-2 rounded-lg bg-rose-950/20 border border-rose-500/20">
-                        <span className="text-[10px] font-bold text-rose-400 flex items-center gap-1 mb-0.5">
-                          <ShieldAlert className="w-3 h-3" /> Key Threat
-                        </span>
-                        <span className="text-[11px] text-foreground font-medium block truncate">
-                          {structuredData.risks[0].title}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Probabilistic Scenarios Grid */}
-                {structuredData.scenarios && structuredData.scenarios.length > 0 && (
-                  <div className="grid grid-cols-3 gap-2 pt-1">
-                    {structuredData.scenarios.map((sc, i) => (
-                      <div
-                        key={i}
-                        className={`p-2 rounded-lg border text-center ${
-                          i === 0
-                            ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-300'
-                            : i === 1
-                            ? 'bg-blue-950/20 border-blue-500/30 text-blue-300'
-                            : 'bg-rose-950/20 border-rose-500/30 text-rose-300'
-                        }`}
-                      >
-                        <div className="flex items-center justify-center gap-1 text-[10px] font-semibold">
-                          {i === 0 ? (
-                            <ArrowUpRight className="w-3 h-3" />
-                          ) : i === 2 ? (
-                            <TrendingDown className="w-3 h-3" />
-                          ) : (
-                            <Layers className="w-3 h-3" />
-                          )}
-                          <span className="truncate">{sc.name.split(' ')[0]} Case</span>
-                        </div>
-                        <span className="text-xs font-bold block mt-0.5">{sc.impact}</span>
-                        <span className="text-[9.5px] opacity-70 block font-mono">
-                          {sc.probability} prob
-                        </span>
+                        <p className="text-[10.5px] text-muted-foreground leading-tight line-clamp-2">
+                          {outlook}
+                        </p>
                       </div>
                     ))}
                   </div>
                 )}
+              </motion.div>
+            )}
+
+            {/* ══════════════════════════════════════════════════════════════════
+                3. AGENT 3: RISK & STRATEGY ENGINE OUTPUT STREAM
+               ══════════════════════════════════════════════════════════════════ */}
+            {runningAgentId === 'risk_strategy_engine' && data && (
+              <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-2.5">
+                {/* Opportunities & Risks Stream */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {/* Opportunities */}
+                  {data.opportunities && data.opportunities.length > 0 && (
+                    <div className="p-3 rounded-xl bg-emerald-950/20 border border-emerald-500/20 space-y-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1">
+                        <Flame className="w-3.5 h-3.5" /> High-Conviction Opportunities
+                      </span>
+                      {data.opportunities.slice(0, 2).map((opp, i) => (
+                        <div key={i} className="text-xs space-y-0.5 border-b border-emerald-500/10 pb-1.5 last:border-0 last:pb-0">
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="font-semibold text-foreground text-[11px] truncate">{opp.title}</span>
+                            <span className="text-[9px] px-1 rounded bg-emerald-500/20 text-emerald-300 font-mono">
+                              {opp.priority}
+                            </span>
+                          </div>
+                          {opp.actionable && (
+                            <p className="text-[10.5px] text-emerald-200/80 leading-tight">
+                              → {opp.actionable}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Risks */}
+                  {data.risks && data.risks.length > 0 && (
+                    <div className="p-3 rounded-xl bg-rose-950/20 border border-rose-500/20 space-y-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-rose-400 flex items-center gap-1">
+                        <ShieldAlert className="w-3.5 h-3.5" /> Critical Vulnerabilities
+                      </span>
+                      {data.risks.slice(0, 2).map((risk, i) => (
+                        <div key={i} className="text-xs space-y-0.5 border-b border-rose-500/10 pb-1.5 last:border-0 last:pb-0">
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="font-semibold text-foreground text-[11px] truncate">{risk.title}</span>
+                            <span className="text-[9px] px-1 rounded bg-rose-500/20 text-rose-300 font-mono">
+                              {risk.severity}
+                            </span>
+                          </div>
+                          {risk.mitigation && (
+                            <p className="text-[10.5px] text-rose-200/80 leading-tight">
+                              🛡️ {risk.mitigation}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Probabilistic Stress Scenarios Grid (Bull / Base / Bear) */}
+                {(data.scenarios || data.marketOutlook?.scenarios) && (
+                  <div className="space-y-1.5 pt-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                      <Compass className="w-3.5 h-3.5 text-indigo-400" /> Stress Test Sensitivity Simulation Matrix:
+                    </span>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(data.scenarios || data.marketOutlook?.scenarios || []).map((sc, i) => (
+                        <div
+                          key={i}
+                          className={`p-2.5 rounded-xl border text-center space-y-0.5 ${
+                            i === 0
+                              ? 'bg-emerald-950/25 border-emerald-500/30 text-emerald-300'
+                              : i === 1
+                              ? 'bg-blue-950/25 border-blue-500/30 text-blue-300'
+                              : 'bg-rose-950/25 border-rose-500/30 text-rose-300'
+                          }`}
+                        >
+                          <div className="flex items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-tight">
+                            {i === 0 ? <ArrowUpRight className="w-3 h-3" /> : i === 2 ? <TrendingDown className="w-3 h-3" /> : <Layers className="w-3 h-3" />}
+                            <span className="truncate">{sc.name.split(' ')[0]} Case</span>
+                          </div>
+                          <span className="text-sm font-bold block">{sc.impact}</span>
+                          <span className="text-[9.5px] opacity-75 block font-mono">
+                            {sc.probability} probability
+                          </span>
+                          {sc.description && (
+                            <p className="text-[9.5px] text-muted-foreground line-clamp-2 pt-0.5 text-left leading-tight opacity-90">
+                              {sc.description}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Recommendations Roadmap */}
+                {data.recommendations && data.recommendations.length > 0 && (
+                  <div className="p-2.5 rounded-xl bg-black/20 border border-white/5 space-y-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                      <Target className="w-3.5 h-3.5 text-indigo-400" /> Actionable Execution Roadmap:
+                    </span>
+                    <div className="space-y-1">
+                      {data.recommendations.slice(0, 3).map((rec, i) => (
+                        <div key={i} className="flex items-center justify-between gap-2 text-[11px] p-1.5 rounded-lg bg-white/[0.02]">
+                          <span className="font-medium text-foreground truncate">{rec.title}</span>
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            {rec.timeframe && (
+                              <span className="text-[9px] px-1.5 py-0.2 rounded bg-white/5 text-muted-foreground font-mono">
+                                {rec.timeframe}
+                              </span>
+                            )}
+                            <span className="text-[9px] px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-mono">
+                              {rec.priority || 'High'}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {/* ══════════════════════════════════════════════════════════════════
+                4. AGENT 4: SYNTHESIS DIRECTOR OUTPUT STREAM
+               ══════════════════════════════════════════════════════════════════ */}
+            {runningAgentId === 'synthesis_director' && (
+              <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="p-3 rounded-xl bg-purple-950/20 border border-purple-500/30 text-xs space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-bold text-foreground flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
+                    Compiling Executive Intelligence Dossier
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-mono">
+                    SEBI Compliant
+                  </span>
+                </div>
+                <p className="text-muted-foreground text-[11.5px] leading-relaxed">
+                  Reconciling quantitative risk scores, real-time market data grounding, and strategic rebalancing steps into the publication-grade executive report...
+                </p>
               </motion.div>
             )}
           </div>

@@ -33,28 +33,86 @@ export type ActivityType =
   | 'pipeline_completed';
 
 export interface AgentStructuredOutput {
-  // Quantitative metrics (Agent 1)
+  // Agent 1: Portfolio Analyst
   healthScore?: number;
   healthStatus?: string;
-  strengths?: string[];
-  weaknesses?: string[];
+  healthSummary?: string;
+  healthReasons?: string[];
+  allocationCommentary?: string;
+  cashFlowHealth?: string;
+  concentrationRisk?: string;
+  topStrengths?: string[];
+  topWeaknesses?: string[];
   
-  // Market grounding (Agent 2)
+  // Agent 2: Macro Analyst
   marketStatus?: string;
   marketQuotes?: string;
   marketSummary?: string;
+  keyDrivers?: string[];
+  niftyTrend?: string;
+  rbiStance?: string;
+  fiiDiiFlow?: string;
+  sectorOutlook?: Record<string, string>;
+  impactOnEquity?: string;
+  impactOnBonds?: string;
+  impactOnPortfolio?: string;
   topHeadline?: string;
   searchSource?: string;
   
-  // Strategy & Actions (Agent 3)
-  opportunities?: { title: string; priority: string; category?: string }[];
-  risks?: { title: string; severity: string }[];
-  recommendations?: { title: string; timeframe?: string; priority?: string }[];
+  // Agent 3: Strategy & Opportunities
+  opportunities?: {
+    title: string;
+    priority: string;
+    category?: string;
+    description?: string;
+    actionable?: string;
+    evidence?: string;
+  }[];
+  risks?: {
+    title: string;
+    severity: string;
+    description?: string;
+    mitigation?: string;
+  }[];
+  recommendations?: {
+    title: string;
+    action?: string;
+    priority?: string;
+    timeframe?: string;
+    category?: string;
+    targetAsset?: string;
+  }[];
+  longTermStrategy?: string;
   
-  // Scenarios & Risk (Agent 4)
-  scenarios?: { name: string; probability: string; impact: string; description?: string }[];
-  sentiment?: string;
-  diversificationGrade?: string;
+  // Agent 4: Risk & Scenarios
+  diversification?: {
+    score?: number;
+    grade?: string;
+    hhi?: number;
+    strengths?: string[];
+    weaknesses?: string[];
+    suggestion?: string;
+  };
+  marketOutlook?: {
+    sentiment?: string;
+    shortTerm?: string;
+    mediumTerm?: string;
+    scenarios?: {
+      name: string;
+      probability: string;
+      impact: string;
+      description?: string;
+    }[];
+  };
+  scenarios?: {
+    name: string;
+    probability: string;
+    impact: string;
+    description?: string;
+  }[];
+
+  // Additional generic output fields
+  rawOutput?: Record<string, unknown>;
 }
 
 export interface AgentActivityEvent {

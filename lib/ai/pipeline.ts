@@ -744,8 +744,14 @@ export async function buildAIInsights(
     structuredData: {
       healthScore: parsed1.healthScore,
       healthStatus: parsed1.healthStatus,
-      strengths: parsed1.topStrengths?.slice(0, 2),
-      weaknesses: parsed1.topWeaknesses?.slice(0, 2),
+      healthSummary: parsed1.healthSummary,
+      healthReasons: parsed1.healthReasons,
+      allocationCommentary: parsed1.allocationCommentary,
+      cashFlowHealth: parsed1.cashFlowHealth,
+      concentrationRisk: parsed1.concentrationRisk,
+      topStrengths: parsed1.topStrengths,
+      topWeaknesses: parsed1.topWeaknesses,
+      rawOutput: parsed1,
     },
   });
   emit('portfolio_analyst', 'agent_completed', 'Portfolio Analyst completed', { status: 'completed' });
@@ -780,6 +786,15 @@ export async function buildAIInsights(
     structuredData: {
       marketStatus: parsed2.marketStatus,
       marketSummary: parsed2.marketSummary,
+      keyDrivers: parsed2.keyDrivers,
+      niftyTrend: parsed2.niftyTrend,
+      rbiStance: parsed2.rbiStance,
+      fiiDiiFlow: parsed2.fiiDiiFlow,
+      sectorOutlook: parsed2.sectorOutlook,
+      impactOnEquity: parsed2.impactOnEquity,
+      impactOnBonds: parsed2.impactOnBonds,
+      impactOnPortfolio: parsed2.impactOnPortfolio,
+      rawOutput: parsed2,
     },
   });
   emit('macro_market_analyst', 'agent_completed', 'Macro & Market Analyst completed', { status: 'completed' });
@@ -808,9 +823,11 @@ export async function buildAIInsights(
     tool: 'strategy_engine',
     description: `Identified ${parsed3.opportunities?.length || 0} Opportunities & ${parsed3.risks?.length || 0} Key Risks`,
     structuredData: {
-      opportunities: (parsed3.opportunities || []).slice(0, 2).map((o: any) => ({ title: o.title, priority: o.priority, category: o.category })),
-      risks: (parsed3.risks || []).slice(0, 2).map((r: any) => ({ title: r.title, severity: r.severity })),
-      recommendations: (parsed3.recommendations || []).slice(0, 3).map((rc: any) => ({ title: rc.title, timeframe: rc.timeframe, priority: rc.priority })),
+      opportunities: parsed3.opportunities,
+      risks: parsed3.risks,
+      recommendations: parsed3.recommendations,
+      longTermStrategy: parsed3.longTermStrategy,
+      rawOutput: parsed3,
     },
   });
   emit('risk_strategy_engine', 'stage_started', 'Simulating probabilistic market scenarios (Bull, Base, Bear)', {
@@ -828,9 +845,12 @@ export async function buildAIInsights(
     tool: 'scenario_modeler',
     description: `Market Sentiment: ${parsed4.marketOutlook?.sentiment || 'Cautious'} · Diversification Grade: ${parsed4.diversification?.grade || 'Good'}`,
     structuredData: {
+      diversification: parsed4.diversification,
+      marketOutlook: parsed4.marketOutlook,
       scenarios: parsed4.marketOutlook?.scenarios || [],
       sentiment: parsed4.marketOutlook?.sentiment,
       diversificationGrade: parsed4.diversification?.grade,
+      rawOutput: parsed4,
     },
   });
   emit('risk_strategy_engine', 'agent_completed', 'Risk & Strategy Engine completed', { status: 'completed' });
