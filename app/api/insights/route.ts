@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { auth } from '@/auth';
+import { buildAIInsights, type PortfolioInput } from '@/lib/ai/pipeline';
+import type { AgentActivityEvent } from '@/types/agent-activity';
 
-// Rate-limit: one Gemini call per 15-min window (same as data refresh)
-let insightCache: { prompt_hash: string; result: any; fetchedAt: number } | null = null;
+// Cache: 15-minute window, keyed by payload hash
+let insightCache: { prompt_hash: string; result: unknown; fetchedAt: number } | null = null;
 const CACHE_MS = 15 * 60 * 1000;
 
 function hashString(s: string): string {
@@ -14,91 +15,91 @@ function hashString(s: string): string {
   return String(h >>> 0);
 }
 
+export async function GET() {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized', insights: null }, { status: 401 });
+  }
+
+  if (insightCache) {
+    return NextResponse.json({ insights: insightCache.result, cached: true });
+  }
+
+  return NextResponse.json({ insights: null, cached: false });
+}
+
 export async function POST(request: NextRequest) {
   const session = await auth();
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized', insights: null }, { status: 401 });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
+  const insightsKey = process.env.GEMINI_INSIGHTS_API_KEY || process.env.GEMINI_API_KEY;
+  if (!insightsKey) {
     return NextResponse.json(
-      { error: 'GEMINI_API_KEY not configured', insights: null },
+      { error: 'No Gemini API key configured (GEMINI_INSIGHTS_API_KEY or GEMINI_API_KEY)', insights: null },
       { status: 503 }
     );
   }
 
   try {
-    const body = await request.json();
-    const promptHash = hashString(JSON.stringify(body));
+    const body: PortfolioInput & { force?: boolean } = await request.json();
+    const { force, ...inputPayload } = body;
+    const promptHash = hashString(JSON.stringify(inputPayload));
 
-    // Serve from cache if within window
-    if (insightCache && insightCache.prompt_hash === promptHash &&
-        Date.now() - insightCache.fetchedAt < CACHE_MS) {
+    // Serve from server cache if not forced and within cache window
+    if (
+      !force &&
+      insightCache &&
+      insightCache.prompt_hash === promptHash &&
+      Date.now() - insightCache.fetchedAt < CACHE_MS
+    ) {
       return NextResponse.json({ insights: insightCache.result, cached: true });
     }
 
-    const { equitySummary, bondSummary, cashFlowSummary, allocationSummary } = body;
+    // Server-Sent Events (SSE) stream for live agent activity execution
+    const encoder = new TextEncoder();
+    const stream = new TransformStream();
+    const writer = stream.writable.getWriter();
 
-    const prompt = `You are a personal finance advisor analyzing an Indian investment portfolio.
-
-Portfolio Summary:
-${JSON.stringify({ equitySummary, bondSummary, cashFlowSummary, allocationSummary }, null, 2)}
-
-Provide a concise analysis and return ONLY valid JSON matching this schema:
-{
-  "health": {
-    "score": number (0-100),
-    "summary": "1 sentence overall summary",
-    "status": "Excellent" | "Good" | "Fair" | "Poor"
-  },
-  "allocation": {
-    "equity": number,
-    "bonds": number,
-    "gold": number,
-    "cash": number
-  },
-  "opportunities": [
-    {
-      "title": "Short title",
-      "description": "Specific actionable suggestion",
-      "priority": "High" | "Medium" | "Low"
-    }
-  ],
-  "risks": [
-    {
-      "title": "Short title",
-      "description": "Risk description",
-      "severity": "High" | "Medium" | "Low"
-    }
-  ],
-  "cashFlow": {
-    "investment": number,
-    "expenses": number,
-    "net": number,
-    "summary": "1 sentence summary of cashflow"
-  },
-  "recommendations": ["string", "string"],
-  "summary": "Overall portfolio executive summary"
-}
-
-Ensure gold and cash are 0 if no data is provided. Never return markdown formatting or explanations outside the JSON object.`;
-
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-    const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: {
-        responseMimeType: 'application/json',
+    const sendEvent = async (data: object) => {
+      try {
+        await writer.write(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+      } catch (e) {
+        console.warn('[api/insights/stream] Write error:', e);
       }
-    });
-    const text = result.response.text();
-    const parsedJSON = JSON.parse(text);
+    };
 
-    insightCache = { prompt_hash: promptHash, result: parsedJSON, fetchedAt: Date.now() };
-    return NextResponse.json({ insights: parsedJSON, cached: false });
+    // Execute multi-agent workflow and stream operational telemetry
+    (async () => {
+      try {
+        const insights = await buildAIInsights(inputPayload as PortfolioInput, (event: AgentActivityEvent) => {
+          sendEvent({ type: 'agent_event', event });
+        });
+
+        insightCache = { prompt_hash: promptHash, result: insights, fetchedAt: Date.now() };
+        await sendEvent({ type: 'pipeline_completed', insights, cached: false });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'AI pipeline error';
+        console.error('[api/insights/stream] Execution error:', message);
+        await sendEvent({ type: 'pipeline_failed', error: message });
+      } finally {
+        try {
+          await writer.close();
+        } catch {}
+      }
+    })();
+
+    return new Response(stream.readable, {
+      headers: {
+        'Content-Type': 'text/event-stream; charset=utf-8',
+        'Cache-Control': 'no-cache, no-transform',
+        Connection: 'keep-alive',
+      },
+    });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Gemini API error';
+    const message = err instanceof Error ? err.message : 'AI pipeline error';
+    console.error('[api/insights]', message);
     return NextResponse.json({ error: message, insights: null }, { status: 500 });
   }
 }

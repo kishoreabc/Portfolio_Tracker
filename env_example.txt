@@ -4,8 +4,10 @@ GOOGLE_SHEETS_API_KEY=""
 
 # Gemini AI (optional — only needed for AI Insights page)
 GEMINI_API_KEY=""
+GEMINI_INSIGHTS_API_KEY="" # Dedicated key for AI Insights agentic workflow (fallback to GEMINI_API_KEY)
 GEMINI_EMBEDDING_API_KEY=""
 GROQ_API_KEY = ""
+TAVILY_API_KEY="" # Optional: Tavily AI Search API for token-efficient real-time web grounding
 
 AUTH_SECRET=""
 
@@ -22,8 +24,8 @@ LOGIN_USERNAME=
 LOGIN_PASSWORD=
 
 # ── Financial News Platform ───────────────────────────────────────────────────
-GEMINI_MODEL="gemini-3.5-flash-lite,gemini:gemini-3.1-flash-lite,gemini:gemini-2.5-flash,gemini:gemini-2.5-flash-lite,gemini:gemini-3-flash,gemini:gemini-3.6-flash"
-FALLBACK_MODELS="groq:llama-3.3-70b-versatile,groq:mixtral-8x7b-32768"
+GEMINI_MODEL="gemini-3.1-flash-lite, gemini-3.5-flash-lite, gemini-3.7-flash, gemini-3.6-flash, gemini-3.5-flash"
+FALLBACK_MODELS="openai/gpt-oss-120b, qwen/qwen3.6-27b, groq:llama-3.1-70b-versatile"
 
 
 

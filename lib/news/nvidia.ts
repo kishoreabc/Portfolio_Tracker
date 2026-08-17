@@ -52,8 +52,8 @@ function getLLMChain(options?: { temperature?: number }) {
   if (process.env.FALLBACK_MODELS) {
     const fallbackSpecs = process.env.FALLBACK_MODELS.split(',').map(s => s.trim()).filter(Boolean);
     modelSpecs.push(...fallbackSpecs);
-  } else if (modelSpecs.length === 1) {
-    modelSpecs.push('groq:llama-3.3-70b-versatile');
+  } else if (modelSpecs.length <= 1) {
+    modelSpecs.push('groq:openai/gpt-oss-120b', 'groq:qwen/qwen3.6-27b');
   }
 
   if (modelSpecs.length === 0) {
@@ -66,38 +66,63 @@ function getLLMChain(options?: { temperature?: number }) {
 
 export class ModelManager {
   private models: { llm: BaseChatModel; blacklistedUntil: number }[];
+  private currentIndex: number = 0;
+  private lastCallTimestamp: number = 0;
 
   constructor(llms: BaseChatModel[]) {
-    this.models = llms.map(llm => ({ llm, blacklistedUntil: 0 }));
+    this.models = llms.map((llm) => ({ llm, blacklistedUntil: 0 }));
+  }
+
+  async applyPacingDelay(minIntervalMs = 1200): Promise<void> {
+    const now = Date.now();
+    const elapsed = now - this.lastCallTimestamp;
+    if (elapsed < minIntervalMs) {
+      const waitTime = minIntervalMs - elapsed;
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
+    }
+    this.lastCallTimestamp = Date.now();
   }
 
   async getNextModel(): Promise<{ model: BaseChatModel; index: number; total: number }> {
     const total = this.models.length;
-    
+    const now = Date.now();
+
     // Check if ALL models are currently blacklisted
-    const allBlacklisted = this.models.every(m => m.blacklistedUntil > Date.now());
+    const allBlacklisted = this.models.every((m) => m.blacklistedUntil > now);
     if (allBlacklisted) {
-      console.warn('[ModelManager] All models rate-limited. Waiting 10 seconds before circular retry...');
-      await new Promise(r => setTimeout(r, 10000));
+      const remainingTimes = this.models.map((m) => Math.max(1000, m.blacklistedUntil - now));
+      const minWait = Math.min(...remainingTimes, 10_000);
+      console.warn(
+        `[ModelManager] All ${total} models rate-limited. Waiting ${(minWait / 1000).toFixed(1)}s before circular retry...`
+      );
+      await new Promise((r) => setTimeout(r, minWait));
       // Reset all blacklists to force a circular retry
-      this.models.forEach(m => m.blacklistedUntil = 0);
+      this.models.forEach((m) => (m.blacklistedUntil = 0));
     }
 
-    // Always start checking from index 0 to prioritize earlier models
-    for (let index = 0; index < total; index++) {
+    // Circular search starting from currentIndex
+    for (let step = 0; step < total; step++) {
+      const index = (this.currentIndex + step) % total;
       const status = this.models[index];
-      
+
       if (status.blacklistedUntil <= Date.now()) {
+        this.currentIndex = (index + 1) % total;
         return { model: status.llm, index, total };
       }
     }
-    
-    return { model: this.models[0].llm, index: 0, total };
+
+    const fallbackIdx = this.currentIndex % total;
+    this.currentIndex = (fallbackIdx + 1) % total;
+    return { model: this.models[fallbackIdx].llm, index: fallbackIdx, total };
   }
 
-  blacklist(index: number, durationMs: number = 60000) {
-    this.models[index].blacklistedUntil = Date.now() + durationMs;
-    console.warn(`[ModelManager] Model ${index + 1}/${this.models.length} blacklisted for ${durationMs/1000}s`);
+  blacklist(index: number, durationMs: number = 60000, reason = 'Rate limit') {
+    if (index >= 0 && index < this.models.length) {
+      this.models[index].blacklistedUntil = Date.now() + durationMs;
+      console.warn(
+        `[ModelManager] Model ${index + 1}/${this.models.length} blacklisted for ${durationMs / 1000}s [Reason: ${reason}]`
+      );
+    }
   }
 }
 

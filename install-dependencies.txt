@@ -1,0 +1,69 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Portfolio Tracker — Complete Dependency Installation Guide
+# ─────────────────────────────────────────────────────────────────────────────
+# Run these commands from the /dashboard directory
+# Requires: Node.js 18+ and npm 9+
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── 1. Install ALL dependencies at once ──────────────────────────────────────
+# (use this if setting up from scratch after cloning)
+
+npm install
+
+# ── 2. Individual dependency groups (for reference) ──────────────────────────
+
+# Core framework
+npm install next@16.2.10 react@19.2.4 react-dom@19.2.4
+
+# Auth
+npm install next-auth@^5.0.0-beta.31
+
+# UI / Design
+npm install framer-motion lucide-react recharts lightweight-charts @radix-ui/react-dialog @base-ui/react cmdk class-variance-authority clsx tailwind-merge
+
+# Data fetching
+npm install @tanstack/react-query @tanstack/react-query-devtools
+
+# Database / Backend
+npm install @supabase/supabase-js
+
+# AI / LLM stack
+npm install @google/generative-ai @langchain/core @langchain/google-genai @langchain/groq
+
+# PDF generation (AI Insights report export)
+npm install pdfmake @types/pdfmake
+
+# Data / Parsing
+npm install yahoo-finance2 rss-parser date-fns node-html-parser
+
+# Dev dependencies
+npm install -D typescript @types/node @types/react @types/react-dom tailwindcss @tailwindcss/postcss postcss eslint eslint-config-next
+
+# ── 3. Required Environment Variables ────────────────────────────────────────
+# Copy env_example.txt to .env.local and fill in the values:
+#
+# GOOGLE_SHEET_ID                — Google Sheets document ID
+# GOOGLE_SHEETS_API_KEY          — Google Sheets API key (read-only)
+# GEMINI_API_KEY                 — Primary Gemini AI key (news, general)
+# GEMINI_INSIGHTS_API_KEY        — Dedicated Gemini key for AI Insights pipeline
+# GEMINI_EMBEDDING_API_KEY       — Gemini key for news vector embeddings
+# GROQ_API_KEY                   — Groq fallback LLM key
+# AUTH_SECRET                    — NextAuth secret (run: openssl rand -hex 32)
+# AUTH_URL                       — App base URL (http://localhost:3000 for local)
+# GOOGLE_CLIENT_ID               — OAuth 2.0 client ID
+# GOOGLE_CLIENT_SECRET           — OAuth 2.0 client secret
+# ALLOWED_EMAILS                 — Comma-separated allowed login emails
+# LOGIN_USERNAME                 — Basic auth username
+# LOGIN_PASSWORD                 — Basic auth password
+# GEMINI_MODEL                   — Primary model(s) e.g. gemini-2.5-flash
+# FALLBACK_MODELS                — Fallback model(s) e.g. groq:llama-3.3-70b-versatile
+# CRON_SECRET                    — Secret for cron job authentication
+# SUPABASE_URL                   — Supabase project URL
+# SUPABASE_SERVICE_ROLE_KEY      — Supabase service role key (server-only)
+# RSS_URL                        — RSS feed URL for news sync
+# NEWS_SYNC_BATCH_SIZE           — How many articles to process per sync (default: 5)
+# MAX_NVIDIA_CONCURRENCY         — Max parallel AI calls for news (default: 2)
+# NEWS_SEARCH_TOP_K              — Max vector search results (default: 20)
+
+# ── 4. Dev server ─────────────────────────────────────────────────────────────
+npm run dev

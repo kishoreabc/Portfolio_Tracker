@@ -18,6 +18,7 @@ function NewsContent() {
   const pathname = usePathname();
   const query = searchParams.get('q');
   const isSemantic = searchParams.get('semantic') === 'true';
+  const sortBy = searchParams.get('sortBy') || 'date';
 
   // If there's a search query, use the search hook
   const searchResult = useNewsSearch(query || '', isSemantic);
@@ -32,7 +33,19 @@ function NewsContent() {
   const newsResult = useNews(filters);
 
   const activeResult = query ? searchResult : newsResult;
-  const articles = query ? searchResult.data?.articles || [] : newsResult.data?.articles || [];
+  const rawArticles = query ? searchResult.data?.articles || [] : newsResult.data?.articles || [];
+  
+  // Default search display: sort by date (newest first)
+  const articles = query
+    ? [...rawArticles].sort((a, b) => {
+        if (sortBy === 'date') {
+          const dateA = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
+          const dateB = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
+          return dateB - dateA;
+        }
+        return 0; // relevance keeps default order (similarity for semantic search)
+      })
+    : rawArticles;
 
   const total = !query ? (newsResult.data?.total || 0) : 0;
   const limit = 20;
@@ -45,6 +58,12 @@ function NewsContent() {
     router.push(`${pathname}?${params.toString()}`);
   };
 
+  const handleSortChange = (newSortBy: 'date' | 'relevance') => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('sortBy', newSortBy);
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
   return (
     <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto">
       {/* Controls */}
@@ -53,7 +72,23 @@ function NewsContent() {
           <NewsSearch />
         </div>
         <div className="flex items-center gap-4 w-full md:w-auto">
-          {!query && <NewsFilters />}
+          {query ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-slate-400">Sort:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => handleSortChange(e.target.value as 'date' | 'relevance')}
+                className="px-3 py-1.5 rounded-lg text-sm font-medium bg-white/5 border border-white/10 text-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
+              >
+                <option className="bg-slate-900 text-slate-200" value="date">Newest First</option>
+                {isSemantic && (
+                  <option className="bg-slate-900 text-slate-200" value="relevance">Most Relevant</option>
+                )}
+              </select>
+            </div>
+          ) : (
+            <NewsFilters />
+          )}
           <RefreshDatabaseButton />
         </div>
       </div>

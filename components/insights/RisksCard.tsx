@@ -14,6 +14,15 @@ export function RisksCard({ data }: { data?: Risk[] }) {
     }
   };
 
+  const getDotColor = (severity: string) => {
+    switch (severity) {
+      case 'High': return 'bg-red-400';
+      case 'Medium': return 'bg-amber-400';
+      case 'Low': return 'bg-green-400';
+      default: return 'bg-slate-400';
+    }
+  };
+
   return (
     <Card className="border-border/50 h-full bg-gradient-to-bl from-card to-red-950/5">
       <CardHeader className="pb-4 flex flex-row items-center gap-2">
@@ -22,14 +31,25 @@ export function RisksCard({ data }: { data?: Risk[] }) {
       </CardHeader>
       <CardContent className="space-y-3">
         {data.map((risk, i) => (
-          <div key={i} className="p-3 rounded-lg bg-white/5 border border-white/5">
-            <div className="flex items-center justify-between gap-3 mb-1">
-              <h4 className="text-body font-semibold text-foreground">{risk.title}</h4>
-              <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-sm border ${getSeverityColor(risk.severity)}`}>
+          <div key={i} className="p-3 rounded-lg bg-white/5 border border-white/5 space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${getDotColor(risk.severity)}`} />
+                <h4 className="text-body font-semibold text-foreground">{risk.title}</h4>
+              </div>
+              <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-sm border flex-shrink-0 ${getSeverityColor(risk.severity)}`}>
                 {risk.severity}
               </span>
             </div>
-            <p className="text-sm text-muted-foreground">{risk.description}</p>
+            <p className="text-sm text-muted-foreground pl-4">{risk.description}</p>
+            {risk.evidence && (
+              <p className="text-xs text-red-400/70 pl-4 italic">📊 {risk.evidence}</p>
+            )}
+            {risk.mitigation && (
+              <div className="ml-4 px-2.5 py-1.5 rounded-md bg-emerald-500/5 border border-emerald-500/15">
+                <p className="text-xs text-emerald-400 font-medium">🛡 {risk.mitigation}</p>
+              </div>
+            )}
           </div>
         ))}
       </CardContent>

@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Lightbulb, ArrowRight } from 'lucide-react';
+import { Lightbulb } from 'lucide-react';
 import type { Opportunity } from '@/types/insights';
 
 export function OpportunitiesCard({ data }: { data?: Opportunity[] }) {
@@ -26,11 +26,19 @@ export function OpportunitiesCard({ data }: { data?: Opportunity[] }) {
             <div className="absolute w-2 h-2 rounded-full bg-amber-400 -left-[4.5px] top-1.5 shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
             <div className="flex items-start justify-between gap-4 mb-1">
               <h4 className="text-body font-semibold text-foreground">{opp.title}</h4>
-              <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-sm border ${getPriorityColor(opp.priority)}`}>
+              <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-sm border flex-shrink-0 ${getPriorityColor(opp.priority)}`}>
                 {opp.priority}
               </span>
             </div>
             <p className="text-sm text-muted-foreground/90">{opp.description}</p>
+            {opp.evidence && (
+              <p className="text-xs text-amber-400/70 mt-1.5 italic">📊 {opp.evidence}</p>
+            )}
+            {opp.action && (
+              <div className="mt-2 px-2.5 py-1.5 rounded-md bg-amber-500/5 border border-amber-500/15">
+                <p className="text-xs text-amber-300 font-medium">→ {opp.action}</p>
+              </div>
+            )}
           </div>
         ))}
       </CardContent>

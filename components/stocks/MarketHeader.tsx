@@ -61,7 +61,11 @@ export const MarketHeader = memo(function MarketHeader({ symbol, quote, performa
         const ts = typeof updatedAt === 'number'
           ? new Date((updatedAt as number) * 1000)
           : new Date(updatedAt as string);
-        return ts.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+        const isToday = ts.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }) ===
+          new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+        return isToday
+          ? ts.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+          : `${ts.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}, ${ts.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
       })()
     : null;
 

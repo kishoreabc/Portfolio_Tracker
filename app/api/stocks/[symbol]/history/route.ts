@@ -10,8 +10,8 @@ export const dynamic = 'force-dynamic';
 function getPeriod1(range: string): Date {
   const now = new Date();
   switch (range) {
-    case '1d':   return new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000); // 2 days for intraday
-    case '5d':   return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    case '1d':   return new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000); // 10 days to handle holidays & long weekends
+    case '5d':   return new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000); // 14 days to ensure 5 trading days
     case '1mo':  return new Date(now.getTime() - 35 * 24 * 60 * 60 * 1000);
     case '3mo':  return new Date(now.getTime() - 95 * 24 * 60 * 60 * 1000);
     case '6mo':  return new Date(now.getTime() - 190 * 24 * 60 * 60 * 1000);
@@ -67,10 +67,18 @@ export async function GET(
       const interval = getInterval(range);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const historical = await (yahooFinance.chart as any)(yahooSymbol, {
+      let historical = await (yahooFinance.chart as any)(yahooSymbol, {
         period1,
         interval,
       }, { validateResult: false }) as { quotes?: Array<{ date: Date; open?: number; high?: number; low?: number; close?: number; volume?: number }> } | null;
+
+      // Fallback for 1d if 5m returned no quotes (e.g. illiquid stock or extended holiday)
+      if (range === '1d' && (!historical?.quotes || historical.quotes.length === 0)) {
+        historical = await (yahooFinance.chart as any)(yahooSymbol, {
+          period1: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
+          interval: '15m',
+        }, { validateResult: false });
+      }
 
       if (historical?.quotes?.length) {
         let candles = historical.quotes
@@ -82,7 +90,8 @@ export async function GET(
             low: Number(q.low?.toFixed(2)),
             close: Number(q.close?.toFixed(2)),
             volume: q.volume ?? 0,
-          }));
+          }))
+          .sort((a, b) => a.time - b.time);
 
         if (range === '1d' && candles.length > 0) {
           const lastCandle = candles[candles.length - 1];
@@ -92,8 +101,10 @@ export async function GET(
           });
         }
 
-        result = { symbol: yahooSymbol, range, candles };
-        break;
+        if (candles.length > 0) {
+          result = { symbol: yahooSymbol, range, candles };
+          break;
+        }
       }
     } catch {
       // try next suffix

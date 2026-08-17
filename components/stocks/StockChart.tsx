@@ -454,7 +454,12 @@ export const StockChart = memo(function StockChart({
         topLabel = d.toLocaleString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
       } else {
         if (timeRange === '1d') {
-          topLabel = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) + ' • ₹' + candle.close.toFixed(2);
+          const isToday = d.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }) ===
+            new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+          const timeStr = isToday
+            ? d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+            : `${d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}, ${d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
+          topLabel = `${timeStr} • ₹${candle.close.toFixed(2)}`;
         } else {
           topLabel = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) + ' • ₹' + candle.close.toFixed(2);
         }
