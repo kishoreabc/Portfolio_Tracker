@@ -164,22 +164,22 @@ export default function DashboardPage() {
           <KpiCard
             id="kpi-today-target"
             title="Today's Target"
-            value={isLoading ? '—' : formatINR(Math.abs(todaysTarget - todaysInvestment))}
+            value={isLoading ? '—' : formatINR(Math.min(Math.max(0, todaysTarget - todaysInvestment),Math.max(0, monthTarget - thisMonthInvestment)))}
             subValue={isLoading ? undefined : `Target: ${formatINR(todaysTarget)}`}
             icon={Target}
             isLoading={isLoading}
             href="/cashflow"
-            valueClassName={!isLoading && (todaysTarget - todaysInvestment) < 0 ? 'text-red-400' : ''}
+            valueClassName="text-white"
           />
           <KpiCard
             id="kpi-month-target"
             title="Month Target"
-            value={isLoading ? '—' : formatINR(Math.abs(monthTarget - thisMonthInvestment))}
+            value={isLoading ? '—' : formatINR(Math.max(0, monthTarget - thisMonthInvestment))}
             subValue={isLoading ? undefined : `Target: ${formatINR(monthTarget)}`}
             icon={Target} 
             isLoading={isLoading}
             href="/cashflow"
-            valueClassName={!isLoading && (monthTarget - thisMonthInvestment) < 0 ? 'text-red-400' : ''}
+            valueClassName="text-white"
           />
         </motion.div>
 

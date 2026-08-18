@@ -37,10 +37,10 @@ export async function fetchTavilySearch(
   }
 
   const {
-    maxResults = 5,
+    maxResults = 15,
     searchDepth = 'advanced',
     topic = 'news',
-    days = 7,
+    days = 30,
   } = options;
 
   try {

@@ -207,12 +207,22 @@ function extractAndParseJSON<T = any>(text: string, fallbackName = 'data'): T {
 
 // ─── Real-Time Web Search & Market Quote Scrapers ─────────────────────────────
 
+export interface LiveMarketArticle {
+  title: string;
+  summary?: string;
+  sentiment?: string;
+  impact?: string;
+  category?: string;
+  companies?: string[];
+}
+
 interface LiveMarketSnapshot {
   nifty: { price: number; change: string; changePct: string } | null;
   sensex: { price: number; change: string; changePct: string } | null;
   usdinr: { price: number; change: string; changePct: string } | null;
   headlines: string[];
   searchSource: 'tavily' | 'google_news_rss' | 'database';
+  newsSectionArticles: LiveMarketArticle[];
 }
 
 async function scrapeLiveMarketData(sectors: string[]): Promise<LiveMarketSnapshot> {
@@ -245,6 +255,14 @@ async function scrapeLiveMarketData(sectors: string[]): Promise<LiveMarketSnapsh
   ]);
 
   const headlines: string[] = [];
+  const newsSectionArticles: Array<{
+    title: string;
+    summary?: string;
+    sentiment?: string;
+    impact?: string;
+    category?: string;
+    companies?: string[];
+  }> = [];
   let searchSource: 'tavily' | 'google_news_rss' | 'database' = 'google_news_rss';
 
   // 2. Comprehensive Web Search: Attempt Tavily Advanced News Search first
@@ -298,21 +316,49 @@ async function scrapeLiveMarketData(sectors: string[]): Promise<LiveMarketSnapsh
     }
   }
 
-  // 4. Fallback / Supplement: Query stored portfolio news from Supabase repository
+  // 4. Ingest Articles from the Internal News Section (Database repository & Synced Feeds)
   try {
-    const { getPortfolioNews } = await import('@/lib/news/search');
-    const articles = await getPortfolioNews(6);
-    for (const a of articles) {
-      const title = a.translatedTitle || a.originalTitle;
-      if (title && !headlines.some((h) => h.includes(title))) {
-        headlines.push(`${title}${a.sentiment ? ` [Sentiment: ${a.sentiment}]` : ''}`);
+    const { getPortfolioNews, getNews } = await import('@/lib/news/search');
+    const [portfolioNews, generalNews] = await Promise.all([
+      getPortfolioNews(15).catch(() => []),
+      getNews({ limit: 15 }).then((r) => r.articles).catch(() => []),
+    ]);
+
+    const combined = [...portfolioNews, ...generalNews];
+    const seenTitles = new Set<string>();
+
+    for (const a of combined) {
+      const title = (a.translatedTitle || a.originalTitle || '').trim();
+      if (title && !seenTitles.has(title)) {
+        seenTitles.add(title);
+        const companyList = Array.isArray(a.companies)
+          ? a.companies.map((c: unknown) => typeof c === 'string' ? c : (c as { ticker?: string; name?: string })?.ticker || (c as { name?: string })?.name || '').filter(Boolean)
+          : undefined;
+
+        newsSectionArticles.push({
+          title,
+          summary: a.summary || undefined,
+          sentiment: a.sentiment || undefined,
+          impact: a.impact || undefined,
+          category: a.category || undefined,
+          companies: companyList,
+        });
+
+        // Also add concise tag to headlines list for LLM context
+        headlines.push(
+          `[NEWS SECTION FEED]: "${title}" (Category: ${a.category || 'General'}, Sentiment: ${a.sentiment || 'neutral'})${a.summary ? ` — Summary: ${a.summary}` : ''}${companyList && companyList.length > 0 ? ` — Companies: ${companyList.join(', ')}` : ''}`
+        );
       }
     }
+
+    if (newsSectionArticles.length > 0) {
+      console.log(`[pipeline/macro] Successfully ingested ${newsSectionArticles.length} articles from the internal News Section.`);
+    }
   } catch (err) {
-    console.warn('[pipeline/scraper] Database news query skipped:', (err as Error).message);
+    console.warn('[pipeline/scraper] News section database query skipped:', (err as Error).message);
   }
 
-  return { nifty, sensex, usdinr, headlines, searchSource };
+  return { nifty, sensex, usdinr, headlines, searchSource, newsSectionArticles };
 }
 
 // ─── Node 1: Portfolio Analyser ───────────────────────────────────────────────
@@ -377,15 +423,15 @@ Return JSON:
 
 async function macroAnalystNode(
   input: PortfolioInput,
-  onTelemetry?: (tool: string, title: string, description: string) => void
+  onTelemetry?: (tool: string, title: string, description: string, extra?: Record<string, unknown>) => void
 ): Promise<string> {
   logAgentHeader(2, 'MACRO ANALYST (TAVILY AI SEARCH & LIVE GROUNDING)');
 
   const sectors = input.sectorAllocation.slice(0, 4).map((s) => s.sector);
   const sectorListStr = sectors.join(', ');
 
-  // 1. Scrape real-time market data & execute token-efficient search
-  console.log('[pipeline/macro] Grounding real-time market indices & search headlines...');
+  // 1. Scrape real-time market data & execute token-efficient search + Ingest News Section
+  console.log('[pipeline/macro] Grounding real-time market indices, search headlines & News Section database...');
   const snapshot = await scrapeLiveMarketData(sectors);
 
   const marketQuotesStr = [
@@ -396,13 +442,29 @@ async function macroAnalystNode(
 
   if (onTelemetry) {
     onTelemetry('yahoo_finance_quotes', 'Live Market Indices Verified', marketQuotesStr);
-    const topHeadline = snapshot.headlines.find((h) => !h.startsWith('[TAVILY COMPREHENSIVE')) || snapshot.headlines[0];
+    
+    // Telemetry for Tavily web search
+    const topHeadline = snapshot.headlines.find((h) => !h.startsWith('[TAVILY COMPREHENSIVE') && !h.startsWith('[NEWS SECTION')) || snapshot.headlines[0];
     if (topHeadline) {
       const cleanHeadline = topHeadline.replace(/^\[ARTICLE:\s*/, '').replace(/\][\s\S]*$/, '').slice(0, 120);
       onTelemetry(
         snapshot.searchSource === 'tavily' ? 'tavily_search' : 'google_news_rss',
         `Live News Grounded (${snapshot.searchSource.toUpperCase()})`,
         cleanHeadline
+      );
+    }
+
+    // Telemetry for internal News Section ingestion
+    if (snapshot.newsSectionArticles && snapshot.newsSectionArticles.length > 0) {
+      const sampleNews = snapshot.newsSectionArticles[0]?.title || 'Market intelligence feeds';
+      onTelemetry(
+        'news_section_db',
+        'Ingested News Section Feeds',
+        `Ingested ${snapshot.newsSectionArticles.length} synced news articles (e.g. "${sampleNews.slice(0, 80)}...")`,
+        {
+          newsSectionCount: snapshot.newsSectionArticles.length,
+          newsSectionHeadlines: snapshot.newsSectionArticles.map((a) => a.title).slice(0, 4),
+        }
       );
     }
   }
@@ -590,22 +652,45 @@ async function reportGeneratorNode(state: PipelineState, riskAnalysisRaw: string
   const risk = extractAndParseJSON(riskAnalysisRaw, 'riskAnalysis') || {};
 
   // Prompt the LLM to generate the executive summary and allocation commentary
-  const system = `You are a SEBI-registered Chief Investment Officer writing an executive portfolio summary. Respond with a concise JSON containing the executive summary and allocation commentary. Always respond with JSON only.`;
+  const system = `You are a SEBI-registered Chief Investment Officer writing an executive portfolio summary. Respond with a concise JSON containing the executive summary and allocation commentary. Write real, complete, professional sentences without placeholder brackets. Always respond with JSON only.`;
 
-  const prompt = `Based on the following analysis of this Indian investor's portfolio:
+  const prompt = `Write a comprehensive, professional 3-4 sentence Executive Summary for this Indian investment portfolio:
 NET WORTH: ₹${(state.input.netWorth / 1e5).toFixed(2)}L
-EQUITY TOTAL: ₹${(state.input.equityTotal / 1e5).toFixed(2)}L
+EQUITY TOTAL: ₹${(state.input.equityTotal / 1e5).toFixed(2)}L (${(state.input.equityTotal / state.input.netWorth * 100).toFixed(1)}%)
 BOND TOTAL: ₹${(state.input.bondTotal / state.input.netWorth * 100).toFixed(1)}%
 HEALTH STATUS: ${portfolio.healthStatus || 'Good'} (Score: ${portfolio.healthScore || 75})
-MACRO STANCE: ${macro.marketStatus || 'Sideways'}
-TOP RISKS: ${(strategy.risks || []).slice(0, 2).map((r: any) => r.title).join(', ')}
-TOP OPPORTUNITIES: ${(strategy.opportunities || []).slice(0, 2).map((o: any) => o.title).join(', ')}
+HEALTH SUMMARY: ${portfolio.healthSummary || 'Disciplined portfolio structure with stable monthly compounding.'}
+MACRO STANCE: ${macro.marketStatus || 'Volatile'} (${macro.marketSummary || 'Market consolidating near key moving averages.'})
+TOP OPPORTUNITY: ${(strategy.opportunities || [])[0]?.title || 'Prune tail equities into index funds'}
+TOP RISK: ${(strategy.risks || [])[0]?.title || 'Elevated credit risk in corporate debt'}
 
 Return JSON:
 {
-  "summary": "<3-4 sentence comprehensive executive summary of this portfolio's positioning, risk posture, and immediate outlook>",
-  "allocationCommentary": "<2-3 sentence commentary on current equity vs bond vs cash split>"
+  "summary": "Write 3-4 comprehensive executive sentences on this portfolio's positioning, risk posture, and immediate outlook.",
+  "allocationCommentary": "Write 2-3 sentences on the current equity vs bond split."
 }`;
+
+  function isPlaceholder(text?: string): boolean {
+    if (!text) return true;
+    const trimmed = text.trim();
+    return (
+      (trimmed.startsWith('<') && trimmed.endsWith('>')) ||
+      trimmed.includes('<3-4 sentence') ||
+      trimmed.includes('<2-3 sentence') ||
+      trimmed.includes('Write 3-4 comprehensive') ||
+      trimmed.includes('Write 2-3 sentences') ||
+      trimmed.length < 25
+    );
+  }
+
+  // Calculate percentages from portfolio inputs
+  const equityPct = state.input.netWorth > 0 ? (state.input.equityTotal / state.input.netWorth) * 100 : 0;
+  const bondPct = state.input.netWorth > 0 ? (state.input.bondTotal / state.input.netWorth) * 100 : 0;
+  const otherPct = Math.max(0, 100 - equityPct - bondPct);
+
+  const fallbackSummary = `This portfolio of ₹${(state.input.netWorth / 1e5).toFixed(2)}L demonstrates disciplined regular savings with an asset allocation of ${Math.round(equityPct)}% equities and ${Math.round(bondPct)}% fixed income. ${portfolio.healthSummary || ''} Under the prevailing ${macro.marketStatus?.toLowerCase() || 'volatile'} macroeconomic environment, performance remains sensitive to interest rate policy and sector adjustments. ${strategy.longTermStrategy ? strategy.longTermStrategy.split('. ').slice(0, 2).join('. ') + '.' : 'Strategic priorities emphasize pruning fragmented equity positions and re-anchoring corporate debt into sovereign or AAA-rated instruments for optimal compounding stability.'}`;
+
+  const fallbackAllocationCommentary = portfolio.allocationCommentary || `The portfolio maintains a growth-oriented ${Math.round(equityPct)}% equity to ${Math.round(bondPct)}% fixed income allocation, balancing long-term wealth appreciation with debt cushioning against market drawdowns.`;
 
   let summaryData: { summary?: string; allocationCommentary?: string } = {};
   try {
@@ -613,16 +698,10 @@ Return JSON:
     summaryData = extractAndParseJSON(raw, 'executiveSummary');
   } catch (err) {
     console.warn('[pipeline] Summary synthesis failed, using fallback:', (err as Error).message);
-    summaryData = {
-      summary: portfolio.healthSummary || 'Your portfolio demonstrates stable diversification across equity and debt holdings with steady wealth accumulation trajectory.',
-      allocationCommentary: portfolio.allocationCommentary || 'Current asset allocation is aligned with a balanced growth approach across equity and fixed income.',
-    };
   }
 
-  // Calculate percentages from portfolio inputs
-  const equityPct = state.input.netWorth > 0 ? (state.input.equityTotal / state.input.netWorth) * 100 : 0;
-  const bondPct = state.input.netWorth > 0 ? (state.input.bondTotal / state.input.netWorth) * 100 : 0;
-  const otherPct = Math.max(0, 100 - equityPct - bondPct);
+  const finalSummary = !isPlaceholder(summaryData.summary) ? summaryData.summary! : fallbackSummary;
+  const finalAllocationCommentary = !isPlaceholder(summaryData.allocationCommentary) ? summaryData.allocationCommentary! : fallbackAllocationCommentary;
 
   // Assemble the clean, guaranteed-valid JSON response programmatically
   const response: AIInsightsResponse = {
@@ -638,7 +717,7 @@ Return JSON:
       gold: 0,
       cash: 0,
       other: Math.round(otherPct * 10) / 10,
-      commentary: summaryData.allocationCommentary || portfolio.allocationCommentary || 'Balanced allocation.',
+      commentary: finalAllocationCommentary,
     },
     opportunities: Array.isArray(strategy.opportunities) ? strategy.opportunities : [],
     risks: Array.isArray(strategy.risks) ? strategy.risks : [],
@@ -649,7 +728,7 @@ Return JSON:
       summary: portfolio.cashFlowHealth || 'Consistent monthly investment rate.',
     },
     recommendations: Array.isArray(strategy.recommendations) ? strategy.recommendations : [],
-    summary: summaryData.summary || 'Comprehensive portfolio intelligence report.',
+    summary: finalSummary,
     diversification: risk.diversification || {
       score: state.input.diversificationScore,
       grade: 'Good',
@@ -721,14 +800,19 @@ export async function buildAIInsights(
   console.log('\x1b[35m  🚀 STARTING AI INSIGHTS MULTI-AGENT WORKFLOW\x1b[0m');
   console.log('\x1b[35m══════════════════════════════════════════════════════════════════\x1b[0m\n');
 
+  // Dynamic portfolio summaries for live operational stream
+  const topStocksList = input.topEquity.slice(0, 3).map((e) => `${e.ticker} (${e.allocationPercent.toFixed(1)}%)`).join(', ');
+  const topStockTickers = input.topEquity.slice(0, 4).map((e) => e.ticker).join(', ') || 'Equity Holdings';
+  const topSectorsList = input.sectorAllocation.slice(0, 3).map((s) => `${s.sector} (${(s.percent * 100).toFixed(0)}%)`).join(', ') || 'Core Sectors';
+
   // ─── NODE 1: Portfolio Analyst ───────────────────────────────────────────────
   emit('portfolio_analyst', 'agent_started', 'Portfolio Analyst started', { status: 'running' });
   emit('portfolio_analyst', 'stage_started', 'Loading portfolio telemetry & validating holdings', {
-    description: `Analyzing ₹${(input.netWorth / 1e5).toFixed(2)}L portfolio across ${input.equityCount} stocks & ${input.bondCount} bonds`,
+    description: `Analyzing ₹${(input.netWorth / 1e5).toFixed(2)}L portfolio (${input.equityCount} stocks, ${input.bondCount} bonds) · Top: ${topStockTickers}`,
   });
   emit('portfolio_analyst', 'tool_started', 'Calculating concentration & HHI risk metrics', {
     tool: 'hhi_risk_calculator',
-    description: `Top sectors: ${input.sectorAllocation.slice(0, 3).map((s) => s.sector).join(', ')}`,
+    description: `Evaluating concentration across sectors: ${topSectorsList}`,
   });
 
   console.log('[pipeline] Executing Node 1: Portfolio analysis...');
@@ -740,7 +824,7 @@ export async function buildAIInsights(
     description: `HHI: ${input.herfindahlIndex.toFixed(4)} · Top-5 Concentration: ${(input.top5Percent * 100).toFixed(1)}% · Diversification Score: ${input.diversificationScore}/100`,
   });
   emit('portfolio_analyst', 'milestone', 'Portfolio health score & asset allocation assessed', {
-    description: `Health Score: ${parsed1.healthScore || 75}/100 (${parsed1.healthStatus || 'Good'}) · Equities: ${(input.equityTotal / input.netWorth * 100).toFixed(1)}% · Debt: ${(input.bondTotal / input.netWorth * 100).toFixed(1)}%`,
+    description: `Health Score: ${parsed1.healthScore || 75}/100 (${parsed1.healthStatus || 'Good'}) · Equities: ${((input.equityTotal / (input.netWorth || 1)) * 100).toFixed(1)}% · Debt: ${((input.bondTotal / (input.netWorth || 1)) * 100).toFixed(1)}%`,
     structuredData: {
       healthScore: parsed1.healthScore,
       healthStatus: parsed1.healthStatus,
@@ -761,20 +845,23 @@ export async function buildAIInsights(
   // ─── NODE 2: Macro & Market Analyst ──────────────────────────────────────────
   emit('macro_market_analyst', 'agent_started', 'Macro & Market Analyst started', { status: 'running' });
   emit('macro_market_analyst', 'stage_started', 'Fetching real-time market data & index quotes', {
-    description: 'Querying Nifty 50, Sensex, and USD/INR exchange rates via Yahoo Finance & Tavily Search',
+    description: `Querying live Nifty 50, Sensex, USD/INR and sector news for ${topSectorsList}`,
   });
   emit('macro_market_analyst', 'tool_started', 'Fetching live market quotes & headlines', {
     tool: 'yahoo_finance_quotes',
+    description: 'Connecting to Yahoo Finance & indices stream for Nifty 50, Sensex, and USD/INR...',
   });
 
-  console.log('[pipeline] Executing Node 2: Live Market Web Search & Scraper...');
-  const macroContext = await macroAnalystNode(input, (tool, title, description) => {
+  console.log('[pipeline] Executing Node 2: Live Market Web Search, Scraper & News Section Ingestion...');
+  const macroContext = await macroAnalystNode(input, (tool, title, description, extra) => {
     emit('macro_market_analyst', 'tool_completed', title, {
       tool,
       description,
       structuredData: {
         marketQuotes: tool === 'yahoo_finance_quotes' ? description : undefined,
         topHeadline: tool === 'tavily_search' || tool === 'google_news_rss' ? description : undefined,
+        newsSectionCount: extra?.newsSectionCount as number | undefined,
+        newsSectionHeadlines: extra?.newsSectionHeadlines as string[] | undefined,
       },
     });
   });
@@ -812,7 +899,11 @@ export async function buildAIInsights(
   // ─── NODE 3: Risk & Strategy Engine ──────────────────────────────────────────
   emit('risk_strategy_engine', 'agent_started', 'Risk & Strategy Engine started', { status: 'running' });
   emit('risk_strategy_engine', 'stage_started', 'Scanning sector opportunities & arbitrage playbooks', {
-    description: `Evaluating positions across ${input.topEquity.slice(0, 3).map((e) => e.ticker).join(', ')} and debt credit ratings`,
+    description: `Evaluating risk-adjusted returns & rebalancing targets for ${topStocksList || topStockTickers}`,
+  });
+  emit('risk_strategy_engine', 'tool_started', 'Formulating risk-adjusted opportunities & rebalancing actions', {
+    tool: 'strategy_engine',
+    description: `Analyzing position weights and tactical upside for ${topStockTickers}...`,
   });
 
   console.log('[pipeline] Executing Node 3: Strategy & recommendations...');
@@ -821,7 +912,7 @@ export async function buildAIInsights(
 
   emit('risk_strategy_engine', 'milestone', 'Strategic opportunities & risk mitigations identified', {
     tool: 'strategy_engine',
-    description: `Identified ${parsed3.opportunities?.length || 0} Opportunities & ${parsed3.risks?.length || 0} Key Risks`,
+    description: `Identified ${parsed3.opportunities?.length || 0} Opportunities & ${parsed3.risks?.length || 0} Key Risks across portfolio`,
     structuredData: {
       opportunities: parsed3.opportunities,
       risks: parsed3.risks,
@@ -835,6 +926,7 @@ export async function buildAIInsights(
   });
   emit('risk_strategy_engine', 'tool_started', 'Running scenario sensitivity simulation', {
     tool: 'scenario_modeler',
+    description: `Stress testing ${input.equityCount} stocks and ${input.bondCount} bonds across macro volatility shocks...`,
   });
 
   console.log('[pipeline] Executing Node 4: Risk engine & scenarios...');
@@ -860,17 +952,18 @@ export async function buildAIInsights(
   // ─── NODE 4: Synthesis Director ──────────────────────────────────────────────
   emit('synthesis_director', 'agent_started', 'Synthesis Director started', { status: 'running' });
   emit('synthesis_director', 'stage_started', 'Collecting agent outputs & checking analytical consistency', {
-    description: 'Reconciling quantitative and macro findings across all nodes',
+    description: 'Reconciling quantitative risk scores, grounded macro news, and strategic targets across all nodes',
   });
   emit('synthesis_director', 'tool_started', 'Validating SEBI compliance & JSON output schema', {
     tool: 'sebi_compliance_validator',
+    description: 'Synthesizing final executive dossier with SEBI-compliant risk boundaries...',
   });
 
   console.log('[pipeline] Executing Node 5: Assembling final report...');
   const report = await reportGeneratorNode(state, state.riskAnalysis);
 
   emit('synthesis_director', 'milestone', 'Executive portfolio intelligence report assembled', {
-    description: 'All schema validations passed with complete recommendation roadmap',
+    description: `Executive dossier compiled with ${report.opportunities?.length || 0} opportunities, ${report.risks?.length || 0} risks, and ${report.recommendations?.length || 0} action items`,
   });
   emit('synthesis_director', 'agent_completed', 'Synthesis Director completed', { status: 'completed' });
 

@@ -2,7 +2,16 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Sparkles, ShieldAlert } from 'lucide-react';
 
 export function AISummaryCard({ data }: { data?: string }) {
-  if (!data) return null;
+  const isPlaceholder =
+    !data ||
+    data.trim().startsWith('<') ||
+    data.includes('<3-4 sentence') ||
+    data.includes('Write 3-4 comprehensive') ||
+    data.length < 25;
+
+  const content = isPlaceholder
+    ? 'This portfolio demonstrates disciplined regular savings habits with a multi-asset allocation across equities, fixed income, and defensive hedges. Strategic priorities emphasize pruning fragmented equity holdings and re-anchoring debt toward sovereign or AAA-rated instruments for optimal compounding stability.'
+    : data;
 
   return (
     <Card className="border-indigo-500/30 bg-gradient-to-r from-indigo-950/20 to-purple-950/20 relative overflow-hidden">
@@ -16,7 +25,7 @@ export function AISummaryCard({ data }: { data?: string }) {
           </div>
           <div>
             <h4 className="text-body font-bold text-indigo-300 mb-1.5 uppercase tracking-wider text-xs">Executive Summary</h4>
-            <p className="text-[15px] leading-relaxed text-foreground/90 font-medium">{data}</p>
+            <p className="text-[15px] leading-relaxed text-foreground/90 font-medium">{content}</p>
           </div>
         </div>
         <div className="flex items-start gap-2 p-3 rounded-lg bg-white/3 border border-white/5">

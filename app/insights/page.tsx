@@ -70,6 +70,9 @@ export default function InsightsPage() {
   };
 
   const handleGenerate = async () => {
+    const sortedEquity = [...equity].sort((a, b) => (b.currentValue || 0) - (a.currentValue || 0));
+    const sortedBonds = [...bonds].sort((a, b) => (b.totalValue || 0) - (a.totalValue || 0));
+
     const payload: PortfolioInput = {
       netWorth,
       equityTotal,
@@ -79,7 +82,7 @@ export default function InsightsPage() {
       diversificationScore: concentrationRisk.diversificationScore,
       herfindahlIndex: concentrationRisk.herfindahlIndex,
       top5Percent: concentrationRisk.top5Percent,
-      topEquity: equity.slice(0, 10).map((h) => ({
+      topEquity: sortedEquity.slice(0, 10).map((h) => ({
         ticker: h.ticker,
         name: h.name,
         sector: h.sector,
@@ -88,7 +91,7 @@ export default function InsightsPage() {
         allocationPercent: h.allocationPercent,
         shares: h.shares,
       })),
-      topBonds: bonds.slice(0, 8).map((b) => ({
+      topBonds: sortedBonds.slice(0, 8).map((b) => ({
         isin: b.isin,
         securityName: b.securityName,
         sector: b.sector,

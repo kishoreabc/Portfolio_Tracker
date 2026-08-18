@@ -4,7 +4,7 @@ import type { BondHolding } from '@/types/bonds';
 export function mapBondHoldings(sheet: ParsedSheet | null): BondHolding[] {
   if (!sheet || !sheet.rows.length) return [];
 
-  return sheet.rows
+  const rawBonds = sheet.rows
     .filter((row) => row.isin || row.securityName || row.issuer)
     .map((row) => ({
       broker: String(row.broker ?? '').trim(),
@@ -26,4 +26,16 @@ export function mapBondHoldings(sheet: ParsedSheet | null): BondHolding[] {
       payoutDate: row.payoutDate ? String(row.payoutDate).trim() : null,
     }))
     .filter((b) => b.totalValue > 0 || b.isin);
+
+  const totalBondValue = rawBonds.reduce((sum, b) => sum + b.totalValue, 0);
+
+  return rawBonds.map((b) => ({
+    ...b,
+    portfolioPercent:
+      b.portfolioPercent > 0
+        ? b.portfolioPercent
+        : totalBondValue > 0
+        ? (b.totalValue / totalBondValue) * 100
+        : 0,
+  }));
 }

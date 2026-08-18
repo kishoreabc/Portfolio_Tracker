@@ -58,6 +58,8 @@ export interface AgentStructuredOutput {
   impactOnPortfolio?: string;
   topHeadline?: string;
   searchSource?: string;
+  newsSectionCount?: number;
+  newsSectionHeadlines?: string[];
   
   // Agent 3: Strategy & Opportunities
   opportunities?: {

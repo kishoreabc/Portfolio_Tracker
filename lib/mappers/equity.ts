@@ -4,7 +4,7 @@ import type { EquityHolding } from '@/types/holdings';
 export function mapEquityHoldings(sheet: ParsedSheet | null): EquityHolding[] {
   if (!sheet || !sheet.rows.length) return [];
 
-  return sheet.rows
+  const rawHoldings = sheet.rows
     .filter((row) => row.ticker || row.name) // must have at least one identifier
     .map((row) => {
       const currentPrice = Number(row.currentPrice ?? 0);
@@ -33,4 +33,16 @@ export function mapEquityHoldings(sheet: ParsedSheet | null): EquityHolding[] {
       };
     })
     .filter((h) => h.ticker && h.currentValue >= 0);
+
+  const totalValue = rawHoldings.reduce((sum, h) => sum + h.currentValue, 0);
+
+  return rawHoldings.map((h) => ({
+    ...h,
+    allocationPercent:
+      h.allocationPercent > 0
+        ? h.allocationPercent
+        : totalValue > 0
+        ? (h.currentValue / totalValue) * 100
+        : 0,
+  }));
 }

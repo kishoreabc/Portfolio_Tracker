@@ -103,7 +103,11 @@ export function AgentExecutionPanel({
     meta.defaultStage;
 
   const latestEvent = agentState?.activities?.slice(-1)[0];
-  const currentTelemetry = latestEvent?.description;
+  const currentTelemetry =
+    latestEvent?.description ||
+    agentState?.currentActivity ||
+    agentState?.currentStage ||
+    meta.defaultStage;
   const currentTool = latestEvent?.tool;
   const data = agentState?.structuredData;
 
@@ -178,17 +182,30 @@ export function AgentExecutionPanel({
           <div className="mt-3.5 pt-3 border-t border-white/10 space-y-3">
             {/* Live Operational Action / Stage Banner */}
             {currentTelemetry && (
-              <div className="flex items-start gap-2 p-2.5 rounded-xl bg-black/35 border border-white/5 text-xs">
+              <motion.div
+                key={currentTelemetry}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+                className="flex items-start gap-2.5 p-3 rounded-xl bg-black/40 border border-indigo-500/20 text-xs shadow-inner"
+              >
                 <Activity className="w-3.5 h-3.5 text-indigo-400 mt-0.5 flex-shrink-0 animate-pulse" />
                 <div className="min-w-0 flex-1">
-                  <span className="text-[10px] font-semibold tracking-wider uppercase text-indigo-300/80 block mb-0.5">
-                    Live Operational Stream:
-                  </span>
-                  <p className="text-[11.5px] text-foreground/90 font-mono leading-relaxed break-words">
+                  <div className="flex items-center justify-between gap-2 mb-0.5">
+                    <span className="text-[10px] font-semibold tracking-wider uppercase text-indigo-300/90">
+                      Live Operational Stream:
+                    </span>
+                    {latestEvent?.type && (
+                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-mono">
+                        {latestEvent.type.replace('_', ' ')}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11.5px] text-foreground font-mono leading-relaxed break-words">
                     {currentTelemetry}
                   </p>
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {/* ══════════════════════════════════════════════════════════════════
@@ -276,6 +293,24 @@ export function AgentExecutionPanel({
                     <span className="text-[11px] font-mono text-foreground font-semibold truncate">
                       {data.marketQuotes}
                     </span>
+                  </div>
+                )}
+
+                {/* News Section Ingestion Card */}
+                {Boolean(data.newsSectionCount && data.newsSectionCount > 0) && (
+                  <div className="p-2.5 rounded-xl bg-purple-950/20 border border-purple-500/30 space-y-1 text-xs">
+                    <span className="text-[10px] font-bold text-purple-300 flex items-center gap-1.5 uppercase tracking-wider">
+                      <Layers className="w-3 h-3 text-purple-400" /> Synced News Section Feeds ({data.newsSectionCount} Articles)
+                    </span>
+                    {data.newsSectionHeadlines && data.newsSectionHeadlines.length > 0 && (
+                      <div className="space-y-0.5">
+                        {data.newsSectionHeadlines.slice(0, 2).map((headline, i) => (
+                          <p key={i} className="text-[10.5px] text-muted-foreground truncate leading-tight">
+                            • {headline}
+                          </p>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
 
