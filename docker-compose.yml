@@ -1,0 +1,15 @@
+services:
+  portfolio-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: portfolio-tracker:latest
+    container_name: portfolio_tracker
+    ports:
+      - "3000:3000"
+    env_file:
+      - path: .env
+        required: false
+      - path: .env.local
+        required: false
+    restart: unless-stopped
