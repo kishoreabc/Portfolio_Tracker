@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
+import appLogo from '@/app/icon.png';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -8,7 +10,7 @@ import {
   ArrowLeftRight, BarChart2, CalendarDays, FileText,
   Sparkles, ChevronLeft, ChevronRight, X, Newspaper,
 } from 'lucide-react';
-import { useState } from 'react';
+import React, { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { useSidebar } from './SidebarContext';
 
@@ -25,35 +27,47 @@ const NAV_ITEMS = [
   { href: '/insights', label: 'AI Insights', icon: Sparkles },
 ];
 
-export function Sidebar() {
-  const pathname = usePathname();
-  const { isMobileOpen, closeMobileSidebar, isCollapsed, toggleCollapsed } = useSidebar();
+interface NavContentProps {
+  pathname: string;
+  isCollapsed: boolean;
+  forceExpanded?: boolean;
+  onClose?: () => void;
+  onToggleCollapse?: () => void;
+}
 
-  const NavContent = ({ forceExpanded = false }: { forceExpanded?: boolean }) => (
+const NavContent = memo(function NavContent({
+  pathname,
+  isCollapsed,
+  forceExpanded = false,
+  onClose,
+  onToggleCollapse,
+}: NavContentProps) {
+  const showLabels = !isCollapsed || forceExpanded;
+
+  return (
     <>
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 h-[60px] border-b border-white/5 flex-shrink-0">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/30">
-          <TrendingUp className="w-4 h-4 text-white" />
+        <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20">
+          <Image
+            src={appLogo}
+            alt="Portfolio Tracker Logo"
+            width={32}
+            height={32}
+            className="w-full h-full object-cover"
+            priority
+          />
         </div>
-        <AnimatePresence>
-          {(!isCollapsed || forceExpanded) && (
-            <motion.div
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.15 }}
-              className="min-w-0 flex-1"
-            >
-              <p className="text-sm font-700 text-white leading-tight truncate">Portfolio</p>
-              <p className="text-xs text-muted-foreground leading-tight">Dashboard</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {showLabels && (
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold text-white leading-tight truncate">Portfolio</p>
+            <p className="text-xs text-muted-foreground leading-tight">Dashboard</p>
+          </div>
+        )}
         {/* Mobile close button */}
-        {forceExpanded && (
+        {forceExpanded && onClose && (
           <button
-            onClick={closeMobileSidebar}
+            onClick={onClose}
             className="ml-auto p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
             aria-label="Close sidebar"
           >
@@ -67,54 +81,42 @@ export function Sidebar() {
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const isActive = href === '/' ? pathname === '/' : pathname.startsWith(href);
           return (
-            <Link key={href} href={href} onClick={forceExpanded ? closeMobileSidebar : undefined}>
-              <motion.div
-                whileHover={{ x: 2 }}
-                whileTap={{ scale: 0.97 }}
+            <Link
+              key={href}
+              href={href}
+              onClick={forceExpanded ? onClose : undefined}
+              className={cn(
+                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150 cursor-pointer relative group',
+                isActive
+                  ? 'bg-blue-600/20 text-blue-400'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+              )}
+            >
+              {isActive && (
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-blue-400 rounded-r-full" />
+              )}
+              <Icon
                 className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 cursor-pointer relative group',
-                  isActive
-                    ? 'bg-blue-600/20 text-blue-400'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                  'w-4 h-4 flex-shrink-0',
+                  isActive ? 'text-blue-400' : 'text-slate-500 group-hover:text-slate-300'
                 )}
-              >
-                {isActive && (
-                  <motion.div
-                    layoutId={forceExpanded ? 'sidebar-active-mobile' : 'sidebar-active'}
-                    className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-blue-400 rounded-r-full"
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  />
-                )}
-                <Icon className={cn('w-4 h-4 flex-shrink-0', isActive ? 'text-blue-400' : 'text-slate-500 group-hover:text-slate-300')} />
-                <AnimatePresence>
-                  {(!isCollapsed || forceExpanded) && (
-                    <motion.span
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.1 }}
-                      className="truncate"
-                    >
-                      {label}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-                {label === 'AI Insights' && (!isCollapsed || forceExpanded) && (
-                  <span className="ml-auto text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                    AI
-                  </span>
-                )}
-              </motion.div>
+              />
+              {showLabels && <span className="truncate">{label}</span>}
+              {label === 'AI Insights' && showLabels && (
+                <span className="ml-auto text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                  AI
+                </span>
+              )}
             </Link>
           );
         })}
       </nav>
 
       {/* Collapse toggle — desktop only */}
-      {!forceExpanded && (
+      {!forceExpanded && onToggleCollapse && (
         <div className="flex-shrink-0 p-2 border-t border-white/5">
           <button
-            onClick={toggleCollapsed}
+            onClick={onToggleCollapse}
             className="w-full flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors"
             aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
@@ -125,10 +127,15 @@ export function Sidebar() {
       )}
     </>
   );
+});
+
+export function Sidebar() {
+  const pathname = usePathname();
+  const { isMobileOpen, closeMobileSidebar, isCollapsed, toggleCollapsed } = useSidebar();
 
   return (
     <>
-      {/* ── Desktop Sidebar ── */}
+      {/* ── Desktop Sidebar (Static & Persistent) ── */}
       <aside
         className={cn(
           "hidden md:flex fixed left-0 top-0 bottom-0 z-40 flex-col border-r border-white/5 overflow-hidden transition-[width] duration-300 ease-in-out",
@@ -136,7 +143,11 @@ export function Sidebar() {
         )}
         style={{ background: 'hsl(222 47% 11% / 0.95)' }}
       >
-        <NavContent />
+        <NavContent
+          pathname={pathname}
+          isCollapsed={isCollapsed}
+          onToggleCollapse={toggleCollapsed}
+        />
       </aside>
 
       {/* ── Mobile Backdrop ── */}
@@ -166,7 +177,12 @@ export function Sidebar() {
             className="md:hidden fixed left-0 top-0 bottom-0 z-50 w-[260px] flex flex-col border-r border-white/5 overflow-hidden"
             style={{ background: 'hsl(222 47% 11% / 0.98)' }}
           >
-            <NavContent forceExpanded />
+            <NavContent
+              pathname={pathname}
+              isCollapsed={false}
+              forceExpanded
+              onClose={closeMobileSidebar}
+            />
           </motion.aside>
         )}
       </AnimatePresence>

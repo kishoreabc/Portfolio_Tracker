@@ -172,3 +172,4 @@ export function StockDetailsModal() {
     </AnimatePresence>
   );
 }
+

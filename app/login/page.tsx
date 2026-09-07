@@ -3,10 +3,12 @@
 import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { signIn, useSession } from 'next-auth/react';
+import Image from 'next/image';
+import appLogo from '@/app/icon.png';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { LayoutDashboard, AlertCircle } from 'lucide-react';
-import { color, motion } from 'framer-motion';
+import { AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 import LoginBackground from '@/components/auth/LoginBackground';
 
 function LoginContent() {
@@ -55,10 +57,17 @@ function LoginContent() {
         <div className="bg-card/40 backdrop-blur-2xl border border-border/50 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] rounded-3xl p-8">
 
           <div className="flex flex-col space-y-2 text-center mb-8">
-            <div className="mx-auto w-16 h-16 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-indigo-500/30">
-              <LayoutDashboard className="w-8 h-8 text-white" />
+            <div className="mx-auto w-16 h-16 rounded-2xl flex items-center justify-center mb-2 shadow-lg shadow-indigo-500/20 overflow-hidden">
+              <Image
+                src={appLogo}
+                alt="Portfolio Tracker Logo"
+                width={64}
+                height={64}
+                className="w-full h-full object-cover"
+                priority
+              />
             </div>
-            <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">Welcome back</h1>
+            <h1 className="text-3xl font-bold tracking-tight bg-clip-text bg-gradient-to-r from-foreground to-foreground/70">Welcome back</h1>
             <p className="text-sm text-muted-foreground mt-1">
               Enter your credentials to access your portfolio
             </p>

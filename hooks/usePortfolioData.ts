@@ -23,10 +23,13 @@ export function usePortfolioData(force = false) {
   const { data: raw, isLoading, error, dataUpdatedAt } = useQuery({
     queryKey: force ? queryKeys.sheetsForced : queryKeys.sheets,
     queryFn: () => fetchSheetsData(force),
-    staleTime: 15 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,      // Consider data fresh for 5 mins
+    refetchInterval: 15 * 60 * 1000, // 🔄 Automatically refetch every 15 minutes in background
+    refetchIntervalInBackground: false, // Stop polling when tab is inactive to save quota
     gcTime: 20 * 60 * 1000,
     retry: 2,
   });
+
 
   // Derived data — memoized by query cache
   const equity = useMemo(() => mapEquityHoldings(raw?.equity ?? null), [raw?.equity]);

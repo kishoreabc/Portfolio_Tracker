@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 
 const EXPANDED_W = 240;
 const COLLAPSED_W = 64;
@@ -39,15 +39,20 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  const toggleMobileSidebar = () => setIsMobileOpen((prev) => !prev);
-  const closeMobileSidebar = () => setIsMobileOpen(false);
-  const toggleCollapsed = () => setIsCollapsed((prev) => !prev);
+  const toggleMobileSidebar = useCallback(() => setIsMobileOpen((prev) => !prev), []);
+  const closeMobileSidebar = useCallback(() => setIsMobileOpen(false), []);
+  const toggleCollapsed = useCallback(() => setIsCollapsed((prev) => !prev), []);
 
   // 0 on mobile (drawer), correct width on desktop
   const sidebarPx = isDesktop ? (isCollapsed ? COLLAPSED_W : EXPANDED_W) : 0;
 
+  const value = useMemo(
+    () => ({ isMobileOpen, toggleMobileSidebar, closeMobileSidebar, isCollapsed, toggleCollapsed, sidebarPx }),
+    [isMobileOpen, toggleMobileSidebar, closeMobileSidebar, isCollapsed, toggleCollapsed, sidebarPx]
+  );
+
   return (
-    <SidebarContext.Provider value={{ isMobileOpen, toggleMobileSidebar, closeMobileSidebar, isCollapsed, toggleCollapsed, sidebarPx }}>
+    <SidebarContext.Provider value={value}>
       {children}
     </SidebarContext.Provider>
   );
