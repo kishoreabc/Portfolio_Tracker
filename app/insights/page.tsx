@@ -5,10 +5,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Topbar } from '@/components/layout/Topbar';
 import { usePortfolioData } from '@/hooks/usePortfolioData';
 import { useAiInsights } from '@/hooks/useAiInsights';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Sparkles, AlertCircle, RefreshCw, Brain, Globe, TrendingUp, Network, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { usePrivacy, maskInsightsData } from '@/lib/privacy-context';
 
 import { PortfolioHealthCard } from '@/components/insights/PortfolioHealthCard';
 import { AssetAllocationCard } from '@/components/insights/AssetAllocationCard';
@@ -26,6 +27,7 @@ import { AgentExecutionPanel } from '@/components/insights/AgentExecutionPanel';
 import type { PortfolioInput } from '@/lib/ai/pipeline';
 
 export default function InsightsPage() {
+  const { isHidden } = usePrivacy();
   const {
     equity, bonds, cashFlowStats, assetAllocation, sectorAllocation,
     concentrationRisk, winners, losers,
@@ -44,14 +46,24 @@ export default function InsightsPage() {
   } = useAiInsights();
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
+  const holdingCounts = useMemo(
+    () => [equity.length + bonds.length, equity.length, bonds.length],
+    [equity.length, bonds.length]
+  );
+
+  const displayInsights = useMemo(() => {
+    if (!insights || !isHidden) return insights;
+    return maskInsightsData(insights, true, { holdingCounts });
+  }, [insights, isHidden, holdingCounts]);
+
   const handleDownloadPdf = async () => {
-    if (!insights) return;
+    if (!displayInsights) return;
     setIsDownloadingPdf(true);
     try {
       const res = await fetch('/api/reports/pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reportType: 'ai', insights }),
+        body: JSON.stringify({ reportType: 'ai', insights: displayInsights }),
       });
       if (!res.ok) throw new Error('PDF export failed');
       const blob = await res.blob();
@@ -301,7 +313,7 @@ export default function InsightsPage() {
 
         {/* Main Dashboard */}
         <AnimatePresence mode="popLayout">
-          {insights && !error && (
+          {displayInsights && !error && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -310,43 +322,43 @@ export default function InsightsPage() {
             >
               {/* Row 1: Health (full width) */}
               <div className="md:col-span-2">
-                <PortfolioHealthCard data={insights.health} />
+                <PortfolioHealthCard data={displayInsights.health} />
               </div>
 
               {/* Row 2: Allocation + Cash Flow */}
-              <AssetAllocationCard data={insights.allocation} />
-              <CashFlowCard data={insights.cashFlow} />
+              <AssetAllocationCard data={displayInsights.allocation} />
+              <CashFlowCard data={displayInsights.cashFlow} />
 
               {/* Row 3: Diversification + Market Condition */}
-              <DiversificationCard data={insights.diversification} />
-              <MarketConditionCard data={insights.marketCondition} />
+              <DiversificationCard data={displayInsights.diversification} />
+              <MarketConditionCard data={displayInsights.marketCondition} />
 
               {/* Row 4: Market Outlook (full width) */}
-              {insights.marketOutlook && (
+              {displayInsights.marketOutlook && (
                 <div className="md:col-span-2">
-                  <MarketOutlookCard data={insights.marketOutlook} />
+                  <MarketOutlookCard data={displayInsights.marketOutlook} />
                 </div>
               )}
 
               {/* Row 5: Opportunities + Risks */}
-              <OpportunitiesCard data={insights.opportunities} />
-              <RisksCard data={insights.risks} />
+              <OpportunitiesCard data={displayInsights.opportunities} />
+              <RisksCard data={displayInsights.risks} />
 
               {/* Row 6: Long-Term Strategy (full width) */}
-              {insights.longTermStrategy && (
+              {displayInsights.longTermStrategy && (
                 <div className="md:col-span-2">
-                  <LongTermStrategyCard data={insights.longTermStrategy} />
+                  <LongTermStrategyCard data={displayInsights.longTermStrategy} />
                 </div>
               )}
 
               {/* Row 7: Recommendations (full width) */}
               <div className="md:col-span-2">
-                <RecommendationsCard data={insights.recommendations} />
+                <RecommendationsCard data={displayInsights.recommendations} />
               </div>
 
               {/* Row 8: Executive Summary (full width) */}
               <div className="md:col-span-2">
-                <AISummaryCard data={insights.summary} />
+                <AISummaryCard data={displayInsights.summary} />
               </div>
             </motion.div>
           )}

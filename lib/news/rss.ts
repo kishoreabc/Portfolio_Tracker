@@ -18,7 +18,7 @@ async function sleep(ms: number) {
 }
 
 /**
- * Fetch and parse the Money Pechu RSS feed.
+ * Fetch and parse the RSS feed.
  * Retries with exponential backoff on transient failures.
  */
 export async function fetchRssFeed(): Promise<RssItem[]> {

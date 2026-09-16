@@ -25,6 +25,7 @@ import {
   type PipelineState,
   type AgentId,
 } from '@/types/agent-activity';
+import { usePrivacy, maskSensitiveText, maskInsightsData } from '@/lib/privacy-context';
 
 interface AgentExecutionPanelProps {
   pipelineState: PipelineState;
@@ -82,6 +83,8 @@ export function AgentExecutionPanel({
   isExecuting,
   hasCompleted,
 }: AgentExecutionPanelProps) {
+  const { isHidden } = usePrivacy();
+
   // If not executing (completed or idle), do not show the activity indicator
   if (!isExecuting || hasCompleted) {
     return null;
@@ -97,19 +100,25 @@ export function AgentExecutionPanel({
   const meta = AGENT_META[runningAgentId] || AGENT_META.portfolio_analyst;
   const Icon = meta.icon;
 
-  const currentStageText =
+  const currentStageText = maskSensitiveText(
     agentState?.currentStage ||
     agentState?.activities?.slice(-1)[0]?.title ||
-    meta.defaultStage;
+    meta.defaultStage,
+    isHidden
+  );
 
   const latestEvent = agentState?.activities?.slice(-1)[0];
-  const currentTelemetry =
+  const currentTelemetry = maskSensitiveText(
     latestEvent?.description ||
     agentState?.currentActivity ||
     agentState?.currentStage ||
-    meta.defaultStage;
+    meta.defaultStage,
+    isHidden
+  );
   const currentTool = latestEvent?.tool;
-  const data = agentState?.structuredData;
+  const data = isHidden && agentState?.structuredData
+    ? maskInsightsData(agentState.structuredData, true)
+    : agentState?.structuredData;
 
   const activeIndex = AGENT_ORDER.indexOf(runningAgentId) + 1;
 

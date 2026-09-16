@@ -95,6 +95,7 @@ A sequential multi-agent pipeline (`lib/ai/pipeline.ts`) that orchestrates speci
 - **Masking Sensitive Balances:** When enabled, instantly masks net worth, equity totals, bond values, day's change, cash flow totals, upcoming bond coupon payments, and individual holding values/CMP with sleek bullets (`••••••`), matching Groww, Zerodha, and INDmoney.
 - **Persistent State:** Synchronizes across browser tabs and preserves user preference in `localStorage` via React 19's `useSyncExternalStore`.
 - **Chart Privacy:** Masks currency tooltips and axis labels in Recharts charts while keeping percentage allocations visible for contextual portfolio review.
+- **AI Insights Commentary Privacy:** Automatically parses and masks AI-generated insights, opportunities, risk assessments, and recommendations to prevent portfolio balances (e.g., net worth, portfolio values, specific holding counts) from leaking into commentary while preserving strategic advice, percentages, and market metrics.
 
 ---
 
