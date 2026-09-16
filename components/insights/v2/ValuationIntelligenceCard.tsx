@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieChart, Quote, Scale, ArrowDown, ArrowUp } from 'lucide-react';
 import type { ValuationIntelligence } from '@/types/insights';
+import { getSectorPE } from '@/lib/calc/valuation';
 
 interface ValuationIntelligenceCardProps {
   data?: ValuationIntelligence;
@@ -89,7 +90,7 @@ export function ValuationIntelligenceCard({ data }: ValuationIntelligenceCardPro
         {data.holdingsValuation && data.holdingsValuation.length > 0 && (
           <div className="space-y-2 pt-1">
             <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
-              Holding Valuation Multiples vs Benchmark
+              Holding Valuation Multiples vs Sector
             </h4>
             <div className="overflow-x-auto rounded-xl border border-border/40">
               <table className="w-full text-left text-xs border-collapse">
@@ -97,31 +98,34 @@ export function ValuationIntelligenceCard({ data }: ValuationIntelligenceCardPro
                   <tr className="border-b border-border/40 bg-white/5 text-muted-foreground">
                     <th className="p-2.5 font-semibold">Stock</th>
                     <th className="p-2.5 font-semibold text-right">Holding P/E</th>
-                    <th className="p-2.5 font-semibold text-right">Benchmark P/E</th>
+                    <th className="p-2.5 font-semibold text-right">Sector P/E</th>
                     <th className="p-2.5 font-semibold text-center">Valuation Stance</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/20 font-mono">
-                  {data.holdingsValuation.map((h, idx) => (
-                    <tr key={idx} className="hover:bg-white/[0.02]">
-                      <td className="p-2.5 font-sans font-medium text-foreground">{h.symbol}</td>
-                      <td className="p-2.5 text-right text-foreground">{h.pe ? `${h.pe}x` : '—'}</td>
-                      <td className="p-2.5 text-right text-muted-foreground">{h.benchmarkPe ? `${h.benchmarkPe}x` : '22.8x'}</td>
-                      <td className="p-2.5 text-center font-sans">
-                        <span
-                          className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md border ${
-                            h.status === 'Undervalued'
-                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                              : h.status === 'Elevated'
-                              ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
-                              : 'bg-white/5 text-muted-foreground border-white/10'
-                          }`}
-                        >
-                          {h.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  {data.holdingsValuation.map((h, idx) => {
+                    const sectorPe = h.sectorPe ?? (typeof h.benchmarkPe === 'number' && h.benchmarkPe !== 22.8 ? h.benchmarkPe : undefined) ?? getSectorPE(undefined, h.symbol);
+                    return (
+                      <tr key={idx} className="hover:bg-white/[0.02]">
+                        <td className="p-2.5 font-sans font-medium text-foreground">{h.symbol}</td>
+                        <td className="p-2.5 text-right text-foreground">{h.pe ? `${h.pe}x` : '—'}</td>
+                        <td className="p-2.5 text-right text-muted-foreground">{typeof sectorPe === 'number' ? `${sectorPe.toFixed(1)}x` : '—'}</td>
+                        <td className="p-2.5 text-center font-sans">
+                          <span
+                            className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md border ${
+                              h.status === 'Undervalued'
+                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                : h.status === 'Elevated'
+                                ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                                : 'bg-white/5 text-muted-foreground border-white/10'
+                            }`}
+                          >
+                            {h.status}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

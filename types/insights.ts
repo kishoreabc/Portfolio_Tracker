@@ -196,6 +196,7 @@ export interface ValuationIntelligence {
     symbol: string;
     pe?: number;
     benchmarkPe?: number;
+    sectorPe?: number;
     status: 'Undervalued' | 'Fair' | 'Elevated' | 'N/A';
   }[];
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
+import { getSectorPE, evaluateValuation } from '@/lib/calc/valuation';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -849,7 +850,7 @@ async function buildAIInsightsPDF(insights: any, data: SheetsData): Promise<any>
   const viBenchPe = vi?.benchmarkPe ?? vi?.benchmarkPE ?? 22.8;
   const viRelPct = vi?.relativeValuationPct ?? vi?.relativeDiscountPremiumPct ?? Number(((viPortPe - viBenchPe) / viBenchPe * 100).toFixed(1));
   content.push(
-    sectionTitle('6. Valuation Intelligence & Benchmark Relative Multiples'),
+    sectionTitle('6. Valuation Intelligence & Sector Relative Multiples'),
     {
       text: `Portfolio Weighted P/E: ${viPortPe}x vs Nifty 50 Benchmark: ${viBenchPe}x (${viRelPct >= 0 ? '+' : ''}${viRelPct}% relative premium/discount). ${vi?.interpretation || ''}`,
       fontSize: 8.5,
@@ -866,31 +867,45 @@ async function buildAIInsightsPDF(insights: any, data: SheetsData): Promise<any>
         symbol: h.ticker,
         pe: undefined as number | undefined,
         benchmarkPe: 22.8,
+        sectorPe: undefined as number | undefined,
         status: 'Fair' as const,
       }));
 
   if (valHoldings.length > 0) {
     content.push(
       makeTable(
-        ['Symbol', 'Current P/E', 'Benchmark P/E', 'Valuation Status', 'Multiple Assessment'],
+        ['Symbol', 'Current P/E', 'Sector P/E', 'Valuation Status', 'Multiple Assessment'],
         valHoldings.map((vh: any) => {
-          const st = String(vh.status || 'Fair');
+          const sym = vh.symbol || vh.ticker || '—';
+          const eqItem = data.equity.find((e) => e.ticker === sym || (sym && e.ticker && (e.ticker.includes(sym) || sym.includes(e.ticker))));
+          const sector = vh.sector || eqItem?.sector;
           const currentPe = vh.pe ?? vh.currentPE;
-          const benchPe = vh.benchmarkPe ?? vh.sectorPE ?? viBenchPe;
+
+          // Resolve sector PE: prioritize vh.sectorPe, then check if vh.benchmarkPe is holding-specific (!== 22.8), else compute from sector/ticker
+          const sectorPe = vh.sectorPe ?? (typeof vh.benchmarkPe === 'number' && vh.benchmarkPe !== 22.8 ? vh.benchmarkPe : undefined) ?? getSectorPE(sector, sym);
+
+          const evalRes = evaluateValuation(currentPe, sectorPe);
+          const st = vh.status && vh.status !== 'Fair' ? vh.status : evalRes.status;
+
           const stColor = st.toLowerCase().includes('elevated') || st.toLowerCase().includes('over')
             ? COLORS.warning
             : st.toLowerCase().includes('under')
             ? COLORS.accent
+            : st.toLowerCase().includes('n/a')
+            ? COLORS.muted
             : COLORS.primary;
+
+          const assessment = evalRes.assessment;
+
           return [
-            { text: vh.symbol || '—', bold: true },
+            { text: sym, bold: true },
             typeof currentPe === 'number' ? `${currentPe.toFixed(1)}x` : '—',
-            typeof benchPe === 'number' ? `${benchPe.toFixed(1)}x` : `${viBenchPe}x`,
+            typeof sectorPe === 'number' ? `${sectorPe.toFixed(1)}x` : '—',
             { text: st, color: stColor, bold: true },
-            st === 'Undervalued' ? 'Attractive valuation margin of safety' : st === 'Elevated' ? 'Trading at rich valuation multiple' : st === 'N/A' ? 'Valuation data not available' : 'Aligned with earnings trajectory',
+            assessment,
           ];
         }),
-        ['20%', '18%', '22%', '18%', '22%']
+        ['20%', '18%', '20%', '18%', '24%']
       )
     );
   }

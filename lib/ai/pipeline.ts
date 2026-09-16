@@ -39,6 +39,7 @@ import type {
   AIConfidence,
 } from '@/types/insights';
 import type { AgentActivityEvent, AgentId, AgentStatus, ActivityType } from '@/types/agent-activity';
+import { getSectorPE, evaluateValuation } from '@/lib/calc/valuation';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1349,15 +1350,15 @@ Return JSON:
     interpretation: `The portfolio trades at ${Math.abs(relVal)}% ${relVal <= 0 ? 'below' : 'above'} the Nifty 50 benchmark on trailing P/E (${portPe}x vs ${benchmarkPe}x). This valuation differential reflects sector weighting and growth expectations rather than a standalone mispricing.`,
     holdingsValuation: state.input.topEquity.slice(0, 8).map((eq) => {
       const metric = state.holdingsAnalysis.find((m) => m.ticker === eq.ticker);
-      let status: 'Undervalued' | 'Fair' | 'Elevated' | 'N/A' = 'Fair';
-      if (!metric?.trailingPE) status = 'N/A';
-      else if (metric.trailingPE < 18) status = 'Undervalued';
-      else if (metric.trailingPE > 42) status = 'Elevated';
+      const sectorPe = getSectorPE(eq.sector, eq.ticker) ?? (metric?.sector ? getSectorPE(metric.sector, eq.ticker) : undefined);
+      const evalResult = evaluateValuation(metric?.trailingPE, sectorPe);
+
       return {
         symbol: eq.ticker,
         pe: metric?.trailingPE,
-        benchmarkPe,
-        status,
+        benchmarkPe: sectorPe ?? benchmarkPe,
+        sectorPe,
+        status: evalResult.status,
       };
     }),
   };

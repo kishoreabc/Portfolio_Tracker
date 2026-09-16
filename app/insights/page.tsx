@@ -157,6 +157,25 @@ export default function InsightsPage() {
         : 0,
       lastMonthInvestment: cashFlowStats.monthlySummaries.slice(-1)[0]?.investment ?? 0,
       lastMonthExpenses: cashFlowStats.monthlySummaries.slice(-1)[0]?.totalExpenses ?? 0,
+      previousReport: (() => {
+        try {
+          const saved = typeof window !== 'undefined' ? localStorage.getItem('portfolio_ai_insights_data') : null;
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed?.health) {
+              return {
+                health: parsed.health,
+                portfolioHealthBreakdown: parsed.portfolioHealthBreakdown,
+                valuationIntelligence: parsed.valuationIntelligence,
+                reviewFlags: parsed.reviewFlags,
+                riskIntelligence: parsed.riskIntelligence,
+                generatedAt: parsed.generatedAt,
+              };
+            }
+          }
+        } catch {}
+        return undefined;
+      })(),
     };
     await fetchInsights(payload);
   };
