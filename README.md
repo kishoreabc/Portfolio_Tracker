@@ -64,11 +64,11 @@ Traditional portfolio management software often comes with significant downsides
 - **Maturity Calendar & Cashflow Forecasting:** Monthly visual timeline of upcoming interest payouts and principal redemptions.
 
 ### 4. 5-Node Agentic AI Insights Pipeline
-A sequential multi-agent pipeline (`lib/ai/pipeline.ts`) that orchestrates specialized AI analysis:
-- **Node 1 — Portfolio Analyzer:** Computes quantitative portfolio metrics, Herfindahl-Hirschman Index (HHI), and diversification scores.
-- **Node 2 — Macro Analyst:** Grounds analysis with live web search via Tavily, scraped RSS headlines, and live Yahoo Finance benchmark index quotes (^NSEI, ^BSESN).
-- **Node 3 — Strategy Node:** Identifies tactical opportunities, rebalancing needs, and asset allocation advice.
-- **Node 4 — Risk Engine:** Performs stress-scenario simulations (e.g., interest rate shifts, equity drawdowns).
+A sequential multi-agent pipeline (`lib/ai/pipeline.ts`) that orchestrates specialized AI analysis tailored specifically for Indian retail investors:
+- **Node 1 — Portfolio Analyzer:** Computes quantitative portfolio metrics, Herfindahl-Hirschman Index (HHI), and diversification scores, while scanning real-time fundamental multiples (Trailing P/E, Forward P/E, P/B) and technical momentum indicators (50DMA, 200DMA, distance from 52W High/Low, technical breadth % above 200DMA) via Yahoo Finance for top equity holdings.
+- **Node 2 — Macro Analyst:** Grounds analysis with live web search via dual-query Tavily Advanced Search, fallback Google News RSS queries, ingested database news feeds, and real-time Yahoo Finance benchmark indices & macro commodities: Nifty 50 (`^NSEI`), Sensex (`^BSESN`), USD/INR (`USDINR=X`), Brent Crude Oil (`BZ=F`), Gold (`GC=F`), and US 10Y Yield (`^TNX`). Evaluates RBI MPC repo rate trajectory, Brent crude CAD impact on fiscal math, and FII vs DII flow dynamics.
+- **Node 3 — Strategy Node:** Delivers a SEBI-grade Indian Retail Investor Playbook with stock-level fundamental and technical actions (accumulating near 200DMA support vs trimming overvalued holdings), core compounding instruments (Nifty 50 and Nifty Next 50 index funds, Target Maturity Debt Funds, Sovereign Gold Bonds / Gold ETFs, Arbitrage funds for equity tax treatment), Union Budget LTCG (12.5% above ₹1.25L exemption threshold) & STCG (20%) tax harvesting, and CDSL/NSDL Depository Participant (DP) charge minimization.
+- **Node 4 — Risk Engine:** Performs portfolio stress-scenario simulations and constructs a macro-grounded Market Outlook featuring explicit investment horizon (e.g., 6–12 months), tactical short-term (1–3M) and structural medium-term (6–12M) outlooks, and Bull/Base/Bear scenarios with explicit macroeconomic triggers and portfolio impact estimates.
 - **Node 5 — Report Generator:** Synthesizes analysis into a clean, structured JSON response consumed by the dashboard UI.
 - **Circular Model Failover:** Automatically switches across configured models (`gemini-3.1-flash-lite`, `gemini-3.5-flash-lite`, Groq `llama-3.1`, `qwen3.6`, `gpt-oss-120b`) with inter-call pacing delays and auto-cooldown blacklisting when encountering 429 quota limits or 503 upstream congestion.
 

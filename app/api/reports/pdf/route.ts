@@ -531,10 +531,48 @@ async function buildAIInsightsPDF(insights: any, data: SheetsData): Promise<any>
     );
   }
 
-  // Section 2: Market Conditions & Scenario Forecasts
+  // V2 Section: Deterministic Health Breakdown
+  if (insights.healthBreakdown) {
+    const hb = insights.healthBreakdown;
+    content.push(
+      sectionTitle('2. Health Scorecard Breakdown (6 Factor Pillars)'),
+      makeTable(
+        ['Factor Pillar', 'Score', 'Weight', 'Weighted Impact'],
+        [
+          ['Fundamental Quality', `${hb.fundamental?.score ?? '—'}/100`, `${((hb.fundamental?.weight ?? 0.25) * 100).toFixed(0)}%`, `${((hb.fundamental?.score ?? 0) * (hb.fundamental?.weight ?? 0.25)).toFixed(1)} pts`],
+          ['Technical Breadth', `${hb.technical?.score ?? '—'}/100`, `${((hb.technical?.weight ?? 0.20) * 100).toFixed(0)}%`, `${((hb.technical?.score ?? 0) * (hb.technical?.weight ?? 0.20)).toFixed(1)} pts`],
+          ['Risk & Drawdown', `${hb.risk?.score ?? '—'}/100`, `${((hb.risk?.weight ?? 0.20) * 100).toFixed(0)}%`, `${((hb.risk?.score ?? 0) * (hb.risk?.weight ?? 0.20)).toFixed(1)} pts`],
+          ['Diversification (HHI)', `${hb.diversification?.score ?? '—'}/100`, `${((hb.diversification?.weight ?? 0.15) * 100).toFixed(0)}%`, `${((hb.diversification?.score ?? 0) * (hb.diversification?.weight ?? 0.15)).toFixed(1)} pts`],
+          ['Valuation Alignment', `${hb.valuation?.score ?? '—'}/100`, `${((hb.valuation?.weight ?? 0.10) * 100).toFixed(0)}%`, `${((hb.valuation?.score ?? 0) * (hb.valuation?.weight ?? 0.10)).toFixed(1)} pts`],
+          ['Performance Momentum', `${hb.performance?.score ?? '—'}/100`, `${((hb.performance?.weight ?? 0.10) * 100).toFixed(0)}%`, `${((hb.performance?.score ?? 0) * (hb.performance?.weight ?? 0.10)).toFixed(1)} pts`],
+        ],
+        ['35%', '20%', '20%', '25%'],
+        ['Composite Health Score', `${insights.health?.score ?? 75}/100`, '100%', `${insights.health?.score ?? 75} pts`]
+      )
+    );
+  }
+
+  // V2 Section: Review Flags
+  if (Array.isArray(insights.reviewFlags) && insights.reviewFlags.length > 0) {
+    content.push(
+      sectionTitle('3. Critical Review Flags'),
+      makeTable(
+        ['Severity', 'Issue / Signal', 'Telemetry Evidence', 'Actionable Recommendation'],
+        insights.reviewFlags.map((f: any) => [
+          String(f.severity || 'yellow').toUpperCase(),
+          f.title || '—',
+          f.evidence || '—',
+          f.recommendation || '—',
+        ]),
+        ['12%', '28%', '30%', '30%']
+      )
+    );
+  }
+
+  // Section: Market Conditions & Scenario Forecasts
   if (insights.marketCondition || insights.marketOutlook) {
     content.push(
-      sectionTitle('2. Market Environment & Scenario Forecasts'),
+      sectionTitle('4. Market Environment & Scenario Forecasts'),
       {
         text: `Market Commentary: ${insights.marketCondition?.summary || 'Market conditions remain range-bound.'}`,
         fontSize: 8.5,
@@ -620,6 +658,37 @@ async function buildAIInsightsPDF(insights: any, data: SheetsData): Promise<any>
         lineHeight: 1.4,
         margin: [0, 0, 0, 10],
       }
+    );
+  }
+
+  // V2 Section: Valuation Intelligence
+  if (insights.valuation) {
+    content.push(
+      sectionTitle('7. Valuation Intelligence'),
+      {
+        text: `Portfolio Weighted P/E: ${insights.valuation.portfolioWeightedPE ?? '—'}x vs Nifty 50 Benchmark: ${insights.valuation.benchmarkPE ?? 22.8}x (${(insights.valuation.relativeDiscountPremiumPct ?? 0) >= 0 ? '+' : ''}${insights.valuation.relativeDiscountPremiumPct ?? 0}% relative). Sector Bias: ${insights.valuation.sectorBias || 'Balanced'}.`,
+        fontSize: 8.5,
+        color: COLORS.text,
+        margin: [0, 0, 0, 8],
+      }
+    );
+  }
+
+  // V2 Section: Thesis Monitor
+  if (Array.isArray(insights.thesisMonitor) && insights.thesisMonitor.length > 0) {
+    content.push(
+      sectionTitle('8. Investment Thesis Monitor (Top Equities)'),
+      makeTable(
+        ['Symbol', 'Weight', 'Status', 'Thesis & Core Drivers', 'Key Catalysts to Watch'],
+        insights.thesisMonitor.map((t: any) => [
+          t.symbol || '—',
+          typeof t.allocationPct === 'number' ? `${t.allocationPct.toFixed(1)}%` : '—',
+          String(t.status || 'intact').toUpperCase(),
+          t.thesis || '—',
+          t.catalystsWatch || '—',
+        ]),
+        ['14%', '10%', '14%', '34%', '28%']
+      )
     );
   }
 

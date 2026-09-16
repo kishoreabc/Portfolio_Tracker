@@ -21,6 +21,8 @@ export interface Opportunity {
   priority: 'High' | 'Medium' | 'Low';
   evidence?: string;
   action?: string;
+  category?: string;
+  actionable?: string;
 }
 
 export interface Risk {
@@ -45,6 +47,8 @@ export interface Recommendation {
   priority: 'High' | 'Medium' | 'Low';
   evidence?: string;
   timeframe?: string;
+  category?: string;
+  targetAsset?: string;
 }
 
 export interface Diversification {
@@ -102,7 +106,208 @@ export interface LongTermStrategy {
   };
 }
 
+// ─── V2 AI Portfolio Intelligence Types ─────────────────────────────────────
+
+export interface PortfolioHealthBreakdown {
+  overall: number;
+  fundamental: number;
+  technical: number;
+  valuation: number;
+  risk: number;
+  diversification: number;
+  performance?: number;
+  status: 'Excellent' | 'Good' | 'Fair' | 'Poor';
+  summary?: string;
+  methodology?: string;
+}
+
+export interface ScoringWeights {
+  fundamental: number;
+  technical: number;
+  valuation: number;
+  risk: number;
+  diversification: number;
+  performance: number;
+}
+
+export interface ExecutiveSummaryInsight {
+  title: string;
+  insight: string;
+  category: 'fundamental' | 'technical' | 'valuation' | 'risk' | 'portfolio' | 'macro';
+  evidence: string[];
+  metrics?: Record<string, string | number>;
+}
+
+export interface FundamentalHolding {
+  symbol: string;
+  name: string;
+  weight: number;
+  pe?: number;
+  forwardPe?: number;
+  pb?: number;
+  roe?: number;
+  roce?: number;
+  epsGrowth?: number;
+  revenueGrowth?: number;
+  netMargin?: number;
+  debtToEquity?: number;
+  dividendYield?: number;
+  status: 'Strong' | 'Neutral' | 'Weak' | 'Under Review';
+}
+
+export interface FundamentalIntelligence {
+  score: number;
+  strengths: string[];
+  watchItems: string[];
+  interpretation: string;
+  holdings: FundamentalHolding[];
+}
+
+export interface TechnicalSignalHolding {
+  symbol: string;
+  name: string;
+  weight: number;
+  currentPrice: number;
+  trend: 'Bullish' | 'Neutral' | 'Bearish';
+  momentum: 'Strong' | 'Neutral' | 'Weak';
+  marketStructure: 'Above 200DMA' | 'Near 200DMA' | 'Below 200DMA';
+  priceVs200DMA?: number;
+  priceVs50DMA?: number;
+  rsi?: number;
+  signalExplanation: string;
+}
+
+export interface TechnicalIntelligence {
+  breadthScore: number;
+  trend: 'Bullish' | 'Neutral' | 'Bearish';
+  momentum: 'Strong' | 'Neutral' | 'Weak';
+  marketStructure: 'Above 200DMA' | 'Near 200DMA' | 'Below 200DMA';
+  signals: TechnicalSignalHolding[];
+  interpretation?: string;
+}
+
+export interface ValuationIntelligence {
+  portfolioPe: number;
+  benchmarkPe: number;
+  benchmarkName: string;
+  relativeValuationPct: number;
+  interpretation: string;
+  holdingsValuation?: {
+    symbol: string;
+    pe?: number;
+    benchmarkPe?: number;
+    status: 'Undervalued' | 'Fair' | 'Elevated' | 'N/A';
+  }[];
+}
+
+export interface RiskFactor {
+  title: string;
+  category: string;
+  severity: 'High' | 'Medium' | 'Low';
+  evidence: string;
+  potentialImpact: string;
+  whatToMonitor: string;
+}
+
+export interface RiskIntelligence {
+  overallRiskScore: number;
+  topSectorExposure: { sector: string; percentage: number };
+  top5HoldingsWeight: number;
+  largestPosition: { symbol: string; percentage: number };
+  debtQualityScore?: number;
+  topRiskFactors: RiskFactor[];
+  interpretation: string;
+}
+
+export interface PerformanceContributor {
+  symbol: string;
+  name?: string;
+  contributionPct: number;
+  returnPct: number;
+  weight: number;
+  type: 'gain' | 'loss';
+}
+
+export interface PortfolioIntelligence {
+  portfolioReturnPct?: number;
+  topContributors: PerformanceContributor[];
+  underperformers: PerformanceContributor[];
+  interpretation: string;
+  assetAllocationSummary?: { asset: string; percentage: number }[];
+  sectorAllocationSummary?: { sector: string; percentage: number }[];
+}
+
+export interface MacroExposure {
+  variable: string;
+  currentValue?: string;
+  trend: 'Elevated' | 'Rising' | 'Falling' | 'Stable' | 'Neutral';
+  sensitivity: string;
+  affectedHoldingsOrSectors: string;
+}
+
+export interface MacroIntelligence {
+  summary: string;
+  exposures: MacroExposure[];
+}
+
+export interface MatrixStock {
+  symbol: string;
+  name: string;
+  weight: number;
+  fundamental: 'Strong' | 'Neutral' | 'Weak';
+  technical: 'Strong' | 'Neutral' | 'Weak';
+}
+
+export interface FundamentalTechnicalMatrix {
+  stocks: MatrixStock[];
+  summary?: string;
+}
+
+export interface ReviewFlag {
+  type: 'concentration' | 'technical' | 'valuation' | 'quality';
+  severity: 'red' | 'orange' | 'yellow' | 'green';
+  title: string;
+  description: string;
+  evidence: string;
+  actionRecommendation?: string;
+}
+
+export interface ThesisHolding {
+  symbol: string;
+  name: string;
+  weight: number;
+  fundamentalsStatus: 'Strong' | 'Neutral' | 'Weak';
+  valuationStatus: 'Undervalued' | 'Moderate' | 'Elevated' | 'Fair';
+  technicalStatus: 'Bullish' | 'Neutral' | 'Bearish';
+  riskLevel: 'Low' | 'Medium' | 'High';
+  thesisStatus: 'Intact' | 'Monitor' | 'Review';
+  explanation: string;
+}
+
+export interface PortfolioChangeItem {
+  metric: string;
+  previousValue: string;
+  currentValue: string;
+  changeDirection?: 'up' | 'down' | 'neutral';
+  interpretation?: string;
+}
+
+export interface PortfolioChanges {
+  isAvailable: boolean;
+  message?: string;
+  changes: PortfolioChangeItem[];
+  interpretation?: string;
+}
+
+export interface AIConfidence {
+  level: 'High' | 'Medium' | 'Low';
+  reason: string;
+  metricsAvailableCount: number;
+  metricsTotalExpected: number;
+}
+
 export interface AIInsightsResponse {
+  // V1 fields (strictly preserved for backwards compatibility)
   health: PortfolioHealth;
   allocation: Allocation;
   opportunities: Opportunity[];
@@ -115,4 +320,21 @@ export interface AIInsightsResponse {
   marketOutlook?: MarketOutlook;
   longTermStrategy?: LongTermStrategy;
   generatedAt?: string;
+
+  // V2 Additive Fields
+  portfolioHealthBreakdown?: PortfolioHealthBreakdown;
+  scoringWeights?: ScoringWeights;
+  executiveSummaryInsights?: ExecutiveSummaryInsight[];
+  fundamentalIntelligence?: FundamentalIntelligence;
+  technicalIntelligence?: TechnicalIntelligence;
+  valuationIntelligence?: ValuationIntelligence;
+  riskIntelligence?: RiskIntelligence;
+  portfolioIntelligence?: PortfolioIntelligence;
+  macroIntelligence?: MacroIntelligence;
+  fundamentalTechnicalMatrix?: FundamentalTechnicalMatrix;
+  reviewFlags?: ReviewFlag[];
+  thesisMonitor?: ThesisHolding[];
+  portfolioChanges?: PortfolioChanges;
+  aiConfidence?: AIConfidence;
 }
+
