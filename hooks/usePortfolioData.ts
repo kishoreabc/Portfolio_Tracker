@@ -2,90 +2,95 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query-keys';
-import type { SheetsApiResponse } from '@/types/sheets';
-import { mapEquityHoldings } from '@/lib/mappers/equity';
-import { mapBondHoldings } from '@/lib/mappers/bonds';
-import { mapTransactions, buildCashFlowStats } from '@/lib/mappers/cashflow';
-import { buildUnifiedPortfolio } from '@/lib/mappers/unified';
-import { computeAssetAllocation, computeSectorAllocation, computeOverallAllocation } from '@/lib/calc/allocation';
-import { computeConcentrationRisk, computeWinnersLosers } from '@/lib/calc/risk';
-import { buildBondMaturityEvents, buildBondLadder, buildCreditRatingDistribution } from '@/lib/calc/forecast';
+import type { SanitizedPortfolioData } from '@/lib/server/portfolioService';
 import { useMemo } from 'react';
 
-async function fetchSheetsData(force = false): Promise<SheetsApiResponse> {
-  const url = force ? '/api/sheets?force=true' : '/api/sheets';
+async function fetchPortfolioData(force = false): Promise<SanitizedPortfolioData> {
+  const url = force ? '/api/portfolio?force=true' : '/api/portfolio';
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`Failed to fetch data: ${res.statusText}`);
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.error || `Failed to fetch portfolio: ${res.statusText}`);
+  }
   return res.json();
 }
 
 export function usePortfolioData(force = false) {
-  const { data: raw, isLoading, error, dataUpdatedAt } = useQuery({
-    queryKey: force ? queryKeys.sheetsForced : queryKeys.sheets,
-    queryFn: () => fetchSheetsData(force),
+  const { data, isLoading, error, dataUpdatedAt } = useQuery({
+    queryKey: force ? queryKeys.portfolioForced : queryKeys.portfolio,
+    queryFn: () => fetchPortfolioData(force),
     staleTime: 5 * 60 * 1000,      // Consider data fresh for 5 mins
-    refetchInterval: 15 * 60 * 1000, // 🔄 Automatically refetch every 15 minutes in background
-    refetchIntervalInBackground: false, // Stop polling when tab is inactive to save quota
+    refetchInterval: 15 * 60 * 1000, // Refetch every 15 mins in background
+    refetchIntervalInBackground: false, // Save quota when tab is inactive
     gcTime: 20 * 60 * 1000,
     retry: 2,
   });
 
+  // Revive transaction dates from serialized ISO strings
+  const transactions = useMemo(() => {
+    if (!data?.transactions) return [];
+    return data.transactions.map((t) => ({
+      ...t,
+      date: new Date(t.date),
+    }));
+  }, [data?.transactions]);
 
-  // Derived data — memoized by query cache
-  const equity = useMemo(() => mapEquityHoldings(raw?.equity ?? null), [raw?.equity]);
-  const bonds = useMemo(() => mapBondHoldings(raw?.bonds ?? null), [raw?.bonds]);
-  const transactions = useMemo(() => mapTransactions(raw?.transactions ?? null), [raw?.transactions]);
-  const cashFlowStats = useMemo(() => buildCashFlowStats(transactions), [transactions]);
-  const portfolio = useMemo(() => buildUnifiedPortfolio(equity, bonds), [equity, bonds]);
-  const assetAllocation = useMemo(() => computeAssetAllocation(equity, bonds), [equity, bonds]);
-  const overallAllocation = useMemo(() => computeOverallAllocation(equity, bonds), [equity, bonds]);
-  const sectorAllocation = useMemo(() => computeSectorAllocation(equity, bonds), [equity, bonds]);
-  const concentrationRisk = useMemo(() => computeConcentrationRisk(equity, bonds), [equity, bonds]);
-  const { winners, losers } = useMemo(() => computeWinnersLosers(equity), [equity]);
-  const bondMaturityEvents = useMemo(() => buildBondMaturityEvents(bonds), [bonds]);
-  const bondLadder = useMemo(() => buildBondLadder(bonds), [bonds]);
-  const creditRatingDistribution = useMemo(() => buildCreditRatingDistribution(bonds), [bonds]);
-
-  const equityTotal = useMemo(() => equity.reduce((s, h) => s + h.currentValue, 0), [equity]);
-  const bondTotal = useMemo(() => bonds.reduce((s, b) => s + b.totalValue, 0), [bonds]);
-  const netWorth = equityTotal + bondTotal;
-
-  const todaysChange = useMemo(() => equity.reduce((s, h) => s + h.priceChange * h.shares, 0), [equity]);
-  const todaysChangePct = netWorth > 0 ? todaysChange / netWorth : 0;
+  const cashFlowStats = useMemo(() => {
+    if (!data?.cashFlowStats) {
+      return {
+        totalInvestment: 0,
+        totalExpenses: 0,
+        totalFoodAndEntertainment: 0,
+        totalOthers: 0,
+        monthlySummaries: [],
+        startDate: null,
+        endDate: null,
+      };
+    }
+    return {
+      ...data.cashFlowStats,
+      startDate: data.cashFlowStats.startDate ? new Date(data.cashFlowStats.startDate) : null,
+      endDate: data.cashFlowStats.endDate ? new Date(data.cashFlowStats.endDate) : null,
+    };
+  }, [data?.cashFlowStats]);
 
   return {
-    // Raw
-    raw,
+    raw: null,
     isLoading,
     error: error as Error | null,
-    lastFetched: raw?.meta.lastFetched ?? null,
+    lastFetched: data?.meta.lastFetched ?? null,
     dataUpdatedAt,
-    tabs: raw?.meta.tabs ?? [],
-    apiErrors: raw?.meta.errors ?? [],
+    tabs: [],
+    apiErrors: data?.meta.errors ?? [],
 
     // Holdings
-    equity,
-    bonds,
-    portfolio,
+    equity: data?.equity ?? [],
+    bonds: data?.bonds ?? [],
+    portfolio: data?.portfolio ?? [],
     transactions,
 
     // Aggregates
-    netWorth,
-    equityTotal,
-    bondTotal,
-    todaysChange,
-    todaysChangePct,
+    netWorth: data?.netWorth ?? 0,
+    equityTotal: data?.equityTotal ?? 0,
+    bondTotal: data?.bondTotal ?? 0,
+    todaysChange: data?.todaysChange ?? 0,
+    todaysChangePct: data?.todaysChangePct ?? 0,
 
     // Analytics
     cashFlowStats,
-    assetAllocation,
-    overallAllocation,
-    sectorAllocation,
-    concentrationRisk,
-    winners,
-    losers,
-    bondMaturityEvents,
-    bondLadder,
-    creditRatingDistribution,
+    assetAllocation: data?.assetAllocation ?? [],
+    overallAllocation: data?.overallAllocation ?? [],
+    sectorAllocation: data?.sectorAllocation ?? [],
+    concentrationRisk: data?.concentrationRisk ?? {
+      top5Holdings: [],
+      top5Percent: 0,
+      herfindahlIndex: 0,
+      diversificationScore: 0,
+    },
+    winners: data?.winners ?? [],
+    losers: data?.losers ?? [],
+    bondMaturityEvents: data?.bondMaturityEvents ?? [],
+    bondLadder: data?.bondLadder ?? [],
+    creditRatingDistribution: data?.creditRatingDistribution ?? [],
   };
 }

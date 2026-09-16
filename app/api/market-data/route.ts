@@ -1,8 +1,31 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit, getClientIdentifier, rateLimitResponse } from '@/lib/server/rateLimiter';
+import { methodNotAllowed, safeErrorResponse } from '@/lib/server/apiHelpers';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+// In-memory cache for market ticker to prevent rate-limiting Yahoo Finance
+let marketCache: { data: unknown; fetchedAt: number } | null = null;
+const MARKET_CACHE_TTL_MS = 60 * 1000; // 1 minute
+
+export async function GET(req: NextRequest) {
+  const clientId = getClientIdentifier(req);
+
+  // Rate limit: 60 requests per minute per IP
+  const limitResult = checkRateLimit(`market-data:${clientId}`, 60, 60 * 1000);
+  if (!limitResult.allowed) {
+    return rateLimitResponse(limitResult.resetTime, 'Market data rate limit exceeded.');
+  }
+
+  const now = Date.now();
+  if (marketCache && now - marketCache.fetchedAt < MARKET_CACHE_TTL_MS) {
+    return NextResponse.json(marketCache.data, {
+      headers: {
+        'Cache-Control': 'public, max-age=60, s-maxage=60, stale-while-revalidate=30',
+      },
+    });
+  }
+
   const indexMap: Record<string, string> = {
     'NIFTY 50': '^NSEI',
     'NIFTY NEXT 50': 'JUNIORBEES.NS',
@@ -16,7 +39,7 @@ export async function GET() {
     'NIFTY PHARMA': '^CNXPHARMA',
     'NIFTY FMCG': '^CNXFMCG',
     'NIFTY METAL': '^CNXMETAL',
-    'INDIA VIX': '^INDIAVIX'
+    'INDIA VIX': '^INDIAVIX',
   };
 
   const allIndianStocks = [
@@ -30,45 +53,65 @@ export async function GET() {
     'APOLLOHOSP.NS', 'EICHERMOT.NS', 'DIVISLAB.NS', 'BAJAJ-AUTO.NS', 'HEROMOTOCO.NS',
     'COALINDIA.NS', 'LTIM.NS', 'UPL.NS', 'BPCL.NS', 'INDUSINDBK.NS',
     'HDFCLIFE.NS', 'ADANIPORTS.NS', 'TATACONSUM.NS', 'ZOMATO.NS', 'JIOFIN.NS',
-    'SOUTHBANK.NS', 'KTKBANK.NS', 'TCS.NS', 'GOLDBEES.NS',
-    'NATCOPHARM.NS', 'DRREDDY.NS', 'TMCV.NS', 'TMPV.NS', 'IDFCFIRSTB.NS',
-    'INDUSINDBK.NS', 'WIPRO.NS', 'HEROMOTOCO.NS', 'ZYDUSLIFE.NS', 'JYOTHYLAB.NS',
-    'CIPLA.NS', 'ITCHOTELS.NS', 'MANAPPURAM.NS', 'MUTHOOTFIN.NS'
   ];
 
-  // Remove duplicates that might exist in the combined list
   const uniqueIndianStocks = Array.from(new Set(allIndianStocks));
   const shuffledStocks = [...uniqueIndianStocks].sort(() => 0.5 - Math.random());
   const selectedStocks = shuffledStocks.slice(0, 15);
 
   const symbols = [
     ...selectedStocks,
-    ...Object.keys(indexMap)
+    ...Object.keys(indexMap),
   ];
 
   try {
     const promises = symbols.map(async (sym) => {
       const yahooSymbol = indexMap[sym] || sym;
-      const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?interval=1d`);
+      const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?interval=1d`, {
+        next: { revalidate: 60 },
+      });
       if (!res.ok) return null;
       const data = await res.json();
       const meta = data?.chart?.result?.[0]?.meta;
       if (!meta) return null;
-      
+
       const price = meta.regularMarketPrice;
       const prevClose = meta.chartPreviousClose;
-      const changePercent = ((price - prevClose) / prevClose) * 100;
-      
+      const changePercent = prevClose ? ((price - prevClose) / prevClose) * 100 : 0;
+
       return {
         symbol: sym.replace('.NS', ''),
-        value: `${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(2)}%`
+        value: `${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(2)}%`,
       };
     });
 
-    const results = await Promise.all(promises);
-    return NextResponse.json(results.filter(Boolean));
+    const rawResults = await Promise.all(promises);
+    const results = rawResults.filter(Boolean);
+
+    marketCache = { data: results, fetchedAt: now };
+
+    return NextResponse.json(results, {
+      headers: {
+        'Cache-Control': 'public, max-age=60, s-maxage=60, stale-while-revalidate=30',
+      },
+    });
   } catch (error) {
-    console.error("Market data fetch error:", error);
-    return NextResponse.json({ error: 'Failed to fetch market data' }, { status: 500 });
+    return safeErrorResponse('api/market-data', error, 'Failed to fetch market data');
   }
+}
+
+export async function POST() {
+  return methodNotAllowed(['GET']);
+}
+
+export async function PUT() {
+  return methodNotAllowed(['GET']);
+}
+
+export async function DELETE() {
+  return methodNotAllowed(['GET']);
+}
+
+export async function PATCH() {
+  return methodNotAllowed(['GET']);
 }

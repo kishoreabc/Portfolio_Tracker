@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { getArticle } from '@/lib/news/search';
+import { getPortfolioData } from '@/lib/server/portfolioService';
 import { checkRateLimit, getClientIdentifier, rateLimitResponse } from '@/lib/server/rateLimiter';
 import { methodNotAllowed, privateNoStoreHeaders, safeErrorResponse, unauthorizedResponse } from '@/lib/server/apiHelpers';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest) {
   const session = await auth();
   if (!session?.user) {
     return unauthorizedResponse();
@@ -16,25 +13,24 @@ export async function GET(
   const userId = session.user.id || session.user.email || null;
   const clientId = getClientIdentifier(request, userId);
 
-  const limitResult = checkRateLimit(`news-id:${clientId}`, 60, 60 * 1000);
+  // Rate limit: 45 requests per 1-minute window
+  const limitResult = checkRateLimit(`portfolio:${clientId}`, 45, 60 * 1000);
   if (!limitResult.allowed) {
-    return rateLimitResponse(limitResult.resetTime);
+    return rateLimitResponse(limitResult.resetTime, 'Portfolio refresh rate limit reached. Please wait a moment.');
   }
 
-  const { id: idString } = await params;
-  const id = parseInt(idString, 10);
-  if (isNaN(id) || id <= 0) {
-    return NextResponse.json({ error: 'Invalid ID' }, { status: 400, headers: privateNoStoreHeaders });
-  }
+  const force = request.nextUrl.searchParams.get('force') === 'true';
 
   try {
-    const article = await getArticle(id);
-    if (!article) {
-      return NextResponse.json({ error: 'Article not found' }, { status: 404, headers: privateNoStoreHeaders });
-    }
-    return NextResponse.json(article, { headers: privateNoStoreHeaders });
-  } catch (error) {
-    return safeErrorResponse(`api/news/${id}`, error, 'Failed to fetch article');
+    const data = await getPortfolioData(force);
+    return NextResponse.json(data, {
+      headers: {
+        ...privateNoStoreHeaders,
+        'X-Last-Fetched': data.meta.lastFetched || '',
+      },
+    });
+  } catch (err) {
+    return safeErrorResponse('api/portfolio', err, 'Failed to load portfolio data');
   }
 }
 

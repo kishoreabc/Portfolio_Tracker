@@ -1,4 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/auth';
+import { checkRateLimit, getClientIdentifier, rateLimitResponse } from '@/lib/server/rateLimiter';
+import { methodNotAllowed, privateNoStoreHeaders, safeErrorResponse, unauthorizedResponse } from '@/lib/server/apiHelpers';
 
 // In-memory cache: symbol+range -> { data, ts }
 const historyCache = new Map<string, { data: unknown; ts: number }>();
@@ -6,12 +9,13 @@ const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 export const dynamic = 'force-dynamic';
 
-// Map our range keys to Yahoo Finance's period1 date offsets
+const VALID_RANGES = new Set(['1d', '5d', '1mo', '3mo', '6mo', '1y', '3y', '5y', 'max']);
+
 function getPeriod1(range: string): Date {
   const now = new Date();
   switch (range) {
-    case '1d':   return new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000); // 10 days to handle holidays & long weekends
-    case '5d':   return new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000); // 14 days to ensure 5 trading days
+    case '1d':   return new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000);
+    case '5d':   return new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
     case '1mo':  return new Date(now.getTime() - 35 * 24 * 60 * 60 * 1000);
     case '3mo':  return new Date(now.getTime() - 95 * 24 * 60 * 60 * 1000);
     case '6mo':  return new Date(now.getTime() - 190 * 24 * 60 * 60 * 1000);
@@ -39,18 +43,35 @@ function getInterval(range: string): string {
 }
 
 export async function GET(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ symbol: string }> }
 ) {
+  const session = await auth();
+  if (!session?.user) {
+    return unauthorizedResponse();
+  }
+
+  const userId = session.user.id || session.user.email || null;
+  const clientId = getClientIdentifier(req, userId);
+
+  const limitResult = checkRateLimit(`stocks-history:${clientId}`, 60, 60 * 1000);
+  if (!limitResult.allowed) {
+    return rateLimitResponse(limitResult.resetTime);
+  }
+
   const { symbol } = await params;
+  if (!symbol || !/^[A-Za-z0-9_.-]{1,20}$/.test(symbol)) {
+    return NextResponse.json({ error: 'Invalid stock symbol' }, { status: 400, headers: privateNoStoreHeaders });
+  }
+
+  const rawRange = req.nextUrl.searchParams.get('range') || '1y';
+  const range = VALID_RANGES.has(rawRange) ? rawRange : '1y';
   const upperSymbol = symbol.toUpperCase();
-  const url = new URL(req.url);
-  const range = url.searchParams.get('range') || '1y';
 
   const cacheKey = `${upperSymbol}:${range}`;
   const cached = historyCache.get(cacheKey);
   if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
-    return NextResponse.json(cached.data);
+    return NextResponse.json(cached.data, { headers: privateNoStoreHeaders });
   }
 
   const suffixes = upperSymbol.includes('.') ? [''] : ['.NS', '.BO'];
@@ -66,13 +87,11 @@ export async function GET(
       const period1 = getPeriod1(range);
       const interval = getInterval(range);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let historical = await (yahooFinance.chart as any)(yahooSymbol, {
         period1,
         interval,
       }, { validateResult: false }) as { quotes?: Array<{ date: Date; open?: number; high?: number; low?: number; close?: number; volume?: number }> } | null;
 
-      // Fallback for 1d if 5m returned no quotes (e.g. illiquid stock or extended holiday)
       if (range === '1d' && (!historical?.quotes || historical.quotes.length === 0)) {
         historical = await (yahooFinance.chart as any)(yahooSymbol, {
           period1: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
@@ -112,9 +131,25 @@ export async function GET(
   }
 
   if (!result) {
-    return NextResponse.json({ error: 'History not found' }, { status: 404 });
+    return NextResponse.json({ error: 'History not found' }, { status: 404, headers: privateNoStoreHeaders });
   }
 
   historyCache.set(cacheKey, { data: result, ts: Date.now() });
-  return NextResponse.json(result);
+  return NextResponse.json(result, { headers: privateNoStoreHeaders });
+}
+
+export async function POST() {
+  return methodNotAllowed(['GET']);
+}
+
+export async function PUT() {
+  return methodNotAllowed(['GET']);
+}
+
+export async function DELETE() {
+  return methodNotAllowed(['GET']);
+}
+
+export async function PATCH() {
+  return methodNotAllowed(['GET']);
 }

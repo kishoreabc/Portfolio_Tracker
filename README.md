@@ -56,7 +56,7 @@ Traditional portfolio management software often comes with significant downsides
 
 ### 2. Intelligent Google Sheets Engine (Heuristic Parsing)
 - **Zero-Rigidity Column Matching:** Flexible synonym-based header detection (`lib/sheets/parser.ts`). Recognizes varied column headers such as `cmp`, `ltp`, `current price`, `qty`, `shares`, `units`, `isin`, `coupon`, etc.
-- **In-Memory Caching:** 15-minute server-side caching with instant cache invalidation via `/api/sheets?force=true`.
+- **In-Memory Caching:** 15-minute server-side caching with instant cache invalidation via `/api/portfolio?force=true`.
 
 ### 3. Fixed-Income & Bond Management
 - **Bond Portfolio Analytics:** Track total bond holdings, weighted coupon rates, yield to maturity (YTM), duration, and credit rating distributions (AAA down to NR).
@@ -369,17 +369,21 @@ docker compose down
 
 | Route | Method | Description | Query / Body Parameters |
 | :--- | :---: | :--- | :--- |
-| `/api/sheets` | `GET` | Fetches, parses, and maps all configured Google Sheets tabs. | `?force=true` (bypasses in-memory 15-minute cache) |
-| `/api/bonds/cashflow` | `GET` | Queries the NSDL BDS service for coupon and redemption schedules. | `?isin=INE002A08018` |
-| `/api/insights` | `POST` | Triggers the 5-node agentic AI portfolio analysis pipeline. | Body: `{ equity, bonds, cashFlow, ... }` |
-| `/api/news` | `GET` | Returns paginated news articles with company tags. | `?page=1&limit=20&portfolioOnly=true` |
-| `/api/news/search` | `GET` | Performs vector semantic search or full-text search across news articles. | `?q=interest+rate&semantic=true` |
-| `/api/news/sync` | `POST` | Triggers the RSS ingestion, translation, embedding, and company-tagging pipeline. | Authorization: `Bearer <CRON_SECRET>` or Admin Session |
-| `/api/news/[id]/reprocess` | `POST` | Re-translates, re-embeds, and re-tags a specific news record. | URL param: `id` |
-| `/api/market-data` | `GET` | Fetches live market indices (NIFTY 50, SENSEX, USD/INR). | None |
-| `/api/stocks/[symbol]/quote` | `GET` | Fetches real-time price quote from Yahoo Finance. | URL param: `symbol` (e.g., `TCS.NS`) |
-| `/api/stocks/[symbol]/history`| `GET` | Fetches historical price bars for candlestick charts. | `?range=1y&interval=1d` |
-| `/api/reports/pdf` | `POST` | Generates a downloadable PDF report using `pdfmake`. | Body: `{ reportType: 'portfolio' \| 'ai', data }` |
+| `/api/portfolio` | `GET` | Authenticated: Fetches and returns sanitized, transformed portfolio data. | `?force=true` (bypasses in-memory 15-minute cache) |
+| `/api/portfolio/summary` | `GET` | Authenticated: Returns high-level portfolio summary metrics. | `?force=true` |
+| `/api/sheets` | `GET` | **Blocked / Disabled:** Direct access to raw Google Sheets data is rejected. | N/A |
+| `/api/bonds/cashflow` | `GET` | Authenticated: Queries NSDL BDS service for coupon and redemption schedules. | `?isin=INE002A08018` |
+| `/api/insights` | `GET, POST` | Authenticated: User-scoped 5-node agentic AI portfolio analysis pipeline. | Body: `{ equity, bonds, cashFlow, ... }` |
+| `/api/news` | `GET` | Authenticated: Returns paginated news articles with company tags. | `?page=1&limit=20&portfolioOnly=true` |
+| `/api/news/search` | `GET` | Authenticated: Vector semantic search or full-text search across news articles. | `?q=interest+rate&semantic=true` |
+| `/api/news/sync` | `POST` | Authenticated: Triggers RSS ingestion and tagging pipeline. | Body: `{ portfolioCompanies?: string[] }` |
+| `/api/news/sync/cron` | `GET` | Internal Cron: Scheduled background news sync with Bearer token. | Authorization: `Bearer <CRON_SECRET>` |
+| `/api/news/[id]/reprocess` | `POST` | Authenticated: Re-translates, re-embeds, and re-tags a specific news record. | URL param: `id` |
+| `/api/market-data` | `GET` | Public: Fetches live market indices for login screen and dashboard ticker. | None |
+| `/api/stocks/[symbol]/quote` | `GET` | Authenticated: Real-time price quote from Yahoo Finance with sanitized response. | URL param: `symbol` (e.g., `TCS.NS`) |
+| `/api/stocks/[symbol]/history`| `GET` | Authenticated: Historical price bars for candlestick charts. | `?range=1y&interval=1d` |
+| `/api/stocks/[symbol]/profile`| `GET` | Authenticated: Sanitized company overview and fundamentals. | URL param: `symbol` |
+| `/api/reports/pdf` | `POST` | Authenticated: Generates downloadable PDF dossier using `pdfmake`. | Body: `{ reportType: 'portfolio' \| 'ai', data }` |
 
 ---
 

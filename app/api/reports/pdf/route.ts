@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { getSectorPE, evaluateValuation } from '@/lib/calc/valuation';
+import { checkRateLimit, getClientIdentifier, rateLimitResponse } from '@/lib/server/rateLimiter';
+import { methodNotAllowed, safeErrorResponse, unauthorizedResponse } from '@/lib/server/apiHelpers';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -1309,27 +1311,30 @@ async function buildAIInsightsPDF(insights: any, data: SheetsData): Promise<any>
 // ─── Fetch portfolio data (server-side, no HTTP round-trip) ────────────────────
 
 async function fetchPortfolioData(): Promise<SheetsData> {
-  const { fetchAllSheetData } = await import('@/lib/sheets/fetcher');
-  const { mapEquityHoldings } = await import('@/lib/mappers/equity');
-  const { mapBondHoldings } = await import('@/lib/mappers/bonds');
-  const { mapTransactions, buildCashFlowStats } = await import('@/lib/mappers/cashflow');
+  const { getPortfolioData } = await import('@/lib/server/portfolioService');
+  const data = await getPortfolioData();
 
-  const raw = await fetchAllSheetData();
-
-  const equity = mapEquityHoldings(raw?.equity ?? null);
-  const bonds = mapBondHoldings(raw?.bonds ?? null);
-  const transactions = mapTransactions(raw?.transactions ?? null);
-  const { monthlySummaries } = buildCashFlowStats(transactions);
-
-  return { equity, bonds, monthlySummaries };
+  return {
+    equity: data.equity,
+    bonds: data.bonds,
+    monthlySummaries: data.cashFlowStats.monthlySummaries,
+  };
 }
 
 // ─── Route ─────────────────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
   const session = await auth();
-  if (!session) {
-    return new NextResponse('Unauthorized', { status: 401 });
+  if (!session?.user) {
+    return unauthorizedResponse();
+  }
+
+  const userId = session.user.id || session.user.email || null;
+  const clientId = getClientIdentifier(request, userId);
+
+  const limitResult = checkRateLimit(`reports-pdf:${clientId}`, 10, 5 * 60 * 1000);
+  if (!limitResult.allowed) {
+    return rateLimitResponse(limitResult.resetTime, 'Report export rate limit exceeded. Please wait a few minutes.');
   }
 
   try {
@@ -1418,8 +1423,22 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'PDF generation failed';
-    console.error('[api/reports/pdf]', message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeErrorResponse('api/reports/pdf', err, 'Failed to generate PDF report');
   }
+}
+
+export async function GET() {
+  return methodNotAllowed(['POST']);
+}
+
+export async function PUT() {
+  return methodNotAllowed(['POST']);
+}
+
+export async function DELETE() {
+  return methodNotAllowed(['POST']);
+}
+
+export async function PATCH() {
+  return methodNotAllowed(['POST']);
 }

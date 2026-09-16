@@ -1,29 +1,22 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { fetchAllSheetData } from '@/lib/sheets/fetcher';
-import { auth } from '@/auth';
+import { NextResponse } from 'next/server';
+import { forbiddenResponse, methodNotAllowed } from '@/lib/server/apiHelpers';
 
-export async function GET(request: NextRequest) {
-  const session = await auth();
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized', meta: { lastFetched: null, tabs: [], errors: ['Unauthorized'] } }, { status: 401 });
-  }
+export async function GET() {
+  return forbiddenResponse('Direct access to raw Google Sheets data has been disabled. Please use /api/portfolio.');
+}
 
-  const force = request.nextUrl.searchParams.get('force') === 'true';
+export async function POST() {
+  return methodNotAllowed(['GET']);
+}
 
-  try {
-    const data = await fetchAllSheetData(force);
-    return NextResponse.json(data, {
-      headers: {
-        'Cache-Control': 'no-store',
-        'X-Last-Fetched': data.meta.lastFetched,
-      },
-    });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[/api/sheets] Error:', message);
-    return NextResponse.json(
-      { error: message, meta: { lastFetched: null, tabs: [], errors: [message] } },
-      { status: 500 }
-    );
-  }
+export async function PUT() {
+  return methodNotAllowed(['GET']);
+}
+
+export async function DELETE() {
+  return methodNotAllowed(['GET']);
+}
+
+export async function PATCH() {
+  return methodNotAllowed(['GET']);
 }

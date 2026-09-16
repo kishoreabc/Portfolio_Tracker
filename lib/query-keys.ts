@@ -1,8 +1,10 @@
 import type { NewsFilters } from '@/types/news';
 
 export const queryKeys = {
-  sheets: ['sheets'] as const,
-  sheetsForced: ['sheets', 'forced'] as const,
+  portfolio: ['portfolio'] as const,
+  portfolioForced: ['portfolio', 'forced'] as const,
+  sheets: ['portfolio'] as const,
+  sheetsForced: ['portfolio', 'forced'] as const,
   insights: (hash: string) => ['insights', hash] as const,
 
   // News

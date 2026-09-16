@@ -94,6 +94,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       const isPublicPath =
         nextUrl.pathname.startsWith('/login') ||
         nextUrl.pathname.startsWith('/api/auth') ||
+        nextUrl.pathname.startsWith('/api/market-data') ||
         nextUrl.pathname.match(/\.(png|jpg|jpeg|svg|gif|ico)$/) ||
         nextUrl.pathname.startsWith('/_next/');
 
@@ -105,6 +106,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
 
       if (isPublicPath) return true;
+
+      // For API routes, return HTTP 401 Unauthorized JSON instead of redirecting
+      if (nextUrl.pathname.startsWith('/api/')) {
+        return Response.json(
+          { error: 'Unauthorized' },
+          { status: 401, headers: { 'Cache-Control': 'no-store' } }
+        );
+      }
 
       // Redirect to login if not logged in and not on a public path
       return false;

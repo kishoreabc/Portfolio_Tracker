@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { buildAIInsights, type PortfolioInput } from '@/lib/ai/pipeline';
 import type { AgentActivityEvent } from '@/types/agent-activity';
+import { checkRateLimit, rateLimitResponse } from '@/lib/server/rateLimiter';
+import { methodNotAllowed, privateNoStoreHeaders, unauthorizedResponse } from '@/lib/server/apiHelpers';
 
-// Cache: 15-minute window, keyed by payload hash
-let insightCache: { prompt_hash: string; result: unknown; fetchedAt: number } | null = null;
+// Cache: 15-minute window, isolated per user ID
+const userInsightCache = new Map<string, { prompt_hash: string; result: unknown; fetchedAt: number }>();
 const CACHE_MS = 15 * 60 * 1000;
 
 function hashString(s: string): string {
@@ -17,28 +19,48 @@ function hashString(s: string): string {
 
 export async function GET() {
   const session = await auth();
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized', insights: null }, { status: 401 });
+  if (!session?.user) {
+    return unauthorizedResponse();
   }
 
-  if (insightCache) {
-    return NextResponse.json({ insights: insightCache.result, cached: true });
+  const userId = session.user.id || session.user.email || 'user';
+  const userCache = userInsightCache.get(userId);
+
+  if (userCache && Date.now() - userCache.fetchedAt < CACHE_MS) {
+    return NextResponse.json(
+      { insights: userCache.result, cached: true },
+      { headers: privateNoStoreHeaders }
+    );
   }
 
-  return NextResponse.json({ insights: null, cached: false });
+  return NextResponse.json(
+    { insights: null, cached: false },
+    { headers: privateNoStoreHeaders }
+  );
 }
 
 export async function POST(request: NextRequest) {
   const session = await auth();
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized', insights: null }, { status: 401 });
+  if (!session?.user) {
+    return unauthorizedResponse();
+  }
+
+  const userId = session.user.id || session.user.email || 'user';
+
+  // Rate limit: maximum 10 generation runs per 10-minute window per user
+  const limitResult = checkRateLimit(`insights:${userId}`, 10, 10 * 60 * 1000);
+  if (!limitResult.allowed) {
+    return rateLimitResponse(
+      limitResult.resetTime,
+      'AI insights rate limit exceeded. Please wait a few minutes before regenerating.'
+    );
   }
 
   const insightsKey = process.env.GEMINI_INSIGHTS_API_KEY || process.env.GEMINI_API_KEY;
   if (!insightsKey) {
     return NextResponse.json(
-      { error: 'No Gemini API key configured (GEMINI_INSIGHTS_API_KEY or GEMINI_API_KEY)', insights: null },
-      { status: 503 }
+      { error: 'AI Insights service is currently unavailable', insights: null },
+      { status: 503, headers: privateNoStoreHeaders }
     );
   }
 
@@ -47,14 +69,18 @@ export async function POST(request: NextRequest) {
     const { force, ...inputPayload } = body;
     const promptHash = hashString(JSON.stringify(inputPayload));
 
-    // Serve from server cache if not forced and within cache window
+    const userCache = userInsightCache.get(userId);
+    // Serve from user-specific server cache if not forced and within cache window
     if (
       !force &&
-      insightCache &&
-      insightCache.prompt_hash === promptHash &&
-      Date.now() - insightCache.fetchedAt < CACHE_MS
+      userCache &&
+      userCache.prompt_hash === promptHash &&
+      Date.now() - userCache.fetchedAt < CACHE_MS
     ) {
-      return NextResponse.json({ insights: insightCache.result, cached: true });
+      return NextResponse.json(
+        { insights: userCache.result, cached: true },
+        { headers: privateNoStoreHeaders }
+      );
     }
 
     // Server-Sent Events (SSE) stream for live agent activity execution
@@ -77,12 +103,13 @@ export async function POST(request: NextRequest) {
           sendEvent({ type: 'agent_event', event });
         });
 
-        insightCache = { prompt_hash: promptHash, result: insights, fetchedAt: Date.now() };
+        // Cache strictly scoped to this authenticated user
+        userInsightCache.set(userId, { prompt_hash: promptHash, result: insights, fetchedAt: Date.now() });
         await sendEvent({ type: 'pipeline_completed', insights, cached: false });
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'AI pipeline error';
+        const message = err instanceof Error ? err.message : String(err);
         console.error('[api/insights/stream] Execution error:', message);
-        await sendEvent({ type: 'pipeline_failed', error: message });
+        await sendEvent({ type: 'pipeline_failed', error: 'Failed to complete AI insights analysis. Please try again later.' });
       } finally {
         try {
           await writer.close();
@@ -93,13 +120,28 @@ export async function POST(request: NextRequest) {
     return new Response(stream.readable, {
       headers: {
         'Content-Type': 'text/event-stream; charset=utf-8',
-        'Cache-Control': 'no-cache, no-transform',
+        'Cache-Control': 'no-cache, no-transform, private',
         Connection: 'keep-alive',
       },
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'AI pipeline error';
-    console.error('[api/insights]', message);
-    return NextResponse.json({ error: message, insights: null }, { status: 500 });
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[api/insights] POST error:', message);
+    return NextResponse.json(
+      { error: 'Failed to process AI insights request', insights: null },
+      { status: 500, headers: privateNoStoreHeaders }
+    );
   }
+}
+
+export async function PUT() {
+  return methodNotAllowed(['GET', 'POST']);
+}
+
+export async function DELETE() {
+  return methodNotAllowed(['GET', 'POST']);
+}
+
+export async function PATCH() {
+  return methodNotAllowed(['GET', 'POST']);
 }

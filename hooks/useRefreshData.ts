@@ -26,16 +26,16 @@ export function useRefreshData() {
     clearError();
     try {
       // Force-fetch bypasses server cache
-      const res = await fetch('/api/sheets?force=true');
+      const res = await fetch('/api/portfolio?force=true');
       
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.error || `Failed to refresh data: ${res.statusText}`);
       }
 
-      // Invalidate and refetch the standard query key
-      await queryClient.invalidateQueries({ queryKey: queryKeys.sheets });
-      await queryClient.refetchQueries({ queryKey: queryKeys.sheets });
+      // Invalidate and refetch the portfolio query keys
+      await queryClient.invalidateQueries({ queryKey: queryKeys.portfolio });
+      await queryClient.refetchQueries({ queryKey: queryKeys.portfolio });
     } catch (err) {
       let message = err instanceof Error ? err.message : String(err);
       
