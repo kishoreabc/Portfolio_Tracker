@@ -156,7 +156,7 @@ export default function CashFlowPage() {
                       ))}
                     </Pie>
                     {showTooltip && (
-                      <Tooltip formatter={((v: number) => fmt(v)) as any}
+                      <Tooltip formatter={((v: number) => fmt(v, isHidden)) as any}
                         contentStyle={{ background: 'hsl(222 47% 13%)', border: '1px solid hsl(222 47% 20%)', borderRadius: '8px', color: 'white', fontSize: 12 }}
                         itemStyle={{ color: 'white', fontWeight: 500 }} />
                     )}

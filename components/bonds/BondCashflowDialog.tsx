@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar, CheckCircle2, Clock, AlertCircle, RefreshCw, Landmark, ArrowUpRight } from 'lucide-react';
 import type { NsdlCashFlowResponse, NsdlCashFlowItem } from '@/types/bonds';
 import { format, parseISO, isValid, isBefore, isAfter, startOfDay } from 'date-fns';
+import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
 
 interface BondCashflowDialogProps {
   isin: string;
@@ -53,7 +54,8 @@ function formatDate(dateStr: string | undefined): string {
   return format(d, 'dd MMM yyyy');
 }
 
-function fmtVal(v: number) {
+function fmtVal(v: number, isHidden: boolean = false) {
+  if (isHidden) return PRIVACY_MASK;
   if (v >= 1e7) return `₹${(v / 1e7).toFixed(2)}Cr`;
   if (v >= 1e5) return `₹${(v / 1e5).toFixed(2)}L`;
   return `₹${v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -68,6 +70,7 @@ export function BondCashflowDialog({
   onOpenChange: setControlledOpen,
   trigger,
 }: BondCashflowDialogProps) {
+  const { isHidden } = usePrivacy();
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = controlledOpen !== undefined;
   const isOpen = isControlled ? controlledOpen : internalOpen;
@@ -200,7 +203,7 @@ export function BondCashflowDialog({
                   {unitsHeld > 0 ? 'Upcoming Cashflow' : 'Payout / Unit'}
                 </p>
                 <p className="text-sm font-bold text-emerald-400 mt-0.5">
-                  {fmtVal(totalUpcomingPayout)}
+                  {fmtVal(totalUpcomingPayout, isHidden)}
                 </p>
               </div>
             </div>
@@ -325,11 +328,11 @@ export function BondCashflowDialog({
                           <TableCell className={`text-xs tabular-nums text-right font-bold font-mono ${
                             item.isPast ? 'text-muted-foreground' : 'text-emerald-400'
                           }`}>
-                            {fmtVal(item.totalAmt)}
+                            {fmtVal(item.totalAmt, isHidden)}
                           </TableCell>
                         ) : (
                           <TableCell className="text-xs tabular-nums text-right font-mono font-medium text-foreground">
-                            ₹{item.amtPerUnit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                            {fmtVal(item.amtPerUnit, isHidden)}
                           </TableCell>
                         )}
 
