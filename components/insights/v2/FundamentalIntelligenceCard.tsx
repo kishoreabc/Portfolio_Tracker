@@ -1,17 +1,51 @@
 'use client';
 
+import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart3, CheckCircle2, AlertTriangle, ShieldCheck, Quote } from 'lucide-react';
 import type { FundamentalIntelligence } from '@/types/insights';
 
 interface FundamentalIntelligenceCardProps {
   data?: FundamentalIntelligence;
+  equity?: Array<{
+    ticker: string;
+    name?: string;
+    sector?: string;
+    currentValue?: number;
+    allocationPercent?: number;
+  }>;
 }
 
-export function FundamentalIntelligenceCard({ data }: FundamentalIntelligenceCardProps) {
-  if (!data) return null;
+export function FundamentalIntelligenceCard({ data, equity }: FundamentalIntelligenceCardProps) {
+  const score = Math.min(100, Math.max(0, data?.score || 75));
 
-  const score = Math.min(100, Math.max(0, data.score || 75));
+  const holdingsList = useMemo(() => {
+    const base = data?.holdings ? [...data.holdings] : [];
+    if (!equity || equity.length === 0) return base;
+
+    const existingSymbols = new Set(base.map((h) => (h.symbol || '').trim().toUpperCase()));
+
+    for (const eq of equity) {
+      const sym = (eq.ticker || '').trim().toUpperCase();
+      if (!sym || existingSymbols.has(sym)) continue;
+
+      base.push({
+        symbol: sym,
+        name: eq.name || sym,
+        weight: eq.allocationPercent || 0,
+        pe: undefined,
+        forwardPe: undefined,
+        pb: undefined,
+        dividendYield: undefined,
+        status: 'Neutral',
+      });
+      existingSymbols.add(sym);
+    }
+
+    return base;
+  }, [data?.holdings, equity]);
+
+  if (!data && holdingsList.length === 0) return null;
 
   const getStatusColor = (val: number) => {
     if (val >= 80) return 'text-emerald-400';
@@ -42,76 +76,79 @@ export function FundamentalIntelligenceCard({ data }: FundamentalIntelligenceCar
           <div>
             <CardTitle className="text-h4">Fundamental Intelligence</CardTitle>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Holdings-level profitability, valuation multiples, and balance sheet characteristics
+              Financial health, balance-sheet resilience, and valuation quality
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="text-right">
-            <span className="text-[10px] text-muted-foreground uppercase tracking-widest block font-medium">Quality Score</span>
-            <span className={`text-lg font-bold tabular-nums ${getStatusColor(score)}`}>
-              {score} <span className="text-xs text-muted-foreground font-normal">/ 100</span>
-            </span>
+        {data && (
+          <div className="flex items-center gap-2">
+            <ShieldCheck className={`w-4 h-4 ${getStatusColor(score)}`} />
+            <div className="flex items-baseline gap-1">
+              <span className={`text-sm font-extrabold ${getStatusColor(score)} font-mono`}>
+                {score}
+              </span>
+              <span className="text-[10px] text-muted-foreground font-mono">/100</span>
+            </div>
           </div>
-        </div>
+        )}
       </CardHeader>
 
       <CardContent className="pt-4 space-y-5">
-        {/* Strengths & Watch Columns */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Strengths */}
-          <div className="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 space-y-2">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 uppercase tracking-wider">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Core Strengths</span>
+        {/* Core Strengths & Watch Items */}
+        {data && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 rounded-xl bg-card/60 border border-border/40 space-y-2">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span>Financial Quality Drivers</span>
+              </div>
+              <ul className="space-y-1.5 text-xs text-muted-foreground">
+                {data.strengths.map((s, idx) => (
+                  <li key={idx} className="flex items-start gap-1.5">
+                    <span className="text-emerald-400 mt-1">•</span>
+                    <span>{s}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <ul className="space-y-1.5 text-xs text-muted-foreground">
-              {data.strengths.map((str, idx) => (
-                <li key={idx} className="flex items-start gap-2">
-                  <span className="text-emerald-400 font-bold mt-0.5">✓</span>
-                  <span className="leading-relaxed">{str}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
 
-          {/* Watch Items */}
-          <div className="p-3.5 rounded-xl bg-amber-500/5 border border-amber-500/20 space-y-2">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400 uppercase tracking-wider">
-              <AlertTriangle className="w-3.5 h-3.5" />
-              <span>Watch Items</span>
+            <div className="p-4 rounded-xl bg-card/60 border border-border/40 space-y-2">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                <AlertTriangle className="w-4 h-4 text-amber-400" />
+                <span>Fundamental Watchpoints</span>
+              </div>
+              <ul className="space-y-1.5 text-xs text-muted-foreground">
+                {data.watchItems.map((w, idx) => (
+                  <li key={idx} className="flex items-start gap-1.5">
+                    <span className="text-amber-400 mt-1">•</span>
+                    <span>{w}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <ul className="space-y-1.5 text-xs text-muted-foreground">
-              {data.watchItems.map((watch, idx) => (
-                <li key={idx} className="flex items-start gap-2">
-                  <span className="text-amber-400 font-bold mt-0.5">⚠</span>
-                  <span className="leading-relaxed">{watch}</span>
-                </li>
-              ))}
-            </ul>
           </div>
-        </div>
+        )}
 
-        {/* AI Interpretation Box */}
-        {data.interpretation && (
-          <div className="p-3.5 rounded-xl bg-white/[0.02] border border-border/40 text-xs text-muted-foreground flex items-start gap-2.5">
-            <Quote className="w-4 h-4 text-indigo-400 flex-shrink-0 mt-0.5" />
+        {/* AI Fundamental Interpretation */}
+        {data?.interpretation && (
+          <div className="p-4 rounded-xl bg-white/[0.02] border border-border/40 text-xs text-muted-foreground flex items-start gap-2.5">
+            <Quote className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <span className="text-[11px] font-semibold text-foreground block">Analytical Interpretation:</span>
+              <span className="text-[11px] font-semibold text-foreground block">Fundamental Context:</span>
               <p className="leading-relaxed italic">{data.interpretation}</p>
             </div>
           </div>
         )}
 
         {/* Stock-Level Table */}
-        {data.holdings && data.holdings.length > 0 && (
+        {holdingsList.length > 0 && (
           <div className="space-y-2 pt-2">
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
                 Holding-Level Fundamentals
               </h4>
-              <span className="text-[11px] text-muted-foreground">Top {data.holdings.length} equities</span>
+              <span className="text-[11px] text-muted-foreground font-mono">{holdingsList.length} Holdings</span>
             </div>
 
             <div className="overflow-x-auto rounded-xl border border-border/40">
@@ -128,13 +165,13 @@ export function FundamentalIntelligenceCard({ data }: FundamentalIntelligenceCar
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/20 font-mono">
-                  {data.holdings.map((h, idx) => (
+                  {holdingsList.map((h, idx) => (
                     <tr key={idx} className="hover:bg-white/[0.02] transition-colors">
                       <td className="p-2.5 font-sans font-medium text-foreground">
                         <div>{h.symbol}</div>
                         <div className="text-[10px] text-muted-foreground truncate max-w-[120px]">{h.name}</div>
                       </td>
-                      <td className="p-2.5 text-right text-foreground">{h.weight.toFixed(1)}%</td>
+                      <td className="p-2.5 text-right text-foreground">{typeof h.weight === 'number' ? `${h.weight.toFixed(1)}%` : '—'}</td>
                       <td className="p-2.5 text-right text-foreground">{h.pe ? `${h.pe}x` : '—'}</td>
                       <td className="p-2.5 text-right text-muted-foreground">{h.forwardPe ? `${h.forwardPe}x` : '—'}</td>
                       <td className="p-2.5 text-right text-muted-foreground">{h.pb ? `${h.pb}x` : '—'}</td>

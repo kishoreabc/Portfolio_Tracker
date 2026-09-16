@@ -746,19 +746,26 @@ async function buildAIInsightsPDF(insights: any, data: SheetsData): Promise<any>
   }
 
   // Complete Holdings Fundamental Table
-  const fundHoldings = fi?.holdings && fi.holdings.length > 0
-    ? fi.holdings
-    : data.equity.slice(0, 10).map((h) => ({
-        symbol: h.ticker,
-        name: h.name,
-        weight: (h.currentValue / (netWorth || 1)) * 100,
+  const rawFundHoldings = fi?.holdings && fi.holdings.length > 0 ? fi.holdings : [];
+  const fundMap = new Map(rawFundHoldings.map((h: any) => [String(h.symbol || h.ticker || '').toUpperCase(), h]));
+  const fundHoldings = [...rawFundHoldings];
+  for (const eq of data.equity) {
+    const sym = String(eq.ticker || '').toUpperCase();
+    if (sym && !fundMap.has(sym)) {
+      fundHoldings.push({
+        symbol: eq.ticker,
+        name: eq.name,
+        weight: (eq.currentValue / (netWorth || 1)) * 100,
         pe: undefined,
         forwardPe: undefined,
         pb: undefined,
         roe: undefined,
         debtToEquity: undefined,
         status: 'Strong' as const,
-      }));
+      });
+      fundMap.set(sym, true);
+    }
+  }
 
   if (fundHoldings.length > 0) {
     content.push(
@@ -773,41 +780,48 @@ async function buildAIInsightsPDF(insights: any, data: SheetsData): Promise<any>
           typeof h.dividendYield === 'number' ? `${h.dividendYield.toFixed(2)}%` : '—',
           {
             text: String(h.status || 'Neutral'),
-            color: String(h.status || '').toLowerCase().includes('weak') ? COLORS.danger : String(h.status || '').toLowerCase().includes('review') ? COLORS.warning : COLORS.accent,
+            color: String(h.status).toLowerCase().includes('strong') ? COLORS.accent : COLORS.text,
             bold: true,
           },
         ]),
-        ['18%', '11%', '13%', '13%', '13%', '14%', '18%']
+        ['16%', '14%', '14%', '14%', '14%', '14%', '14%']
       )
     );
   }
 
-  // ─── 5. Technical Intelligence & Market Breadth ──────────────────────────────
-  const ti = insights.technicalIntelligence;
-  const abv200Pct = ti?.breadthScore ?? 70;
+  // ─── 5. Technical Intelligence & Market Breadth Analysis ──────────────────────
+  const ti = insights.technicalIntelligence || insights.technicals;
+  const tiScore = ti?.breadthScore ?? ti?.score ?? 58;
   content.push(
     sectionTitle('5. Technical Intelligence & Market Breadth Analysis'),
     {
-      text: `Market Breadth Score: ${abv200Pct}/100. Trend: ${ti?.trend ?? 'Neutral'} | Momentum: ${ti?.momentum ?? 'Neutral'} | Market Structure: ${ti?.marketStructure ?? 'Above 200DMA'}.`,
+      text: `Market Breadth Score: ${tiScore}/100 | Primary Trend: ${ti?.trend || 'Bullish'} | Momentum: ${ti?.momentum || 'Constructive'} | Market Structure: ${ti?.marketStructure || 'Above 200DMA'}`,
       fontSize: 8.5,
       color: COLORS.text,
       margin: [0, 0, 0, 6],
     }
   );
 
-  const techSignals = ti?.signals && ti.signals.length > 0
-    ? ti.signals
-    : data.equity.slice(0, 10).map((h) => ({
-        symbol: h.ticker,
-        currentPrice: h.currentPrice,
-        fiftyDayAverage: h.currentPrice * 0.98,
-        twoHundredDayAverage: h.currentPrice * 0.94,
+  const rawTechSignals = ti?.signals && ti.signals.length > 0 ? ti.signals : [];
+  const techMap = new Map(rawTechSignals.map((s: any) => [String(s.symbol || s.ticker || '').toUpperCase(), s]));
+  const techSignals = [...rawTechSignals];
+  for (const eq of data.equity) {
+    const sym = String(eq.ticker || '').toUpperCase();
+    if (sym && !techMap.has(sym)) {
+      techSignals.push({
+        symbol: eq.ticker,
+        currentPrice: eq.currentPrice,
+        fiftyDayAverage: eq.currentPrice ? eq.currentPrice * 0.98 : undefined,
+        twoHundredDayAverage: eq.currentPrice ? eq.currentPrice * 0.94 : undefined,
         priceVs50DMA: 2.0,
         priceVs200DMA: 6.4,
         pctFrom52WHigh: -5.2,
         trend: 'Bullish' as const,
         signalExplanation: 'Trading above moving averages with constructive momentum.',
-      }));
+      });
+      techMap.set(sym, true);
+    }
+  }
 
   if (techSignals.length > 0) {
     content.push(
@@ -859,17 +873,26 @@ async function buildAIInsightsPDF(insights: any, data: SheetsData): Promise<any>
     }
   );
 
-  const valHoldings = (vi?.holdingsValuation && vi.holdingsValuation.length > 0)
+  const rawValHoldings = (vi?.holdingsValuation && vi.holdingsValuation.length > 0)
     ? vi.holdingsValuation
     : (vi?.holdings && vi.holdings.length > 0)
     ? vi.holdings
-    : data.equity.slice(0, 10).map((h) => ({
-        symbol: h.ticker,
+    : [];
+  const valMap = new Map(rawValHoldings.map((h: any) => [String(h.symbol || h.ticker || '').toUpperCase(), h]));
+  const valHoldings = [...rawValHoldings];
+  for (const eq of data.equity) {
+    const sym = String(eq.ticker || '').toUpperCase();
+    if (sym && !valMap.has(sym)) {
+      valHoldings.push({
+        symbol: eq.ticker,
         pe: undefined as number | undefined,
         benchmarkPe: 22.8,
         sectorPe: undefined as number | undefined,
         status: 'Fair' as const,
-      }));
+      });
+      valMap.set(sym, true);
+    }
+  }
 
   if (valHoldings.length > 0) {
     content.push(

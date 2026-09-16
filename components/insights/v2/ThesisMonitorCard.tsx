@@ -55,7 +55,7 @@ export function ThesisMonitorCard({ holdings }: ThesisMonitorCardProps) {
         </div>
 
         <span className="text-[10px] text-muted-foreground uppercase tracking-widest px-2.5 py-0.5 rounded bg-white/5 border border-white/10 font-mono">
-          Top {holdings.length} Holdings
+          {holdings.length} Holdings
         </span>
       </CardHeader>
 

@@ -110,7 +110,7 @@ export default function InsightsPage() {
       diversificationScore: concentrationRisk.diversificationScore,
       herfindahlIndex: concentrationRisk.herfindahlIndex,
       top5Percent: concentrationRisk.top5Percent,
-      topEquity: sortedEquity.slice(0, 10).map((h) => ({
+      topEquity: sortedEquity.map((h) => ({
         ticker: h.ticker,
         name: h.name,
         sector: h.sector,
@@ -119,7 +119,7 @@ export default function InsightsPage() {
         allocationPercent: h.allocationPercent,
         shares: h.shares,
       })),
-      topBonds: sortedBonds.slice(0, 8).map((b) => ({
+      topBonds: sortedBonds.map((b) => ({
         isin: b.isin,
         securityName: b.securityName,
         sector: b.sector,
@@ -149,7 +149,7 @@ export default function InsightsPage() {
         shares: equity.find((e) => e.ticker === l.ticker)?.shares ?? 0,
       })),
       assetAllocation: assetAllocation.map((a) => ({ label: a.label, percent: a.percent })),
-      sectorAllocation: sectorAllocation.slice(0, 8).map((s) => ({ sector: s.sector, percent: s.percent })),
+      sectorAllocation: sectorAllocation.map((s) => ({ sector: s.sector, percent: s.percent })),
       totalInvestment: cashFlowStats.totalInvestment,
       totalExpenses: cashFlowStats.totalExpenses,
       monthlyAvgInvestment: cashFlowStats.monthlySummaries.length
@@ -412,12 +412,12 @@ export default function InsightsPage() {
               {activeSection === 'overview' && (
                 <div className="space-y-6 animate-fade-in-up">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <FundamentalIntelligenceCard data={displayInsights.fundamentalIntelligence} />
+                    <FundamentalIntelligenceCard data={displayInsights.fundamentalIntelligence} equity={equity} />
                     <TechnicalIntelligenceCard data={displayInsights.technicalIntelligence} />
                   </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <ValuationIntelligenceCard data={displayInsights.valuationIntelligence} />
+                    <ValuationIntelligenceCard data={displayInsights.valuationIntelligence} equity={equity} />
                     <RiskIntelligenceCard data={displayInsights.riskIntelligence} />
                   </div>
 
@@ -435,7 +435,7 @@ export default function InsightsPage() {
               {/* TAB 1: FUNDAMENTAL */}
               {activeSection === 'fundamental' && (
                 <div className="space-y-6 animate-fade-in-up">
-                  <FundamentalIntelligenceCard data={displayInsights.fundamentalIntelligence} />
+                  <FundamentalIntelligenceCard data={displayInsights.fundamentalIntelligence} equity={equity} />
                 </div>
               )}
 
@@ -449,7 +449,7 @@ export default function InsightsPage() {
               {/* TAB 3: VALUATION */}
               {activeSection === 'valuation' && (
                 <div className="space-y-6 animate-fade-in-up">
-                  <ValuationIntelligenceCard data={displayInsights.valuationIntelligence} />
+                  <ValuationIntelligenceCard data={displayInsights.valuationIntelligence} equity={equity} />
                 </div>
               )}
 

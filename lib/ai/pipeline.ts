@@ -409,7 +409,7 @@ export async function fetchHoldingsAnalysis(topEquity: EquityInput[]): Promise<S
     const YahooFinance = yfModule.default || yfModule;
     const yahooFinance = new (YahooFinance as any)({ suppressNotices: ['yahooSurvey'] });
 
-    const targets = topEquity.slice(0, 8);
+    const targets = topEquity;
     const results = await Promise.allSettled(
       targets.map(async (holding) => {
         const rawTicker = (holding.ticker || '').trim().toUpperCase();
@@ -791,7 +791,7 @@ SECTOR ALLOCATION (top 5):
 ${input.sectorAllocation.slice(0, 5).map((s) => `  ${s.sector}: ${(s.percent * 100).toFixed(1)}%`).join('\n')}
 
 TOP EQUITY HOLDINGS:
-${input.topEquity.slice(0, 8).map((e) => `  ${e.ticker} | ${e.sector} | ₹${(e.currentValue / 1e5).toFixed(2)}L | ${e.allocationPercent.toFixed(1)}% | ${e.percentChange >= 0 ? '+' : ''}${(e.percentChange * 100).toFixed(2)}%`).join('\n')}
+${input.topEquity.map((e) => `  ${e.ticker} | ${e.sector} | ₹${(e.currentValue / 1e5).toFixed(2)}L | ${e.allocationPercent.toFixed(1)}% | ${e.percentChange >= 0 ? '+' : ''}${(e.percentChange * 100).toFixed(2)}%`).join('\n')}
 
 TOP EQUITY FUNDAMENTAL & TECHNICAL ANALYSIS (Yahoo Finance Real-Time):
 Average Trailing P/E: ${avgPE}x | Technical Breadth: ${breadthPct !== null ? `${breadthPct}% holdings above 200DMA` : 'N/A'}
@@ -826,16 +826,16 @@ Return JSON:
   "fundamentalWatchItems": ["<watch item 1, e.g. 'Valuation dispersion in select positions'>", "<watch item 2>"],
   "fundamentalInterpretation": "<2-3 sentences analyzing business profitability, debt quality, and cash flow conversion>",
   "holdingsFundamentalStatus": [
-    ${input.topEquity.slice(0, 8).map((e) => `{"ticker": "${e.ticker}", "status": "Strong"|"Neutral"|"Weak"}`).join(',\n    ')}
+    ${input.topEquity.map((e) => `{"ticker": "${e.ticker}", "status": "Strong"|"Neutral"|"Weak"}`).join(',\n    ')}
   ],
   "technicalTrend": "Bullish"|"Neutral"|"Bearish",
   "technicalMomentum": "Strong"|"Neutral"|"Weak",
   "technicalMarketStructure": "Above 200DMA"|"Near 200DMA"|"Below 200DMA",
   "technicalSignals": [
-    ${input.topEquity.slice(0, 8).map((e) => `{"ticker": "${e.ticker}", "trend": "Bullish"|"Neutral"|"Bearish", "momentum": "Strong"|"Neutral"|"Weak", "explanation": "<1 sentence explaining position relative to 50DMA/200DMA>"}`).join(',\n    ')}
+    ${input.topEquity.map((e) => `{"ticker": "${e.ticker}", "trend": "Bullish"|"Neutral"|"Bearish", "momentum": "Strong"|"Neutral"|"Weak", "explanation": "<1 sentence explaining position relative to 50DMA/200DMA>"}`).join(',\n    ')}
   ],
   "matrixClassifications": [
-    ${input.topEquity.slice(0, 8).map((e) => `{"ticker": "${e.ticker}", "fundamental": "Strong"|"Neutral"|"Weak", "technical": "Strong"|"Neutral"|"Weak"}`).join(',\n    ')}
+    ${input.topEquity.map((e) => `{"ticker": "${e.ticker}", "fundamental": "Strong"|"Neutral"|"Weak", "technical": "Strong"|"Neutral"|"Weak"}`).join(',\n    ')}
   ]
 }`;
 
@@ -1041,7 +1041,7 @@ Return JSON:
     }
   ],
   "thesisMonitor": [
-    ${state.input.topEquity.slice(0, 8).map((e) => `{
+    ${state.input.topEquity.map((e) => `{
       "ticker": "${e.ticker}",
       "fundamentalsStatus": "Strong"|"Neutral"|"Weak",
       "valuationStatus": "Undervalued"|"Moderate"|"Elevated"|"Fair",
@@ -1270,7 +1270,7 @@ Return JSON:
   }
 
   // 2. Fundamental Intelligence
-  const fundamentalHoldings: FundamentalHolding[] = state.input.topEquity.slice(0, 8).map((eq) => {
+  const fundamentalHoldings: FundamentalHolding[] = state.input.topEquity.map((eq) => {
     const metric = state.holdingsAnalysis.find((m) => m.ticker === eq.ticker);
     const statusMatch = portfolio.holdingsFundamentalStatus?.find((s: any) => s.ticker === eq.ticker);
     let status: 'Strong' | 'Neutral' | 'Weak' | 'Under Review' = statusMatch?.status || 'Neutral';
@@ -1304,7 +1304,7 @@ Return JSON:
   };
 
   // 3. Technical Intelligence
-  const technicalSignals: TechnicalSignalHolding[] = state.input.topEquity.slice(0, 8).map((eq) => {
+  const technicalSignals: TechnicalSignalHolding[] = state.input.topEquity.map((eq) => {
     const metric = state.holdingsAnalysis.find((m) => m.ticker === eq.ticker);
     const sigMatch = portfolio.technicalSignals?.find((s: any) => s.ticker === eq.ticker);
     const above200 = (metric?.pctVs200DMA ?? 0) >= 0;
@@ -1348,7 +1348,7 @@ Return JSON:
     benchmarkName: 'NIFTY 50',
     relativeValuationPct: relVal,
     interpretation: `The portfolio trades at ${Math.abs(relVal)}% ${relVal <= 0 ? 'below' : 'above'} the Nifty 50 benchmark on trailing P/E (${portPe}x vs ${benchmarkPe}x). This valuation differential reflects sector weighting and growth expectations rather than a standalone mispricing.`,
-    holdingsValuation: state.input.topEquity.slice(0, 8).map((eq) => {
+    holdingsValuation: state.input.topEquity.map((eq) => {
       const metric = state.holdingsAnalysis.find((m) => m.ticker === eq.ticker);
       const sectorPe = getSectorPE(eq.sector, eq.ticker) ?? (metric?.sector ? getSectorPE(metric.sector, eq.ticker) : undefined);
       const evalResult = evaluateValuation(metric?.trailingPE, sectorPe);
@@ -1479,7 +1479,7 @@ Return JSON:
   };
 
   // 8. Fundamental x Technical Matrix
-  const matrixStocks: MatrixStock[] = state.input.topEquity.slice(0, 8).map((eq) => {
+  const matrixStocks: MatrixStock[] = state.input.topEquity.map((eq) => {
     const metric = state.holdingsAnalysis.find((m) => m.ticker === eq.ticker);
     const matrixItem = portfolio.matrixClassifications?.find((mc: any) => mc.ticker === eq.ticker);
 
@@ -1566,8 +1566,8 @@ Return JSON:
     }
   }
 
-  // 10. Investment Thesis Monitor (top 8 equity holdings)
-  const thesisMonitor: ThesisHolding[] = state.input.topEquity.slice(0, 8).map((eq) => {
+  // 10. Investment Thesis Monitor (all equity holdings)
+  const thesisMonitor: ThesisHolding[] = state.input.topEquity.map((eq) => {
     const fromNode = Array.isArray(strategy.thesisMonitor)
       ? strategy.thesisMonitor.find((t: any) => t.ticker === eq.ticker)
       : null;
