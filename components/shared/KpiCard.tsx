@@ -6,6 +6,8 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { usePrivacy } from '@/lib/privacy-context';
+import { PrivacyToggle } from './PrivacyToggle';
 
 interface KpiCardProps {
   title: string;
@@ -20,6 +22,8 @@ interface KpiCardProps {
   id?: string;
   href?: string;
   valueClassName?: string;
+  isPrivate?: boolean;
+  showPrivacyToggle?: boolean;
 }
 
 const ACCENT_STYLES = {
@@ -63,11 +67,19 @@ export function KpiCard({
   id,
   href,
   valueClassName,
+  isPrivate = false,
+  showPrivacyToggle = false,
 }: KpiCardProps) {
+  const { isHidden } = usePrivacy();
   const accent = ACCENT_STYLES[accentColor];
 
   const isPositive = change !== undefined && change > 0;
   const isNegative = change !== undefined && change < 0;
+
+  const displayValue = isPrivate && isHidden ? '••••••' : value;
+  const displaySubValue = isPrivate && isHidden && subValue
+    ? subValue.replace(/₹[\d,.]+(\s*(?:Cr|L))?/g, '••••••')
+    : subValue;
 
   if (isLoading) {
     return (
@@ -90,26 +102,29 @@ export function KpiCard({
         <div>
           <div className="flex items-start justify-between mb-3">
             <p className="text-body font-semibold text-muted-foreground uppercase tracking-wider">{title}</p>
-            {Icon && (
-              <div className={cn('p-2 rounded-lg', accent.icon)}>
-                <Icon className="w-4 h-4" />
-              </div>
-            )}
+            <div className="flex items-center gap-1.5">
+              {showPrivacyToggle && <PrivacyToggle variant="card" />}
+              {Icon && (
+                <div className={cn('p-2 rounded-lg', accent.icon)}>
+                  <Icon className="w-4 h-4" />
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="space-y-1">
             <motion.p
               className={`text-h2 font-bold tabular-nums ${valueClassName || 'text-foreground'}`}
-              key={value}
+              key={displayValue}
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.25 }}
             >
-              {value}
+              {displayValue}
             </motion.p>
 
-            {subValue && (
-              <p className="text-small text-muted-foreground">{subValue}</p>
+            {displaySubValue && (
+              <p className="text-small text-muted-foreground">{displaySubValue}</p>
             )}
 
             {change !== undefined && (

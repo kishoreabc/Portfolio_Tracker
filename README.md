@@ -90,6 +90,12 @@ A sequential multi-agent pipeline (`lib/ai/pipeline.ts`) that orchestrates speci
 - **Access Control:** Restricts access using an email allowlist (`ALLOWED_EMAILS`).
 - **Concurrent Session Protection:** Enforces single active user sessions, invalidating stale JWT sessions upon new login.
 
+### 9. Groww-Style Privacy Mode (Hide Investment Details)
+- **Omnipresent Eye Toggle:** Dedicated `Eye` / `EyeOff` button in the global Topbar (accessible on every page) and directly within the Net Worth KPI card header.
+- **Masking Sensitive Balances:** When enabled, instantly masks net worth, equity totals, bond values, day's change, cash flow totals, upcoming bond coupon payments, and individual holding values/CMP with sleek bullets (`••••••`), matching Groww, Zerodha, and INDmoney.
+- **Persistent State:** Synchronizes across browser tabs and preserves user preference in `localStorage` via React 19's `useSyncExternalStore`.
+- **Chart Privacy:** Masks currency tooltips and axis labels in Recharts charts while keeping percentage allocations visible for contextual portfolio review.
+
 ---
 
 ## 🏗️ Architecture & Data Flow

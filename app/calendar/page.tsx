@@ -12,8 +12,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CalendarIcon, Banknote, AlertCircle, CalendarSearch } from 'lucide-react';
 import { BondCashflowDialog } from '@/components/bonds/BondCashflowDialog';
 import { useState, useEffect } from 'react';
+import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
 
-function fmt(v: number) {
+function fmt(v: number, isHidden: boolean = false) {
+  if (isHidden) return PRIVACY_MASK;
   if (v >= 1e7) return `₹${(v / 1e7).toFixed(2)}Cr`;
   if (v >= 1e5) return `₹${(v / 1e5).toFixed(2)}L`;
   return `₹${v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -21,6 +23,7 @@ function fmt(v: number) {
 
 export default function CalendarPage() {
   const { bondMaturityEvents, isLoading, lastFetched, apiErrors } = usePortfolioData();
+  const { isHidden } = usePrivacy();
   const [selectedIsin, setSelectedIsin] = useState<{ isin: string; name: string; units?: number } | null>(null);
 
   const [upcomingCoupons, setUpcomingCoupons] = useState<any[]>([]);
@@ -156,7 +159,7 @@ export default function CalendarPage() {
                         <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">{month}</span>
                         <div className="flex-1 h-px bg-border/40" />
                         <span className="text-xs text-muted-foreground">
-                          {fmt(events.reduce((s, e) => s + e.totalValue, 0))} maturing
+                          {fmt(events.reduce((s, e) => s + e.totalValue, 0), isHidden)} maturing
                         </span>
                       </div>
                       <div className="space-y-2 ml-2">
@@ -172,7 +175,7 @@ export default function CalendarPage() {
                               <p className="text-xs text-muted-foreground">{e.issuer} · {e.isin}</p>
                             </div>
                             <div className="text-right flex-shrink-0">
-                              <p className="text-sm font-semibold">{fmt(e.totalValue)}</p>
+                              <p className="text-sm font-semibold">{fmt(e.totalValue, isHidden)}</p>
                               <Badge variant="outline" className="text-[10px] border-green-500/30 text-green-400">
                                 {e.creditRating}
                               </Badge>
@@ -223,7 +226,7 @@ export default function CalendarPage() {
                       <div className="flex items-center gap-3">
                         <div className="text-right">
                           <p className={`text-sm font-semibold ${c.isEstimated ? 'text-amber-400' : 'text-green-400'}`}>
-                            {c.isEstimated ? '~' : ''}{fmt(c.amount)}
+                            {c.isEstimated ? '~' : ''}{fmt(c.amount, isHidden)}
                           </p>
                           <p className="text-[11px] text-muted-foreground">{c.isEstimated ? 'est. payment' : 'payment'}</p>
                         </div>

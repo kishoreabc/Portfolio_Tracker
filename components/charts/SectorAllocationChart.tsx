@@ -6,6 +6,7 @@ import {
 import type { SectorAllocation } from '@/types/holdings';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { BarChart2 } from 'lucide-react';
+import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
 
 interface Props {
   data: SectorAllocation[];
@@ -22,13 +23,15 @@ const COLORS = [
   'hsl(160 60% 45%)',
 ];
 
-function formatCrore(v: number) {
+function formatCrore(v: number, isHidden: boolean = false) {
+  if (isHidden) return PRIVACY_MASK;
   if (v >= 1e7) return `₹${(v / 1e7).toFixed(1)}Cr`;
   if (v >= 1e5) return `₹${(v / 1e5).toFixed(1)}L`;
   return `₹${v.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
 }
 
 function CustomTooltip({ active, payload }: { active?: boolean; payload?: { payload: SectorAllocation }[] }) {
+  const { isHidden } = usePrivacy();
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
@@ -43,14 +46,14 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: { payl
     }}>
       <p style={{ fontWeight: 600, marginBottom: 6, color: 'hsl(210 40% 90%)' }}>{d.sector}</p>
       <p style={{ color: 'hsl(215 20% 65%)', marginBottom: 2 }}>
-        Invested: <span style={{ color: 'hsl(210 40% 95%)', fontWeight: 600 }}>{formatCrore(d.totalValue)}</span>
+        Invested: <span style={{ color: 'hsl(210 40% 95%)', fontWeight: 600 }}>{formatCrore(d.totalValue, isHidden)}</span>
       </p>
       <p style={{ color: 'hsl(215 20% 65%)' }}>
         Allocation: <span style={{ color: 'hsl(221 83% 70%)', fontWeight: 600 }}>{(d.percent * 100).toFixed(1)}%</span>
       </p>
       {d.equityValue > 0 && d.bondValue > 0 && (
         <p style={{ color: 'hsl(215 20% 55%)', marginTop: 4, fontSize: 11 }}>
-          EQ {formatCrore(d.equityValue)} · BD {formatCrore(d.bondValue)}
+          EQ {formatCrore(d.equityValue, isHidden)} · BD {formatCrore(d.bondValue, isHidden)}
         </p>
       )}
     </div>
@@ -58,6 +61,7 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: { payl
 }
 
 export function SectorAllocationChart({ data }: Props) {
+  const { isHidden } = usePrivacy();
   if (!data.length) {
     return <EmptyState title="No sector data" description="Sector breakdown will appear once holdings are loaded." icon={BarChart2} />;
   }
@@ -68,7 +72,7 @@ export function SectorAllocationChart({ data }: Props) {
         <CartesianGrid strokeDasharray="3 3" stroke="hsl(222 47% 20%)" horizontal={false} />
         <XAxis
           type="number"
-          tickFormatter={formatCrore}
+          tickFormatter={(v) => formatCrore(v, isHidden)}
           tick={{ fontSize: 11, fill: 'hsl(215 20% 55%)' }}
           axisLine={false}
           tickLine={false}

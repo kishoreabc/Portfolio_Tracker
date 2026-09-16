@@ -17,8 +17,10 @@ import {
 import { BondCashflowDialog } from '@/components/bonds/BondCashflowDialog';
 import { Button } from '@/components/ui/button';
 import { CalendarSearch } from 'lucide-react';
+import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
 
-function fmt(v: number) {
+function fmt(v: number, isHidden: boolean = false) {
+  if (isHidden) return PRIVACY_MASK;
   if (v >= 1e7) return `₹${(v / 1e7).toFixed(2)}Cr`;
   if (v >= 1e5) return `₹${(v / 1e5).toFixed(2)}L`;
   return `₹${v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -83,6 +85,7 @@ function CustomLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent }: an
 
 export default function BondsPage() {
   const { bonds, bondLadder, creditRatingDistribution, bondMaturityEvents, isLoading, lastFetched, apiErrors } = usePortfolioData();
+  const { isHidden } = usePrivacy();
 
   const [selectedBond, setSelectedBond] = useState<{ isin: string; securityName: string; unitsHeld: number; faceValue: number } | null>(null);
 
@@ -138,8 +141,8 @@ export default function BondsPage() {
                 <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={bondLadder} margin={{ left: 0, right: 8, top: 4, bottom: 4 }}>
                     <XAxis dataKey="year" tick={{ fontSize: 11, fill: 'hsl(215 20% 55%)' }} axisLine={false} tickLine={false} />
-                    <YAxis tickFormatter={fmt} tick={{ fontSize: 10, fill: 'hsl(215 20% 55%)' }} axisLine={false} tickLine={false} />
-                    <Tooltip formatter={((v: number) => [fmt(v), 'Maturing Value']) as never}
+                    <YAxis tickFormatter={(v) => fmt(v, isHidden)} tick={{ fontSize: 10, fill: 'hsl(215 20% 55%)' }} axisLine={false} tickLine={false} />
+                    <Tooltip formatter={((v: number) => [fmt(v, isHidden), 'Maturing Value']) as never}
                       contentStyle={{ background: 'hsl(222 47% 13%)', border: '1px solid hsl(222 47% 20%)', borderRadius: '8px', color: 'white', fontSize: 12 }} 
                       itemStyle={{ color: 'white', fontWeight: 500 }} />
                     <Bar dataKey="totalValue" radius={[4, 4, 0, 0]} maxBarSize={36} fill="hsl(142 71% 45%)" />
@@ -165,7 +168,7 @@ export default function BondsPage() {
                         <Cell key={i} fill={getRatingColor(entry.rating)} stroke="transparent" />
                       ))}
                     </Pie>
-                    <Tooltip formatter={((v: number, name: string) => [fmt(v), name]) as never}
+                    <Tooltip formatter={((v: number, name: string) => [fmt(v, isHidden), name]) as never}
                       contentStyle={{ background: 'hsl(222 47% 13%)', border: '1px solid hsl(222 47% 20%)', borderRadius: '8px', color: 'white', fontSize: 12 }} 
                       itemStyle={{ color: 'white', fontWeight: 500 }} />
                     <Legend iconType="circle" iconSize={8}
@@ -237,7 +240,7 @@ export default function BondsPage() {
                             <span className={`text-caption font-bold tabular-nums ${
                               next.isEstimated ? 'text-amber-400' : 'text-green-400'
                             }`}>
-                              {next.isEstimated ? '~' : ''}{fmt(next.amount)}
+                              {next.isEstimated ? '~' : ''}{fmt(next.amount, isHidden)}
                             </span>
                             <span className="text-caption text-muted-foreground/80 tabular-nums">
                               {format(next.date, 'dd MMM yyyy')}
@@ -247,7 +250,7 @@ export default function BondsPage() {
                         );
                       })()}
                     </TableCell>
-                    <TableCell className="text-caption font-semibold tabular-nums text-foreground">{fmt(b.totalValue)}</TableCell>
+                    <TableCell className="text-caption font-semibold tabular-nums text-foreground">{fmt(b.totalValue, isHidden)}</TableCell>
                     <TableCell className="text-caption font-medium tabular-nums text-blue-400">{b.ytm ? `${(b.ytm * 100).toFixed(2)}%` : '—'}</TableCell>
                     <TableCell className="text-caption font-medium tabular-nums text-amber-400">{b.couponRate ? `${(b.couponRate * 100).toFixed(2)}%` : '—'}</TableCell>
                     <TableCell>

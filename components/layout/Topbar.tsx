@@ -8,6 +8,7 @@ import { useRefreshData } from '@/hooks/useRefreshData';
 import { useSession, signOut } from 'next-auth/react';
 import { useSessionWatcher } from '@/components/auth/SessionWatcher';
 import { useSidebar } from '@/components/layout/SidebarContext';
+import { PrivacyToggle } from '@/components/shared/PrivacyToggle';
 
 interface TopbarProps {
   lastFetched?: string | null;
@@ -180,6 +181,9 @@ export function Topbar({ lastFetched, pageTitle = 'Dashboard', apiErrors = [], h
             </span>
           </motion.button>
         ) : null}
+
+        {/* ── Privacy / Hide Details Toggle (Groww mode) ── */}
+        <PrivacyToggle variant="topbar" />
 
         {/* ── Font size controls — hidden on mobile ── */}
         <div className="hidden md:flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2 py-1 ml-1"

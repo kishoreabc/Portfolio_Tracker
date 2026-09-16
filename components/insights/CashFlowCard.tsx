@@ -2,14 +2,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Wallet } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import type { CashFlow } from '@/types/insights';
+import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
 
-function fmt(v: number) {
+function fmt(v: number, isHidden: boolean = false) {
+  if (isHidden) return PRIVACY_MASK;
   if (v >= 1e7) return `₹${(v / 1e7).toFixed(2)}Cr`;
   if (v >= 1e5) return `₹${(v / 1e5).toFixed(2)}L`;
   return `₹${v.toLocaleString('en-IN')}`;
 }
 
 export function CashFlowCard({ data }: { data?: CashFlow }) {
+  const { isHidden } = usePrivacy();
   if (!data) return null;
 
   const chartData = [
@@ -32,7 +35,7 @@ export function CashFlowCard({ data }: { data?: CashFlow }) {
               <XAxis type="number" hide />
               <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} width={80} tick={{ fill: '#94a3b8', fontSize: 13 }} />
               <Tooltip
-                formatter={(value: any) => [fmt(value), 'Amount']}
+                formatter={(value: any) => [fmt(value, isHidden), 'Amount']}
                 contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '8px' }}
                 itemStyle={{ color: '#f8fafc' }}
                 cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
@@ -50,7 +53,7 @@ export function CashFlowCard({ data }: { data?: CashFlow }) {
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted-foreground">Net Cash Flow</span>
             <span className={`text-body font-bold tabular-nums ${netColor}`}>
-              {data.net > 0 ? '+' : ''}{fmt(data.net)}
+              {data.net > 0 ? '+' : ''}{fmt(data.net, isHidden)}
             </span>
           </div>
           <p className="text-xs text-muted-foreground leading-relaxed mt-2">

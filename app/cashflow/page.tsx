@@ -11,8 +11,10 @@ import { motion } from 'framer-motion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import type { MonthlySummary } from '@/types/transactions';
+import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
 
-function fmt(v: number) {
+function fmt(v: number, isHidden: boolean = false) {
+  if (isHidden) return PRIVACY_MASK;
   if (v >= 1e7) return `₹${Number((v / 1e7).toFixed(2))}Cr`;
   if (v >= 1e5) return `₹${Number((v / 1e5).toFixed(2))}L`;
   return `₹${Math.round(v).toLocaleString('en-IN')}`;
@@ -33,6 +35,7 @@ function CustomLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent }: an
 
 export default function CashFlowPage() {
   const { cashFlowStats, transactions, isLoading, lastFetched, apiErrors } = usePortfolioData();
+  const { isHidden } = usePrivacy();
   const summaries = cashFlowStats.monthlySummaries;
 
   const [selectedMonth, setSelectedMonth] = useState<MonthlySummary | null>(null);
@@ -72,7 +75,7 @@ export default function CashFlowPage() {
               {isLoading ? <Skeleton className="h-8 bg-white/5" /> : (
                 <>
                   <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">{label}</p>
-                  <p className={`text-xl sm:text-2xl lg:text-3xl xl:text-h2 font-bold tabular-nums ${color}`}>{fmt(value)}</p>
+                  <p className={`text-xl sm:text-2xl lg:text-3xl xl:text-h2 font-bold tabular-nums ${color}`}>{fmt(value, isHidden)}</p>
                 </>
               )}
             </motion.div>
@@ -115,10 +118,10 @@ export default function CashFlowPage() {
                       className="border-border/30 hover:bg-white/[0.05] cursor-pointer transition-colors"
                       onClick={() => setSelectedMonth(m)}>
                       <TableCell className="text-xs sm:text-sm md:text-base font-semibold text-foreground whitespace-nowrap">{m.label}</TableCell>
-                      <TableCell className="text-xs sm:text-sm md:text-base text-blue-400 tabular-nums font-medium whitespace-nowrap">{fmt(m.investment)}</TableCell>
-                      <TableCell className="text-xs sm:text-sm md:text-base text-amber-400 tabular-nums font-medium whitespace-nowrap">{fmt(m.foodAndEntertainment)}</TableCell>
-                      <TableCell className="text-xs sm:text-sm md:text-base text-purple-400 tabular-nums font-medium whitespace-nowrap">{fmt(m.others)}</TableCell>
-                      <TableCell className="text-xs sm:text-sm md:text-base text-red-400 font-bold tabular-nums whitespace-nowrap">{fmt(m.totalExpenses)}</TableCell>
+                      <TableCell className="text-xs sm:text-sm md:text-base text-blue-400 tabular-nums font-medium whitespace-nowrap">{fmt(m.investment, isHidden)}</TableCell>
+                      <TableCell className="text-xs sm:text-sm md:text-base text-amber-400 tabular-nums font-medium whitespace-nowrap">{fmt(m.foodAndEntertainment, isHidden)}</TableCell>
+                      <TableCell className="text-xs sm:text-sm md:text-base text-purple-400 tabular-nums font-medium whitespace-nowrap">{fmt(m.others, isHidden)}</TableCell>
+                      <TableCell className="text-xs sm:text-sm md:text-base text-red-400 font-bold tabular-nums whitespace-nowrap">{fmt(m.totalExpenses, isHidden)}</TableCell>
                     </motion.tr>
                   ))}
                 </TableBody>
@@ -177,20 +180,20 @@ export default function CashFlowPage() {
                   {selectedTransactions.map((t, i) => (
                     <TableRow key={i} className="border-border/30 hover:bg-white/[0.02]">
                       <TableCell className="text-[10px] sm:text-xs md:text-sm font-medium text-muted-foreground whitespace-nowrap">{t.date.toLocaleDateString('en-IN')}</TableCell>
-                      <TableCell className="text-[10px] sm:text-xs md:text-sm text-amber-400 tabular-nums whitespace-nowrap">{fmt(t.foodAndEntertainment)}</TableCell>
-                      <TableCell className="text-[10px] sm:text-xs md:text-sm text-blue-400 tabular-nums whitespace-nowrap">{fmt(t.investment)}</TableCell>
-                      <TableCell className="text-[10px] sm:text-xs md:text-sm text-purple-400 tabular-nums whitespace-nowrap">{fmt(t.others)}</TableCell>
-                      <TableCell className="text-[10px] sm:text-xs md:text-sm text-foreground font-semibold tabular-nums whitespace-nowrap">{fmt(t.dailyTotal)}</TableCell>
+                      <TableCell className="text-[10px] sm:text-xs md:text-sm text-amber-400 tabular-nums whitespace-nowrap">{fmt(t.foodAndEntertainment, isHidden)}</TableCell>
+                      <TableCell className="text-[10px] sm:text-xs md:text-sm text-blue-400 tabular-nums whitespace-nowrap">{fmt(t.investment, isHidden)}</TableCell>
+                      <TableCell className="text-[10px] sm:text-xs md:text-sm text-purple-400 tabular-nums whitespace-nowrap">{fmt(t.others, isHidden)}</TableCell>
+                      <TableCell className="text-[10px] sm:text-xs md:text-sm text-foreground font-semibold tabular-nums whitespace-nowrap">{fmt(t.dailyTotal, isHidden)}</TableCell>
                     </TableRow>
                   ))}
                   {/* Totals row */}
                   {selectedMonth && (
                     <TableRow className="border-border/50 hover:bg-transparent bg-white/[0.02]">
                       <TableCell className="text-[10px] sm:text-xs md:text-sm font-bold text-foreground whitespace-nowrap">Total</TableCell>
-                      <TableCell className="text-[10px] sm:text-xs md:text-sm font-bold text-amber-400 tabular-nums whitespace-nowrap">{fmt(selectedMonth.foodAndEntertainment)}</TableCell>
-                      <TableCell className="text-[10px] sm:text-xs md:text-sm font-bold text-blue-400 tabular-nums whitespace-nowrap">{fmt(selectedMonth.investment)}</TableCell>
-                      <TableCell className="text-[10px] sm:text-xs md:text-sm font-bold text-purple-400 tabular-nums whitespace-nowrap">{fmt(selectedMonth.others)}</TableCell>
-                      <TableCell className="text-[10px] sm:text-xs md:text-sm font-bold text-foreground tabular-nums whitespace-nowrap">{fmt(selectedMonth.totalExpenses + selectedMonth.investment)}</TableCell>
+                      <TableCell className="text-[10px] sm:text-xs md:text-sm font-bold text-amber-400 tabular-nums whitespace-nowrap">{fmt(selectedMonth.foodAndEntertainment, isHidden)}</TableCell>
+                      <TableCell className="text-[10px] sm:text-xs md:text-sm font-bold text-blue-400 tabular-nums whitespace-nowrap">{fmt(selectedMonth.investment, isHidden)}</TableCell>
+                      <TableCell className="text-[10px] sm:text-xs md:text-sm font-bold text-purple-400 tabular-nums whitespace-nowrap">{fmt(selectedMonth.others, isHidden)}</TableCell>
+                      <TableCell className="text-[10px] sm:text-xs md:text-sm font-bold text-foreground tabular-nums whitespace-nowrap">{fmt(selectedMonth.totalExpenses + selectedMonth.investment, isHidden)}</TableCell>
                     </TableRow>
                   )}
                 </TableBody>

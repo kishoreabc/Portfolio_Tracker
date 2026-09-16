@@ -7,8 +7,10 @@ import { Topbar } from '@/components/layout/Topbar';
 import { usePortfolioData } from '@/hooks/usePortfolioData';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TrendingUp, TrendingDown, Shield } from 'lucide-react';
+import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
 
-function fmt(v: number) {
+function fmt(v: number, isHidden: boolean = false) {
+  if (isHidden) return PRIVACY_MASK;
   if (v >= 1e7) return `₹${(v / 1e7).toFixed(2)}Cr`;
   if (v >= 1e5) return `₹${(v / 1e5).toFixed(2)}L`;
   return `₹${v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -16,6 +18,7 @@ function fmt(v: number) {
 
 export default function AnalyticsPage() {
   const { winners, losers, concentrationRisk, sectorAllocation, isLoading, lastFetched, apiErrors } = usePortfolioData();
+  const { isHidden } = usePrivacy();
 
   const diversificationColor =
     concentrationRisk.diversificationScore >= 70 ? 'text-emerald-400' :
@@ -109,7 +112,7 @@ export default function AnalyticsPage() {
                     </div>
                     <div className="text-right">
                       <p className="text-body font-bold text-emerald-400">+{(w.percentChange * 100).toFixed(2)}%</p>
-                      <p className="text-caption text-muted-foreground">{fmt(w.currentPrice)}</p>
+                      <p className="text-caption text-muted-foreground">{fmt(w.currentPrice, isHidden)}</p>
                     </div>
                   </motion.div>
                 ))}
@@ -133,7 +136,7 @@ export default function AnalyticsPage() {
                     </div>
                     <div className="text-right">
                       <p className="text-body font-bold text-red-400">{(l.percentChange * 100).toFixed(2)}%</p>
-                      <p className="text-caption text-muted-foreground">{fmt(l.currentPrice)}</p>
+                      <p className="text-caption text-muted-foreground">{fmt(l.currentPrice, isHidden)}</p>
                     </div>
                   </motion.div>
                 ))}
@@ -152,7 +155,7 @@ export default function AnalyticsPage() {
                 <div key={s.sector} className="space-y-1">
                   <div className="flex justify-between text-body">
                     <span className="text-muted-foreground/80 font-medium">{s.sector}</span>
-                    <span className="font-semibold text-foreground">{fmt(s.totalValue)} <span className="text-caption text-muted-foreground font-normal">({(s.percent * 100).toFixed(1)}%)</span></span>
+                    <span className="font-semibold text-foreground">{fmt(s.totalValue, isHidden)} <span className="text-caption text-muted-foreground font-normal">({(s.percent * 100).toFixed(1)}%)</span></span>
                   </div>
                   <div className="flex gap-0.5 h-1.5 rounded overflow-hidden">
                     <div style={{ width: `${s.totalValue > 0 ? (s.equityValue / s.totalValue) * (s.percent * 100) : 0}%`, background: 'hsl(221 83% 53%)', minWidth: s.equityValue > 0 ? 2 : 0 }} className="rounded-l" />

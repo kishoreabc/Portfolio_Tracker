@@ -6,6 +6,7 @@ import {
 import type { AssetClassSummary } from '@/types/holdings';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { PieChartIcon } from 'lucide-react';
+import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
 
 const RADIAN = Math.PI / 180;
 
@@ -36,6 +37,8 @@ function CustomOuterLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent,
 }
 
 export function OverallAllocationPie({ data }: Props) {
+  const { isHidden } = usePrivacy();
+
   if (!data.length) {
     return <EmptyState title="No allocation data" description="Data will appear here once loaded." icon={PieChartIcon} />;
   }
@@ -61,7 +64,11 @@ export function OverallAllocationPie({ data }: Props) {
           ))}
         </Pie>
         <Tooltip
-          formatter={(value: any) => `₹${Number(value).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          formatter={(value: any) =>
+            isHidden
+              ? PRIVACY_MASK
+              : `₹${Number(value).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+          }
           contentStyle={{
             background: 'hsl(222 47% 11%)',
             border: '1px solid hsl(222 47% 20%)',

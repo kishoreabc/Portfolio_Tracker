@@ -6,7 +6,7 @@ import {
 import type { AssetClassSummary } from '@/types/holdings';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { PieChartIcon } from 'lucide-react';
-import { color } from 'framer-motion';
+import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
 
 const RADIAN = Math.PI / 180;
 
@@ -30,6 +30,7 @@ function CustomLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent, name
 }
 
 export function AssetAllocationPie({ data }: Props) {
+  const { isHidden } = usePrivacy();
   if (!data.length) {
     return <EmptyState title="No allocation data" description="Equity and bond data will appear here once loaded." icon={PieChartIcon} />;
   }
@@ -56,7 +57,7 @@ export function AssetAllocationPie({ data }: Props) {
         </Pie>
         <Tooltip
           formatter={((value: number, name: string) => [
-            `₹${Number(value).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`,
+            isHidden ? PRIVACY_MASK : `₹${Number(value).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`,
             name,
           ]) as never}
           contentStyle={{

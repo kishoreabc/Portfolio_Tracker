@@ -58,3 +58,6 @@ scratch.ts
 *.tar
 *.tar.gz
 *.zip
+
+skills-lock.json
+.agents

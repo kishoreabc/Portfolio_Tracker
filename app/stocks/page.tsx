@@ -11,17 +11,20 @@ import { Topbar } from '@/components/layout/Topbar';
 import { SectorAllocationChart } from '@/components/charts/SectorAllocationChart';
 import { usePortfolioData } from '@/hooks/usePortfolioData';
 import { useStockModal } from '@/lib/stock-modal-context';
+import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
 import {
   BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell,
 } from 'recharts';
 
-function fmt(v: number) {
+function fmt(v: number, isHidden: boolean = false) {
+  if (isHidden) return PRIVACY_MASK;
   if (v >= 1e7) return `₹${(v / 1e7).toFixed(2)}Cr`;
   if (v >= 1e5) return `₹${(v / 1e5).toFixed(2)}L`;
   return `₹${v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-function fmtPrice(v: number) {
+function fmtPrice(v: number, isHidden: boolean = false) {
+  if (isHidden) return PRIVACY_MASK;
   return `₹${Math.abs(v).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
@@ -32,6 +35,7 @@ function fmtChange(v: number) {
 
 export default function StocksPage() {
   const { equity, winners, losers, isLoading, lastFetched, apiErrors, sectorAllocation } = usePortfolioData();
+  const { isHidden } = usePrivacy();
   const [search, setSearch] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' }>({ key: '', direction: 'asc' });
   const { openStock } = useStockModal();
@@ -90,7 +94,7 @@ export default function StocksPage() {
                     </div>
                     <div className="text-right">
                       <p className="text-body font-bold text-emerald-400">+{(w.percentChange * 100).toFixed(2)}%</p>
-                      <p className="text-caption text-muted-foreground">{fmtPrice(w.currentPrice)}</p>
+                      <p className="text-caption text-muted-foreground">{fmtPrice(w.currentPrice, isHidden)}</p>
                     </div>
                   </div>
                 ))}
@@ -113,7 +117,7 @@ export default function StocksPage() {
                     </div>
                     <div className="text-right">
                       <p className="text-body font-bold text-red-400">{(l.percentChange * 100).toFixed(2)}%</p>
-                      <p className="text-caption text-muted-foreground">{fmtPrice(l.currentPrice)}</p>
+                      <p className="text-caption text-muted-foreground">{fmtPrice(l.currentPrice, isHidden)}</p>
                     </div>
                   </div>
                 ))}
@@ -177,9 +181,9 @@ export default function StocksPage() {
                         onClick={() => openStock(h.ticker)}
                       >{h.name}</TableCell>
                       <TableCell className="text-small text-muted-foreground/80 font-normal">{h.sector}</TableCell>
-                      <TableCell className="text-right text-body font-medium tabular-nums text-foreground/90">{h.shares.toLocaleString()}</TableCell>
-                      <TableCell className="text-right text-body font-medium tabular-nums text-foreground/90">{fmtPrice(h.currentPrice)}</TableCell>
-                      <TableCell className="text-right text-body font-medium tabular-nums text-foreground">{fmt(h.currentValue)}</TableCell>
+                      <TableCell className="text-right text-body font-medium tabular-nums text-foreground/90">{isHidden ? PRIVACY_MASK : h.shares.toLocaleString()}</TableCell>
+                      <TableCell className="text-right text-body font-medium tabular-nums text-foreground/90">{fmtPrice(h.currentPrice, isHidden)}</TableCell>
+                      <TableCell className="text-right text-body font-medium tabular-nums text-foreground">{fmt(h.currentValue, isHidden)}</TableCell>
                       <TableCell className="text-right text-body font-medium tabular-nums text-foreground/90">
                         {(h.allocationPercent).toFixed(2)}%
                       </TableCell>

@@ -1,45 +1,94 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
-@theme {
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+@custom-variant dark (&:is(.dark *));
 
-  /* Typography scale tokens (Tailwind CSS v4 custom properties) */
-  --text-display: var(--text-scale-display);
-  --text-h1: var(--text-scale-h1);
-  --text-h2: var(--text-scale-h2);
-  --text-h3: var(--text-scale-h3);
-  --text-h4: var(--text-scale-h4);
-  --text-body-lg: var(--text-scale-body-lg);
-  --text-body: var(--text-scale-body);
-  --text-small: var(--text-scale-small);
-  --text-caption: var(--text-scale-caption);
+@theme inline {
+  /* Typography Scale variables (relative to 18px base root) */
+  --text-scale-display: 2rem;       /* 36px */
+  --text-scale-h1: 1.667rem;        /* 30px */
+  --text-scale-h2: 1.333rem;        /* 24px */
+  --text-scale-h3: 1.111rem;        /* 20px */
+  --text-scale-h4: 1rem;            /* 18px */
+  --text-scale-body-lg: 0.889rem;   /* 14px */
+  --text-scale-body: 0.778rem;      /* 14px */
+  --text-scale-small: 0.722rem;     /* 13px */
+  --text-scale-caption: 0.667rem;   /* 12px */
 
-  /* Brand colors */
+  /* Color tokens — these generate Tailwind utilities via @theme */
   --color-brand-50: hsl(221 83% 97%);
   --color-brand-100: hsl(221 83% 93%);
   --color-brand-400: hsl(221 83% 65%);
   --color-brand-500: hsl(221 83% 53%);
   --color-brand-600: hsl(221 83% 45%);
   --color-brand-700: hsl(221 83% 38%);
-
-  /* Surface (dark navy) */
   --color-surface-50: hsl(222 47% 11%);
   --color-surface-100: hsl(222 47% 13%);
   --color-surface-200: hsl(222 47% 16%);
   --color-surface-300: hsl(222 47% 20%);
   --color-surface-400: hsl(222 47% 25%);
   --color-surface-500: hsl(222 47% 32%);
-
-  /* Gain / Loss */
   --color-gain: hsl(142 71% 45%);
   --color-gain-muted: hsl(142 71% 45% / 0.15);
   --color-loss: hsl(0 84% 60%);
   --color-loss-muted: hsl(0 84% 60% / 0.15);
-
-  /* Warning */
   --color-warn: hsl(38 92% 50%);
   --color-warn-muted: hsl(38 92% 50% / 0.15);
+  --chart-1: 221 83% 53%;
+  --chart-2: 142 71% 45%;
+  --chart-3: 38 92% 50%;
+  --chart-4: 270 76% 62%;
+  --chart-5: 0 84% 60%;
+}
+
+/* Light theme — default / when .dark is NOT present on <html> */
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222 8% 15%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 8% 15%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 8% 15%;
+  --primary: 221 83% 53%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222 8% 15%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+  --accent: 221 83% 53%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 221 83% 53%;
+  --radius: 0.75rem;
+  color-scheme: light;
+}
+
+/* Dark theme — when .dark class is on <html> */
+.dark {
+  --background: 222 47% 11%;
+  --foreground: 210 40% 98%;
+  --card: 222 47% 13%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222 47% 13%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 221 83% 53%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 222 47% 16%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 222 47% 16%;
+  --muted-foreground: 215 20% 65%;
+  --accent: 221 83% 53%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 222 47% 20%;
+  --input: 222 47% 16%;
+  --ring: 221 83% 53%;
+  --radius: 0.75rem;
+  color-scheme: dark;
 }
 
 /* shadcn CSS variable overrides — dark mode only for this app */
@@ -75,11 +124,6 @@
   --input: 222 47% 16%;
   --ring: 221 83% 53%;
   --radius: 0.75rem;
-  --chart-1: 221 83% 53%;
-  --chart-2: 142 71% 45%;
-  --chart-3: 38 92% 50%;
-  --chart-4: 270 76% 62%;
-  --chart-5: 0 84% 60%;
   color-scheme: dark;
 }
 

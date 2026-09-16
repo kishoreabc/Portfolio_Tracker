@@ -6,17 +6,20 @@ import {
 import type { MonthlySummary } from '@/types/transactions';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ArrowLeftRight } from 'lucide-react';
+import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
 
 interface Props {
   data: MonthlySummary[];
 }
 
-function fmt(v: number) {
+function fmt(v: number, isHidden: boolean = false) {
+  if (isHidden) return PRIVACY_MASK;
   if (v >= 1e5) return `₹${(v / 1e5).toFixed(1)}L`;
   return `₹${v.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
 }
 
 export function CashFlowChart({ data }: Props) {
+  const { isHidden } = usePrivacy();
   if (!data.length) {
     return <EmptyState title="No transaction data" description="Daily transaction data will appear here once loaded." icon={ArrowLeftRight} />;
   }
@@ -33,9 +36,9 @@ export function CashFlowChart({ data }: Props) {
       <BarChart data={chartData} margin={{ left: 8, right: 8, top: 4, bottom: 4 }} barGap={2}>
         <CartesianGrid strokeDasharray="3 3" stroke="hsl(222 47% 20%)" vertical={false} />
         <XAxis dataKey="month" tick={{ fontSize: 10, fill: 'hsl(215 20% 55%)' }} axisLine={false} tickLine={false} />
-        <YAxis tickFormatter={fmt} tick={{ fontSize: 10, fill: 'hsl(215 20% 55%)' }} axisLine={false} tickLine={false} />
+        <YAxis tickFormatter={(v) => fmt(v, isHidden)} tick={{ fontSize: 10, fill: 'hsl(215 20% 55%)' }} axisLine={false} tickLine={false} />
         <Tooltip
-          formatter={((value: number, name: string) => [fmt(value), name]) as never}
+          formatter={((value: number, name: string) => [fmt(value, isHidden), name]) as never}
           contentStyle={{
             background: 'hsl(222 47% 13%)',
             border: '1px solid hsl(222 47% 20%)',

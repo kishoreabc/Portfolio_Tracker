@@ -18,8 +18,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
+import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
 
-function formatINR(value: number): string {
+function formatINR(value: number, isHidden: boolean = false): string {
+  if (isHidden) return PRIVACY_MASK;
   const isNegative = value < 0;
   const absValue = Math.abs(value);
   let formatted = '';
@@ -56,6 +58,7 @@ export default function DashboardPage() {
     bonds,
     transactions,
   } = usePortfolioData();
+  const { isHidden } = usePrivacy();
 
   const equityCount = equity.length;
   const bondCount = bonds.length;
@@ -110,6 +113,8 @@ export default function DashboardPage() {
             accentColor="blue"
             isLoading={isLoading}
             href="/portfolio"
+            isPrivate
+            showPrivacyToggle
           />
           <KpiCard
             id="kpi-equity"
@@ -120,6 +125,7 @@ export default function DashboardPage() {
             accentColor="green"
             isLoading={isLoading}
             href="/stocks"
+            isPrivate
           />
           <KpiCard
             id="kpi-bonds"
@@ -130,6 +136,7 @@ export default function DashboardPage() {
             accentColor="purple"
             isLoading={isLoading}
             href="/bonds"
+            isPrivate
           />
           <KpiCard
             id="kpi-today-change"
@@ -141,6 +148,7 @@ export default function DashboardPage() {
             accentColor={todaysChange >= 0 ? 'green' : 'red'}
             isLoading={isLoading}
             href="/stocks"
+            isPrivate
           />
           <KpiCard
             id="kpi-monthly-investment"
@@ -150,6 +158,7 @@ export default function DashboardPage() {
             accentColor="amber"
             isLoading={isLoading}
             href="/cashflow"
+            isPrivate
           />
           <KpiCard
             id="kpi-monthly-expenses"
@@ -160,6 +169,7 @@ export default function DashboardPage() {
             isLoading={isLoading}
             note={cashFlowStats.monthlySummaries.length === 0 ? 'No expense data' : undefined}
             href="/cashflow"
+            isPrivate
           />
           <KpiCard
             id="kpi-today-target"
@@ -255,7 +265,7 @@ export default function DashboardPage() {
                               {r.count} {r.unit}
                             </TableCell>
                             <TableCell className="text-right text-body font-medium tabular-nums text-foreground">
-                              {formatINR(r.value)}
+                              {formatINR(r.value, isHidden)}
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex items-center justify-end gap-2">
@@ -280,7 +290,7 @@ export default function DashboardPage() {
                             {equityCount + bondCount} holdings
                           </TableCell>
                           <TableCell className="text-right text-body font-bold tabular-nums text-foreground">
-                            {formatINR(total)}
+                            {formatINR(total, isHidden)}
                           </TableCell>
                           <TableCell className="text-right text-body font-bold tabular-nums text-foreground">100.00%</TableCell>
                         </TableRow>
@@ -351,10 +361,10 @@ export default function DashboardPage() {
             className="grid grid-cols-2 md:grid-cols-4 gap-3"
           >
             {[
-              { label: 'Total Invested', value: formatINR(cashFlowStats.totalInvestment) },
-              { label: 'Total Expenses', value: formatINR(cashFlowStats.totalExpenses) },
-              { label: 'Food & Ent.', value: formatINR(cashFlowStats.totalFoodAndEntertainment) },
-              { label: 'Others', value: formatINR(cashFlowStats.totalOthers) },
+              { label: 'Total Invested', value: formatINR(cashFlowStats.totalInvestment, isHidden) },
+              { label: 'Total Expenses', value: formatINR(cashFlowStats.totalExpenses, isHidden) },
+              { label: 'Food & Ent.', value: formatINR(cashFlowStats.totalFoodAndEntertainment, isHidden) },
+              { label: 'Others', value: formatINR(cashFlowStats.totalOthers, isHidden) },
             ].map(({ label, value }) => (
               <div key={label} className="rounded-lg border border-border/40 px-4 py-3 bg-card/50">
                 <p className="text-small text-muted-foreground font-medium mb-1">{label}</p>

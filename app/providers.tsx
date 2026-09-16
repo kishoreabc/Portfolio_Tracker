@@ -6,6 +6,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { SessionProvider } from 'next-auth/react';
 import { useState } from 'react';
 import { StockModalProvider } from '@/lib/stock-modal-context';
+import { PrivacyProvider } from '@/lib/privacy-context';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -26,9 +27,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <SessionProvider>
         <StockModalProvider>
-          <TooltipProvider>
-            {children}
-          </TooltipProvider>
+          <PrivacyProvider>
+            <TooltipProvider>
+              {children}
+            </TooltipProvider>
+          </PrivacyProvider>
         </StockModalProvider>
       </SessionProvider>
       {process.env.NODE_ENV === 'development' && <ReactQueryDevtools initialIsOpen={false} />}

@@ -10,10 +10,12 @@ import {
   Download, FileText, FileSpreadsheet, BarChart3,
   TrendingUp, Shield, Sparkles, BookOpen, AlertCircle, CheckCircle2,
 } from 'lucide-react';
+import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
 
 // ─── Formatters ─────────────────────────────────────────────────────────────
 
-function fmt(v: number) {
+function fmt(v: number, isHidden: boolean = false) {
+  if (isHidden) return PRIVACY_MASK;
   if (typeof v !== 'number' || isNaN(v)) return '₹0.00';
   if (v >= 1e7) return `₹${(v / 1e7).toFixed(2)}Cr`;
   if (v >= 1e5) return `₹${(v / 1e5).toFixed(2)}L`;
@@ -173,6 +175,7 @@ function ReportCard({
 
 export default function ReportsPage() {
   const { portfolio, equity, bonds, cashFlowStats, concentrationRisk, isLoading, lastFetched, apiErrors, netWorth, equityTotal, bondTotal } = usePortfolioData();
+  const { isHidden } = usePrivacy();
   const [exporting, setExporting] = useState<ExportState>(null);
   const [notification, setNotification] = useState<Notification>(null);
 
@@ -332,9 +335,9 @@ export default function ReportsPage() {
   };
 
   const statsItems = [
-    { label: 'Net Worth', value: fmt(netWorth), color: 'text-foreground' },
-    { label: 'Equity', value: fmt(equityTotal), color: 'text-blue-400' },
-    { label: 'Bonds', value: fmt(bondTotal), color: 'text-purple-400' },
+    { label: 'Net Worth', value: fmt(netWorth, isHidden), color: 'text-foreground' },
+    { label: 'Equity', value: fmt(equityTotal, isHidden), color: 'text-blue-400' },
+    { label: 'Bonds', value: fmt(bondTotal, isHidden), color: 'text-purple-400' },
     { label: 'Holdings', value: String(portfolio.length), color: 'text-foreground' },
     { label: 'Diversification', value: `${concentrationRisk.diversificationScore}/100`, color: 'text-emerald-400' },
     { label: 'Top-5 Conc.', value: pct(concentrationRisk.top5Percent), color: concentrationRisk.top5Percent > 0.5 ? 'text-red-400' : 'text-amber-400' },

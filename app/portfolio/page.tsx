@@ -13,8 +13,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Topbar } from '@/components/layout/Topbar';
 import { usePortfolioData } from '@/hooks/usePortfolioData';
 import { useStockModal } from '@/lib/stock-modal-context';
+import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
 
-function fmt(v: number) {
+function fmt(v: number, isHidden: boolean = false) {
+  if (isHidden) return PRIVACY_MASK;
   if (v >= 1e7) return `₹${(v / 1e7).toFixed(2)}Cr`;
   if (v >= 1e5) return `₹${(v / 1e5).toFixed(2)}L`;
   return `₹${v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -22,8 +24,23 @@ function fmt(v: number) {
 
 type SortKey = 'name' | 'currentValue' | 'localAllocPct';
 
+function SkeletonRows({ cols }: { cols: number }) {
+  return (
+    <>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <TableRow key={i} className="border-border/30">
+          {Array.from({ length: cols }).map((_, j) => (
+            <TableCell key={j}><Skeleton className="h-4 bg-white/5" /></TableCell>
+          ))}
+        </TableRow>
+      ))}
+    </>
+  );
+}
+
 export default function PortfolioPage() {
   const { portfolio, isLoading, lastFetched, apiErrors } = usePortfolioData();
+  const { isHidden } = usePrivacy();
   const [equitySearch, setEquitySearch] = useState('');
   const [bondSearch, setBondSearch] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('currentValue');
@@ -78,18 +95,6 @@ export default function PortfolioPage() {
   const equityTotal = equityRows.reduce((s, r) => s + r.currentValue, 0);
   const bondTotal = bondRows.reduce((s, r) => s + r.currentValue, 0);
 
-  const SkeletonRows = ({ cols }: { cols: number }) => (
-    <>
-      {Array.from({ length: 5 }).map((_, i) => (
-        <TableRow key={i} className="border-border/30">
-          {Array.from({ length: cols }).map((_, j) => (
-            <TableCell key={j}><Skeleton className="h-4 bg-white/5" /></TableCell>
-          ))}
-        </TableRow>
-      ))}
-    </>
-  );
-
   return (
     <>
       <Topbar lastFetched={lastFetched} pageTitle="Portfolio" apiErrors={apiErrors} />
@@ -106,7 +111,7 @@ export default function PortfolioPage() {
                   <CardTitle className="text-blue-400">
                     Equity Holdings
                     <span className="ml-2 text-small text-muted-foreground font-normal">
-                      ({equityRows.length} stocks · {fmt(equityTotal)})
+                      ({equityRows.length} stocks · {fmt(equityTotal, isHidden)})
                     </span>
                   </CardTitle>
                 </div>
@@ -155,7 +160,7 @@ export default function PortfolioPage() {
                           onClick={() => openStock(row.ticker)}
                         >{row.ticker}</TableCell>
                         <TableCell className="text-small text-muted-foreground/80 font-normal">{row.sector}</TableCell>
-                        <TableCell className="text-right text-body font-medium tabular-nums text-foreground">{fmt(row.currentValue)}</TableCell>
+                        <TableCell className="text-right text-body font-medium tabular-nums text-foreground">{fmt(row.currentValue, isHidden)}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
                             <div className="w-12 h-1 rounded-full bg-white/10 overflow-hidden">
@@ -172,7 +177,7 @@ export default function PortfolioPage() {
                     {!isLoading && equityRows.length > 0 && (
                       <TableRow className="border-t border-border/50 bg-white/[0.015]">
                         <TableCell colSpan={3} className="text-body font-bold text-foreground">Total Equity</TableCell>
-                        <TableCell className="text-right text-body font-bold tabular-nums text-foreground">{fmt(equityTotal)}</TableCell>
+                        <TableCell className="text-right text-body font-bold tabular-nums text-foreground">{fmt(equityTotal, isHidden)}</TableCell>
                         <TableCell className="text-right text-body font-bold text-blue-400">100.00%</TableCell>
                       </TableRow>
                     )}
@@ -195,7 +200,7 @@ export default function PortfolioPage() {
                   <CardTitle className="text-purple-400">
                     Bond Holdings
                     <span className="ml-2 text-small text-muted-foreground font-normal">
-                      ({bondRows.length} bonds · {fmt(bondTotal)})
+                      ({bondRows.length} bonds · {fmt(bondTotal, isHidden)})
                     </span>
                   </CardTitle>
                 </div>
@@ -238,7 +243,7 @@ export default function PortfolioPage() {
                         <TableCell className="text-body font-semibold text-foreground max-w-[200px] truncate">{row.name}</TableCell>
                         <TableCell className="text-small font-mono text-muted-foreground">{row.ticker}</TableCell>
                         <TableCell className="text-small text-muted-foreground/80 font-normal">{row.sector}</TableCell>
-                        <TableCell className="text-right text-body font-medium tabular-nums text-foreground">{fmt(row.currentValue)}</TableCell>
+                        <TableCell className="text-right text-body font-medium tabular-nums text-foreground">{fmt(row.currentValue, isHidden)}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
                             <div className="w-12 h-1 rounded-full bg-white/10 overflow-hidden">
@@ -255,7 +260,7 @@ export default function PortfolioPage() {
                     {!isLoading && bondRows.length > 0 && (
                       <TableRow className="border-t border-border/50 bg-white/[0.015]">
                         <TableCell colSpan={3} className="text-body font-bold text-foreground">Total Bonds</TableCell>
-                        <TableCell className="text-right text-body font-bold tabular-nums text-foreground">{fmt(bondTotal)}</TableCell>
+                        <TableCell className="text-right text-body font-bold tabular-nums text-foreground">{fmt(bondTotal, isHidden)}</TableCell>
                         <TableCell className="text-right text-body font-bold text-purple-400">100.00%</TableCell>
                       </TableRow>
                     )}
