@@ -812,7 +812,7 @@ async function buildAIInsightsPDF(insights: any, data: SheetsData): Promise<any>
   if (techSignals.length > 0) {
     content.push(
       makeTable(
-        ['Symbol', 'CMP', '50 DMA', '200 DMA', 'vs 52W High', 'Trend', 'vs 50DMA', 'vs 200DMA', 'Momentum Signal'],
+        ['Symbol', 'CMP', '50 DMA', '200 DMA', 'From 52W High', 'Trend', '50 DMA %', '200 DMA %', 'Momentum Signal'],
         techSignals.map((s: any) => {
           const sig = String(s.trend || s.signal || 'Neutral');
           const sigColor = sig.toLowerCase().includes('bear') ? COLORS.danger

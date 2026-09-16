@@ -137,14 +137,14 @@ export function TechnicalIntelligenceCard({ data }: TechnicalIntelligenceCardPro
 
                   <div className="grid grid-cols-2 gap-2 text-[11px] font-mono pt-1">
                     <div className="flex items-center justify-between p-1.5 rounded bg-black/20">
-                      <span className="text-muted-foreground">vs 200DMA:</span>
-                      <span className={sig.priceVs200DMA !== undefined && sig.priceVs200DMA >= 0 ? 'text-emerald-400' : 'text-red-400'}>
+                      <span className="text-muted-foreground whitespace-nowrap">200 DMA</span>
+                      <span className={`font-semibold ${sig.priceVs200DMA !== undefined && sig.priceVs200DMA >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                         {sig.priceVs200DMA !== undefined ? `${sig.priceVs200DMA >= 0 ? '+' : ''}${sig.priceVs200DMA}%` : '—'}
                       </span>
                     </div>
                     <div className="flex items-center justify-between p-1.5 rounded bg-black/20">
-                      <span className="text-muted-foreground">vs 50DMA:</span>
-                      <span className={sig.priceVs50DMA !== undefined && sig.priceVs50DMA >= 0 ? 'text-emerald-400' : 'text-red-400'}>
+                      <span className="text-muted-foreground whitespace-nowrap">50 DMA</span>
+                      <span className={`font-semibold ${sig.priceVs50DMA !== undefined && sig.priceVs50DMA >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                         {sig.priceVs50DMA !== undefined ? `${sig.priceVs50DMA >= 0 ? '+' : ''}${sig.priceVs50DMA}%` : '—'}
                       </span>
                     </div>
