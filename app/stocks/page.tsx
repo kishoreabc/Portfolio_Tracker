@@ -87,14 +87,14 @@ export default function StocksPage() {
             <CardContent className="space-y-2">
               {isLoading ? <Skeleton className="h-10 bg-white/5" /> :
                 winners.slice(0, 1).map((w) => (
-                  <div key={w.ticker} className="flex items-center justify-between px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
+                  <div key={w.ticker} className="flex items-center justify-between px-3.5 py-2.5 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
                     <div>
-                      <p className="text-small font-semibold text-foreground">{w.ticker}</p>
-                      <p className="text-caption text-muted-foreground truncate max-w-[140px]">{w.name}</p>
+                      <p className="text-sm font-bold text-foreground">{w.ticker}</p>
+                      <p className="text-xs text-muted-foreground truncate max-w-[140px]">{w.name}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-body font-bold text-emerald-400">+{(w.percentChange * 100).toFixed(2)}%</p>
-                      <p className="text-caption text-muted-foreground">{fmtPrice(w.currentPrice, isHidden)}</p>
+                      <p className="text-sm font-bold text-emerald-400">+{(w.percentChange * 100).toFixed(2)}%</p>
+                      <p className="text-xs text-muted-foreground tabular-nums">{fmtPrice(w.currentPrice, isHidden)}</p>
                     </div>
                   </div>
                 ))}
@@ -110,14 +110,14 @@ export default function StocksPage() {
             <CardContent className="space-y-2">
               {isLoading ? <Skeleton className="h-10 bg-white/5" /> :
                 losers.slice(0, 1).map((l) => (
-                  <div key={l.ticker} className="flex items-center justify-between px-3 py-2 rounded-lg bg-red-500/5 border border-red-500/10">
+                  <div key={l.ticker} className="flex items-center justify-between px-3.5 py-2.5 rounded-lg bg-red-500/5 border border-red-500/10">
                     <div>
-                      <p className="text-small font-semibold text-foreground">{l.ticker}</p>
-                      <p className="text-caption text-muted-foreground truncate max-w-[140px]">{l.name}</p>
+                      <p className="text-sm font-bold text-foreground">{l.ticker}</p>
+                      <p className="text-xs text-muted-foreground truncate max-w-[140px]">{l.name}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-body font-bold text-red-400">{(l.percentChange * 100).toFixed(2)}%</p>
-                      <p className="text-caption text-muted-foreground">{fmtPrice(l.currentPrice, isHidden)}</p>
+                      <p className="text-sm font-bold text-red-400">{(l.percentChange * 100).toFixed(2)}%</p>
+                      <p className="text-xs text-muted-foreground tabular-nums">{fmtPrice(l.currentPrice, isHidden)}</p>
                     </div>
                   </div>
                 ))}
@@ -142,7 +142,7 @@ export default function StocksPage() {
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <Input id="stocks-search" placeholder="Search stocks…" value={search}
-                onChange={(e) => setSearch(e.target.value)} className="pl-8 h-8 text-small bg-card border-border/50 placeholder:text-body text-body" />
+                onChange={(e) => setSearch(e.target.value)} className="pl-8 h-8 text-sm bg-card border-border/50 placeholder:text-muted-foreground text-foreground" />
             </div>
           </CardHeader>
           <CardContent className="p-0">
@@ -150,15 +150,15 @@ export default function StocksPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-border/50 hover:bg-transparent">
-                    <TableHead className="text-body-lg font-semibold text-foreground/90 hover:text-foreground cursor-pointer select-none tracking-wide" onClick={() => handleSort('ticker')}>Symbol <SortIcon columnKey="ticker" /></TableHead>
-                    <TableHead className="text-body-lg font-semibold text-foreground/90 hover:text-foreground cursor-pointer select-none tracking-wide" onClick={() => handleSort('name')}>Name <SortIcon columnKey="name" /></TableHead>
-                    <TableHead className="text-body-lg font-semibold text-foreground/90 hover:text-foreground cursor-pointer select-none tracking-wide" onClick={() => handleSort('sector')}>Sector <SortIcon columnKey="sector" /></TableHead>
-                    <TableHead className="text-body-lg font-semibold text-foreground/90 hover:text-foreground cursor-pointer select-none text-right tracking-wide" onClick={() => handleSort('shares')}>Shares <SortIcon columnKey="shares" /></TableHead>
-                    <TableHead className="text-body-lg font-semibold text-foreground/90 hover:text-foreground cursor-pointer select-none text-right tracking-wide" onClick={() => handleSort('currentPrice')}>CMP <SortIcon columnKey="currentPrice" /></TableHead>
-                    <TableHead className="text-body-lg font-semibold text-foreground/90 hover:text-foreground cursor-pointer select-none text-right tracking-wide" onClick={() => handleSort('currentValue')}>Value <SortIcon columnKey="currentValue" /></TableHead>
-                    <TableHead className="text-body-lg font-semibold text-foreground/90 hover:text-foreground cursor-pointer select-none text-right tracking-wide" onClick={() => handleSort('allocationPercent')}>Alloc % <SortIcon columnKey="allocationPercent" /></TableHead>
-                    <TableHead className="text-body-lg font-semibold text-foreground/90 hover:text-foreground cursor-pointer select-none text-right tracking-wide" onClick={() => handleSort('priceChange')}>Price Chg <SortIcon columnKey="priceChange" /></TableHead>
-                    <TableHead className="text-body-lg font-semibold text-foreground/90 hover:text-foreground cursor-pointer select-none text-right tracking-wide" onClick={() => handleSort('percentChange')}>Change % <SortIcon columnKey="percentChange" /></TableHead>
+                    <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground cursor-pointer select-none" onClick={() => handleSort('ticker')}>Symbol <SortIcon columnKey="ticker" /></TableHead>
+                    <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground cursor-pointer select-none" onClick={() => handleSort('name')}>Name <SortIcon columnKey="name" /></TableHead>
+                    <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground cursor-pointer select-none" onClick={() => handleSort('sector')}>Sector <SortIcon columnKey="sector" /></TableHead>
+                    <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('shares')}>Shares <SortIcon columnKey="shares" /></TableHead>
+                    <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('currentPrice')}>CMP <SortIcon columnKey="currentPrice" /></TableHead>
+                    <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('currentValue')}>Value <SortIcon columnKey="currentValue" /></TableHead>
+                    <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('allocationPercent')}>Alloc % <SortIcon columnKey="allocationPercent" /></TableHead>
+                    <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('priceChange')}>Price Chg <SortIcon columnKey="priceChange" /></TableHead>
+                    <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('percentChange')}>Change % <SortIcon columnKey="percentChange" /></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -172,27 +172,27 @@ export default function StocksPage() {
                     <motion.tr key={h.ticker} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.015 }} className="border-border/30 hover:bg-white/[0.02] transition-colors">
                       <TableCell
-                        className="font-mono text-small font-semibold text-blue-400 cursor-pointer hover:text-blue-300 hover:underline transition-colors"
+                        className="font-mono text-xs font-semibold text-blue-400 cursor-pointer hover:text-blue-300 hover:underline transition-colors"
                         onClick={() => openStock(h.ticker)}
                       >{h.ticker}</TableCell>
                       <TableCell
-                        className="text-body font-semibold text-foreground max-w-[160px] truncate cursor-pointer hover:text-blue-300 transition-colors"
+                        className="text-sm font-semibold text-foreground max-w-[160px] truncate cursor-pointer hover:text-blue-300 transition-colors"
                         title={h.name}
                         onClick={() => openStock(h.ticker)}
                       >{h.name}</TableCell>
-                      <TableCell className="text-small text-muted-foreground/80 font-normal">{h.sector}</TableCell>
-                      <TableCell className="text-right text-body font-medium tabular-nums text-foreground/90">{isHidden ? PRIVACY_MASK : h.shares.toLocaleString()}</TableCell>
-                      <TableCell className="text-right text-body font-medium tabular-nums text-foreground/90">{fmtPrice(h.currentPrice, isHidden)}</TableCell>
-                      <TableCell className="text-right text-body font-medium tabular-nums text-foreground">{fmt(h.currentValue, isHidden)}</TableCell>
-                      <TableCell className="text-right text-body font-medium tabular-nums text-foreground/90">
+                      <TableCell className="text-xs text-muted-foreground/80 font-normal">{h.sector}</TableCell>
+                      <TableCell className="text-right text-sm font-medium tabular-nums text-foreground/90">{isHidden ? PRIVACY_MASK : h.shares.toLocaleString()}</TableCell>
+                      <TableCell className="text-right text-sm font-medium tabular-nums text-foreground/90">{fmtPrice(h.currentPrice, isHidden)}</TableCell>
+                      <TableCell className="text-right text-sm font-medium tabular-nums text-foreground">{fmt(h.currentValue, isHidden)}</TableCell>
+                      <TableCell className="text-right text-sm font-medium tabular-nums text-foreground/90">
                         {(h.allocationPercent).toFixed(2)}%
                       </TableCell>
-                      <TableCell className="text-right text-body font-medium tabular-nums">
+                      <TableCell className="text-right text-sm font-medium tabular-nums">
                         <span className={h.priceChange >= 0 ? 'text-emerald-400' : 'text-red-400'}>
                           {fmtChange(h.priceChange)}
                         </span>
                       </TableCell>
-                      <TableCell className="text-right text-body font-medium tabular-nums">
+                      <TableCell className="text-right text-sm font-medium tabular-nums">
                         <span className={h.percentChange >= 0 ? 'text-emerald-400' : 'text-red-400'}>
                           {h.percentChange >= 0 ? '+' : '-'}{Math.abs(h.percentChange * 100).toFixed(2)}%
                         </span>

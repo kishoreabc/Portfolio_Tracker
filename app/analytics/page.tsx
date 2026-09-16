@@ -40,8 +40,8 @@ export default function AnalyticsPage() {
                   <CardDescription>Based on Herfindahl-Hirschman Index</CardDescription>
                 </div>
                 {isLoading ? <Skeleton className="h-10 w-20 bg-white/5" /> : (
-                  <span className={`text-display font-bold tabular-nums ${diversificationColor}`}>
-                    {concentrationRisk.diversificationScore}<span className="text-body text-muted-foreground/80 font-normal">/100</span>
+                  <span className={`text-3xl sm:text-4xl font-extrabold tabular-nums tracking-tight ${diversificationColor}`}>
+                    {concentrationRisk.diversificationScore}<span className="text-sm sm:text-base text-muted-foreground font-normal">/100</span>
                   </span>
                 )}
               </div>
@@ -52,16 +52,16 @@ export default function AnalyticsPage() {
               )}
               <div className="grid grid-cols-3 gap-3 pt-1">
                 <div className="text-center">
-                  <p className="text-caption font-semibold text-muted-foreground/80 uppercase tracking-wide">HHI Index</p>
-                  <p className="text-body font-bold text-foreground mt-0.5">{concentrationRisk.herfindahlIndex.toFixed(4)}</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">HHI Index</p>
+                  <p className="text-base sm:text-lg font-bold text-foreground mt-0.5">{concentrationRisk.herfindahlIndex.toFixed(4)}</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-caption font-semibold text-muted-foreground/80 uppercase tracking-wide">Top 5 Holdings</p>
-                  <p className="text-body font-bold text-foreground mt-0.5">{(concentrationRisk.top5Percent * 100).toFixed(1)}%</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Top 5 Holdings</p>
+                  <p className="text-base sm:text-lg font-bold text-foreground mt-0.5">{(concentrationRisk.top5Percent * 100).toFixed(1)}%</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-caption font-semibold text-muted-foreground/80 uppercase tracking-wide">Risk Level</p>
-                  <p className={`text-body font-bold mt-0.5 ${diversificationColor}`}>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Risk Level</p>
+                  <p className={`text-base sm:text-lg font-bold mt-0.5 ${diversificationColor}`}>
                     {concentrationRisk.diversificationScore >= 70 ? 'Well Div.' :
                      concentrationRisk.diversificationScore >= 40 ? 'Moderate' : 'Concentrated'}
                   </p>
@@ -81,9 +81,9 @@ export default function AnalyticsPage() {
             {isLoading ? Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-8 bg-white/5" />) :
               concentrationRisk.top5Holdings.map((h, i) => (
                 <div key={i} className="space-y-1">
-                  <div className="flex justify-between text-body">
+                  <div className="flex justify-between text-sm">
                     <span className="font-semibold text-foreground">{h.name}</span>
-                    <span className={h.type === 'equity' ? 'text-blue-400' : 'text-green-400'}>
+                    <span className={`font-semibold tabular-nums ${h.type === 'equity' ? 'text-blue-400' : 'text-green-400'}`}>
                       {(h.percent * 100).toFixed(1)}%
                     </span>
                   </div>
@@ -107,12 +107,12 @@ export default function AnalyticsPage() {
                   <motion.div key={w.ticker} whileHover={{ x: 4 }}
                     className="flex items-center justify-between p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
                     <div>
-                      <p className="text-small font-semibold">{w.ticker}</p>
-                      <p className="text-caption text-muted-foreground max-w-[120px] truncate">{w.name}</p>
+                      <p className="text-sm font-bold text-foreground">{w.ticker}</p>
+                      <p className="text-xs text-muted-foreground max-w-[120px] truncate">{w.name}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-body font-bold text-emerald-400">+{(w.percentChange * 100).toFixed(2)}%</p>
-                      <p className="text-caption text-muted-foreground">{fmt(w.currentPrice, isHidden)}</p>
+                      <p className="text-sm font-bold text-emerald-400">+{(w.percentChange * 100).toFixed(2)}%</p>
+                      <p className="text-xs text-muted-foreground tabular-nums">{fmt(w.currentPrice, isHidden)}</p>
                     </div>
                   </motion.div>
                 ))}
@@ -131,12 +131,12 @@ export default function AnalyticsPage() {
                   <motion.div key={l.ticker} whileHover={{ x: 4 }}
                     className="flex items-center justify-between p-3 rounded-lg bg-red-500/5 border border-red-500/10">
                     <div>
-                      <p className="text-small font-semibold">{l.ticker}</p>
-                      <p className="text-caption text-muted-foreground max-w-[120px] truncate">{l.name}</p>
+                      <p className="text-sm font-bold text-foreground">{l.ticker}</p>
+                      <p className="text-xs text-muted-foreground max-w-[120px] truncate">{l.name}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-body font-bold text-red-400">{(l.percentChange * 100).toFixed(2)}%</p>
-                      <p className="text-caption text-muted-foreground">{fmt(l.currentPrice, isHidden)}</p>
+                      <p className="text-sm font-bold text-red-400">{(l.percentChange * 100).toFixed(2)}%</p>
+                      <p className="text-xs text-muted-foreground tabular-nums">{fmt(l.currentPrice, isHidden)}</p>
                     </div>
                   </motion.div>
                 ))}
@@ -153,9 +153,9 @@ export default function AnalyticsPage() {
             {isLoading ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-6 bg-white/5" />) :
               sectorAllocation.map((s) => (
                 <div key={s.sector} className="space-y-1">
-                  <div className="flex justify-between text-body">
-                    <span className="text-muted-foreground/80 font-medium">{s.sector}</span>
-                    <span className="font-semibold text-foreground">{fmt(s.totalValue, isHidden)} <span className="text-caption text-muted-foreground font-normal">({(s.percent * 100).toFixed(1)}%)</span></span>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground/90 font-medium">{s.sector}</span>
+                    <span className="font-semibold text-foreground">{fmt(s.totalValue, isHidden)} <span className="text-xs text-muted-foreground font-normal">({(s.percent * 100).toFixed(1)}%)</span></span>
                   </div>
                   <div className="flex gap-0.5 h-1.5 rounded overflow-hidden">
                     <div style={{ width: `${s.totalValue > 0 ? (s.equityValue / s.totalValue) * (s.percent * 100) : 0}%`, background: 'hsl(221 83% 53%)', minWidth: s.equityValue > 0 ? 2 : 0 }} className="rounded-l" />

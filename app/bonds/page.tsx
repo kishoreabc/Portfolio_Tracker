@@ -191,7 +191,7 @@ export default function BondsPage() {
               <TableHeader>
                 <TableRow className="border-border/50 hover:bg-transparent">
                   {['Security', 'ISIN', 'Issuer', 'Rating', 'Maturity', 'Payout Type', 'Upcoming Interest', 'Value', 'YTM', 'Coupon', 'Cashflow'].map(h => (
-                    <TableHead key={h} className="text-body-lg font-semibold text-foreground/90 tracking-wide">{h}</TableHead>
+                    <TableHead key={h} className="text-xs font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">{h}</TableHead>
                   ))}
                 </TableRow>
               </TableHeader>
@@ -205,20 +205,20 @@ export default function BondsPage() {
                 )) : sortedBonds.map((b, i) => (
                   <motion.tr key={b.isin || i} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.02 }} className="border-border/30 hover:bg-white/[0.02] transition-colors">
-                    <TableCell className="text-caption text-muted-foreground/80 whitespace-normal break-words max-w-[350px]">{b.securityName}</TableCell>
-                    <TableCell className="text-caption font-mono text-muted-foreground/80 font-medium">{b.isin}</TableCell>
-                    <TableCell className="text-caption text-muted-foreground/80 whitespace-normal break-words max-w-[150px]">{b.issuer}</TableCell>
+                    <TableCell className="text-xs font-semibold text-foreground whitespace-normal break-words max-w-[320px]">{b.securityName}</TableCell>
+                    <TableCell className="text-xs font-mono text-muted-foreground/90 font-medium">{b.isin}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground/90 whitespace-normal break-words max-w-[150px]">{b.issuer}</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="text-caption px-1.5 font-semibold"
+                      <Badge variant="outline" className="text-xs px-2 py-0.5 font-semibold"
                         style={{ borderColor: `${getRatingColor(b.creditRating, 'gray')}40`, color: getRatingColor(b.creditRating, 'gray') }}>
                         {b.creditRating}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-caption tabular-nums text-foreground/90">{b.maturityDate ?? '—'}</TableCell>
+                    <TableCell className="text-xs tabular-nums text-foreground/90">{b.maturityDate ?? '—'}</TableCell>
                     {/* Payout Type column */}
                     <TableCell>
                       {b.payoutType ? (
-                        <span className="inline-flex items-center rounded px-1.5 py-0.5 text-caption font-semibold"
+                        <span className="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold"
                           style={{
                             background: getPayoutStyle(b.payoutType).bg,
                             color: getPayoutStyle(b.payoutType).text,
@@ -227,22 +227,22 @@ export default function BondsPage() {
                           {b.payoutType}
                         </span>
                       ) : (
-                        <span className="text-caption text-muted-foreground/50">—</span>
+                        <span className="text-xs text-muted-foreground/50">—</span>
                       )}
                     </TableCell>
                     {/* Upcoming Interest column */}
                     <TableCell>
                       {(() => {
                         const next = nextPaymentMap.get(b.isin);
-                        if (!next) return <span className="text-caption text-muted-foreground/50">—</span>;
+                        if (!next) return <span className="text-xs text-muted-foreground/50">—</span>;
                         return (
                           <div className="flex flex-col gap-0.5">
-                            <span className={`text-caption font-bold tabular-nums ${
+                            <span className={`text-xs font-bold tabular-nums ${
                               next.isEstimated ? 'text-amber-400' : 'text-green-400'
                             }`}>
                               {next.isEstimated ? '~' : ''}{fmt(next.amount, isHidden)}
                             </span>
-                            <span className="text-caption text-muted-foreground/80 tabular-nums">
+                            <span className="text-[11px] text-muted-foreground/80 tabular-nums">
                               {format(next.date, 'dd MMM yyyy')}
                               {next.isEstimated && <span className="ml-1 text-amber-400/60 font-semibold">est.</span>}
                             </span>
@@ -250,9 +250,9 @@ export default function BondsPage() {
                         );
                       })()}
                     </TableCell>
-                    <TableCell className="text-caption font-semibold tabular-nums text-foreground">{fmt(b.totalValue, isHidden)}</TableCell>
-                    <TableCell className="text-caption font-medium tabular-nums text-blue-400">{b.ytm ? `${(b.ytm * 100).toFixed(2)}%` : '—'}</TableCell>
-                    <TableCell className="text-caption font-medium tabular-nums text-amber-400">{b.couponRate ? `${(b.couponRate * 100).toFixed(2)}%` : '—'}</TableCell>
+                    <TableCell className="text-xs sm:text-sm font-bold tabular-nums text-foreground">{fmt(b.totalValue, isHidden)}</TableCell>
+                    <TableCell className="text-xs sm:text-sm font-semibold tabular-nums text-blue-400">{b.ytm ? `${(b.ytm * 100).toFixed(2)}%` : '—'}</TableCell>
+                    <TableCell className="text-xs sm:text-sm font-semibold tabular-nums text-amber-400">{b.couponRate ? `${(b.couponRate * 100).toFixed(2)}%` : '—'}</TableCell>
                     <TableCell>
                       <Button
                         variant="ghost"

@@ -71,11 +71,11 @@ export default function CashFlowPage() {
             { label: 'Others', value: cashFlowStats.totalOthers, color: 'text-purple-400' },
           ].map(({ label, value, color }) => (
             <motion.div key={label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-              className="rounded-xl border border-border/50 p-4 bg-card">
+              className="rounded-xl border border-border/50 p-4 sm:p-5 bg-card flex flex-col justify-between">
               {isLoading ? <Skeleton className="h-8 bg-white/5" /> : (
                 <>
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">{label}</p>
-                  <p className={`text-xl sm:text-2xl lg:text-3xl xl:text-h2 font-bold tabular-nums ${color}`}>{fmt(value, isHidden)}</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">{label}</p>
+                  <p className={`text-2xl sm:text-3xl font-extrabold tabular-nums tracking-tight ${color}`}>{fmt(value, isHidden)}</p>
                 </>
               )}
             </motion.div>
@@ -86,7 +86,7 @@ export default function CashFlowPage() {
         <Card className="border-border/50">
           <CardHeader className="pb-5">
             <CardTitle>Monthly Breakdown</CardTitle>
-            <p className="text-small text-muted-foreground font-normal">From Daily Transaction sheet · {cashFlowStats.startDate?.toLocaleDateString('en-IN') ?? '—'} to {cashFlowStats.endDate?.toLocaleDateString('en-IN') ?? '—'}</p>
+            <p className="text-xs text-muted-foreground font-normal">From Daily Transaction sheet · {cashFlowStats.startDate?.toLocaleDateString('en-IN') ?? '—'} to {cashFlowStats.endDate?.toLocaleDateString('en-IN') ?? '—'}</p>
           </CardHeader>
           <CardContent>
             {isLoading ? <Skeleton className="h-[280px] bg-white/5" /> : <CashFlowChart data={summaries} />}
@@ -104,7 +104,7 @@ export default function CashFlowPage() {
                 <TableHeader>
                   <TableRow className="border-border/50 hover:bg-transparent">
                     {['Month', 'Investment', 'Food & Ent.', 'Others', 'Total Expenses'].map(h => (
-                      <TableHead key={h} className="text-xs sm:text-sm md:text-base font-semibold text-foreground/90 tracking-wide whitespace-nowrap">{h}</TableHead>
+                      <TableHead key={h} className="text-xs font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">{h}</TableHead>
                     ))}
                   </TableRow>
                 </TableHeader>
@@ -117,11 +117,11 @@ export default function CashFlowPage() {
                     <motion.tr key={m.label} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.02 }}
                       className="border-border/30 hover:bg-white/[0.05] cursor-pointer transition-colors"
                       onClick={() => setSelectedMonth(m)}>
-                      <TableCell className="text-xs sm:text-sm md:text-base font-semibold text-foreground whitespace-nowrap">{m.label}</TableCell>
-                      <TableCell className="text-xs sm:text-sm md:text-base text-blue-400 tabular-nums font-medium whitespace-nowrap">{fmt(m.investment, isHidden)}</TableCell>
-                      <TableCell className="text-xs sm:text-sm md:text-base text-amber-400 tabular-nums font-medium whitespace-nowrap">{fmt(m.foodAndEntertainment, isHidden)}</TableCell>
-                      <TableCell className="text-xs sm:text-sm md:text-base text-purple-400 tabular-nums font-medium whitespace-nowrap">{fmt(m.others, isHidden)}</TableCell>
-                      <TableCell className="text-xs sm:text-sm md:text-base text-red-400 font-bold tabular-nums whitespace-nowrap">{fmt(m.totalExpenses, isHidden)}</TableCell>
+                      <TableCell className="text-sm font-semibold text-foreground whitespace-nowrap">{m.label}</TableCell>
+                      <TableCell className="text-sm text-blue-400 tabular-nums font-medium whitespace-nowrap">{fmt(m.investment, isHidden)}</TableCell>
+                      <TableCell className="text-sm text-amber-400 tabular-nums font-medium whitespace-nowrap">{fmt(m.foodAndEntertainment, isHidden)}</TableCell>
+                      <TableCell className="text-sm text-purple-400 tabular-nums font-medium whitespace-nowrap">{fmt(m.others, isHidden)}</TableCell>
+                      <TableCell className="text-sm text-red-400 font-bold tabular-nums whitespace-nowrap">{fmt(m.totalExpenses, isHidden)}</TableCell>
                     </motion.tr>
                   ))}
                 </TableBody>

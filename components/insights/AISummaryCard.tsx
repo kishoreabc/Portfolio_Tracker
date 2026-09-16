@@ -24,7 +24,7 @@ export function AISummaryCard({ data }: { data?: string }) {
             <Sparkles className="w-5 h-5 text-indigo-400" />
           </div>
           <div>
-            <h4 className="text-body font-bold text-indigo-300 mb-1.5 uppercase tracking-wider text-xs">Executive Summary</h4>
+            <h4 className="font-bold text-indigo-300 mb-1.5 uppercase tracking-wider text-xs">Executive Summary</h4>
             <p className="text-[15px] leading-relaxed text-foreground/90 font-medium">{content}</p>
           </div>
         </div>

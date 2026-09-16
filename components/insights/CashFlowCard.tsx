@@ -52,7 +52,7 @@ export function CashFlowCard({ data }: { data?: CashFlow }) {
         <div className="flex flex-col gap-1 border-t border-white/5 pt-3">
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted-foreground">Net Cash Flow</span>
-            <span className={`text-body font-bold tabular-nums ${netColor}`}>
+            <span className={`text-base font-bold tabular-nums ${netColor}`}>
               {data.net > 0 ? '+' : ''}{fmt(data.net, isHidden)}
             </span>
           </div>

@@ -204,10 +204,10 @@ export default function DashboardPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-border/50 hover:bg-transparent">
-                    <TableHead className="text-body-lg font-semibold text-foreground/90 tracking-wide">Asset Class</TableHead>
-                    <TableHead className="text-body-lg font-semibold text-foreground/90 tracking-wide text-right">Holdings</TableHead>
-                    <TableHead className="text-body-lg font-semibold text-foreground/90 tracking-wide text-right">Value</TableHead>
-                    <TableHead className="text-body-lg font-semibold text-foreground/90 tracking-wide text-right">Allocation %</TableHead>
+                    <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Asset Class</TableHead>
+                    <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right">Holdings</TableHead>
+                    <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right">Value</TableHead>
+                    <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right">Allocation %</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -253,18 +253,18 @@ export default function DashboardPage() {
                             transition={{ delay: 0.2 + i * 0.05 }}
                             className="border-border/30 hover:bg-white/[0.02] transition-colors"
                           >
-                            <TableCell className="text-body font-semibold text-foreground max-w-[200px] truncate">
+                            <TableCell className="text-sm font-semibold text-foreground max-w-[200px] truncate">
                               <div className="flex items-center gap-2">
                                 <div className={`w-7 h-7 rounded-lg ${r.bg} flex items-center justify-center flex-shrink-0`}>
                                   <r.icon className={`w-3.5 h-3.5 ${r.color}`} />
                                 </div>
-                                <span className={`text-body font-semibold ${r.color}`}>{r.label}</span>
+                                <span className={`text-sm font-semibold ${r.color}`}>{r.label}</span>
                               </div>
                             </TableCell>
-                            <TableCell className="text-right text-small text-muted-foreground/80 tabular-nums">
+                            <TableCell className="text-right text-xs text-muted-foreground/80 font-medium tabular-nums">
                               {r.count} {r.unit}
                             </TableCell>
-                            <TableCell className="text-right text-body font-medium tabular-nums text-foreground">
+                            <TableCell className="text-right text-sm font-medium tabular-nums text-foreground">
                               {formatINR(r.value, isHidden)}
                             </TableCell>
                             <TableCell className="text-right">
@@ -276,7 +276,7 @@ export default function DashboardPage() {
                                     style={{ width: `${r.alloc}%` }}
                                   />
                                 </div>
-                                <span className={`text-body font-semibold tabular-nums ${r.color}`}>
+                                <span className={`text-sm font-semibold tabular-nums ${r.color}`}>
                                   {r.alloc.toFixed(2)}%
                                 </span>
                               </div>
@@ -285,14 +285,14 @@ export default function DashboardPage() {
                         ))}
                         {/* Total row */}
                         <TableRow className="border-border/50 border-t bg-white/[0.015]">
-                          <TableCell className="text-body font-bold text-foreground">Total Portfolio</TableCell>
-                          <TableCell className="text-right text-small text-muted-foreground/80 tabular-nums">
+                          <TableCell className="text-sm font-bold text-foreground">Total Portfolio</TableCell>
+                          <TableCell className="text-right text-xs text-muted-foreground/80 font-medium tabular-nums">
                             {equityCount + bondCount} holdings
                           </TableCell>
-                          <TableCell className="text-right text-body font-bold tabular-nums text-foreground">
+                          <TableCell className="text-right text-sm font-bold tabular-nums text-foreground">
                             {formatINR(total, isHidden)}
                           </TableCell>
-                          <TableCell className="text-right text-body font-bold tabular-nums text-foreground">100.00%</TableCell>
+                          <TableCell className="text-right text-sm font-bold tabular-nums text-foreground">100.00%</TableCell>
                         </TableRow>
                       </>
                     );
@@ -366,9 +366,9 @@ export default function DashboardPage() {
               { label: 'Food & Ent.', value: formatINR(cashFlowStats.totalFoodAndEntertainment, isHidden) },
               { label: 'Others', value: formatINR(cashFlowStats.totalOthers, isHidden) },
             ].map(({ label, value }) => (
-              <div key={label} className="rounded-lg border border-border/40 px-4 py-3 bg-card/50">
-                <p className="text-small text-muted-foreground font-medium mb-1">{label}</p>
-                <p className="text-body font-semibold text-foreground tabular-nums">{value}</p>
+              <div key={label} className="rounded-xl border border-border/40 px-4 py-3.5 bg-card/50">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">{label}</p>
+                <p className="text-lg sm:text-xl font-bold text-foreground tabular-nums tracking-tight">{value}</p>
               </div>
             ))}
           </motion.div>

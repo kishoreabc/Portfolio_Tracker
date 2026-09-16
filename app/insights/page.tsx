@@ -258,7 +258,7 @@ export default function InsightsPage() {
                   </span>
                 )}
               </div>
-              <h2 className="text-h2 font-bold text-foreground flex items-center gap-2 mt-1">
+              <h2 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2 mt-1">
                 <Sparkles className="w-5 h-5 text-indigo-400" />
                 AI Portfolio Intelligence
               </h2>
@@ -325,7 +325,7 @@ export default function InsightsPage() {
                   <AlertCircle className="w-6 h-6 text-red-400" />
                 </div>
                 <div className="flex-1 text-center sm:text-left">
-                  <h4 className="text-body font-bold text-red-400">Analysis Failed</h4>
+                  <h4 className="text-base font-bold text-red-400">Analysis Failed</h4>
                   <p className="text-sm text-muted-foreground mt-1 max-w-2xl">{error}</p>
                 </div>
                 <div className="flex items-center gap-3">

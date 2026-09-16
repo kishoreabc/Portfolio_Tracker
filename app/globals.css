@@ -4,16 +4,16 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  /* Typography Scale variables (relative to 18px base root) */
-  --text-scale-display: 2rem;       /* 36px */
-  --text-scale-h1: 1.667rem;        /* 30px */
-  --text-scale-h2: 1.333rem;        /* 24px */
-  --text-scale-h3: 1.111rem;        /* 20px */
-  --text-scale-h4: 1rem;            /* 18px */
-  --text-scale-body-lg: 0.889rem;   /* 14px */
-  --text-scale-body: 0.778rem;      /* 14px */
-  --text-scale-small: 0.722rem;     /* 13px */
-  --text-scale-caption: 0.667rem;   /* 12px */
+  /* Typography Scale variables */
+  --text-display: 2.25rem;       /* 36px */
+  --text-h1: 1.875rem;          /* 30px */
+  --text-h2: 1.5rem;            /* 24px */
+  --text-h3: 1.25rem;           /* 20px */
+  --text-h4: 1.125rem;          /* 18px */
+  --text-body-lg: 1rem;         /* 16px */
+  --text-body: 0.875rem;        /* 14px */
+  --text-small: 0.75rem;        /* 12px */
+  --text-caption: 0.6875rem;    /* 11px */
 
   /* Color tokens — these generate Tailwind utilities via @theme */
   --color-brand-50: hsl(221 83% 97%);
@@ -93,16 +93,6 @@
 
 /* shadcn CSS variable overrides — dark mode only for this app */
 :root {
-  /* Typography Scale variables (relative to 18px base root) */
-  --text-scale-display: 2rem;       /* 36px */
-  --text-scale-h1: 1.667rem;        /* 30px */
-  --text-scale-h2: 1.333rem;        /* 24px */
-  --text-scale-h3: 1.111rem;        /* 20px */
-  --text-scale-h4: 1rem;            /* 18px */
-  --text-scale-body-lg: 0.889rem;   /* 16px */
-  --text-scale-body: 0.778rem;      /* 14px */
-  --text-scale-small: 0.722rem;     /* 13px */
-  --text-scale-caption: 0.667rem;   /* 12px */
 
   --background: 222 47% 11%;
   --foreground: 210 40% 98%;
@@ -234,3 +224,24 @@ button:not(:disabled):hover {
 .recharts-wrapper *:focus {
   outline: none !important;
 }
+
+/* Typography Scale Utilities */
+@utility text-display { font-size: 2.25rem; line-height: 2.5rem; }
+@utility text-h1 { font-size: 1.875rem; line-height: 2.25rem; }
+@utility text-h2 { font-size: 1.5rem; line-height: 2rem; }
+@utility text-h3 { font-size: 1.25rem; line-height: 1.75rem; }
+@utility text-h4 { font-size: 1.125rem; line-height: 1.5rem; }
+@utility text-body-lg { font-size: 1rem; line-height: 1.5rem; }
+@utility text-body { font-size: 0.875rem; line-height: 1.25rem; }
+@utility text-small { font-size: 0.75rem; line-height: 1rem; }
+@utility text-caption { font-size: 0.6875rem; line-height: 0.875rem; }
+
+.text-display { font-size: 2.25rem; line-height: 2.5rem; }
+.text-h1 { font-size: 1.875rem; line-height: 2.25rem; }
+.text-h2 { font-size: 1.5rem; line-height: 2rem; }
+.text-h3 { font-size: 1.25rem; line-height: 1.75rem; }
+.text-h4 { font-size: 1.125rem; line-height: 1.5rem; }
+.text-body-lg { font-size: 1rem; line-height: 1.5rem; }
+.text-body { font-size: 0.875rem; line-height: 1.25rem; }
+.text-small { font-size: 0.75rem; line-height: 1rem; }
+.text-caption { font-size: 0.6875rem; line-height: 0.875rem; }

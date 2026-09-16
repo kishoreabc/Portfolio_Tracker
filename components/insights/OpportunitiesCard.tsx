@@ -25,7 +25,7 @@ export function OpportunitiesCard({ data }: { data?: Opportunity[] }) {
           <div key={i} className="group relative pl-4 pb-4 border-l border-white/10 last:border-0 last:pb-0">
             <div className="absolute w-2 h-2 rounded-full bg-amber-400 -left-[4.5px] top-1.5 shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
             <div className="flex items-start justify-between gap-4 mb-1">
-              <h4 className="text-body font-semibold text-foreground">{opp.title}</h4>
+              <h4 className="text-sm font-semibold text-foreground">{opp.title}</h4>
               <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-sm border flex-shrink-0 ${getPriorityColor(opp.priority)}`}>
                 {opp.priority}
               </span>

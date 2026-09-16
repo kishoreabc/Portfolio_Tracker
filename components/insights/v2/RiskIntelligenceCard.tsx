@@ -58,28 +58,28 @@ export function RiskIntelligenceCard({ data }: RiskIntelligenceCardProps) {
       <CardContent className="pt-4 space-y-5">
         {/* Risk Concentration Telemetry Metrics */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="p-3 rounded-xl bg-card/60 border border-border/40 space-y-1">
+          <div className="p-3.5 rounded-xl bg-card/60 border border-border/40 space-y-1">
             <span className="text-[10px] text-muted-foreground uppercase tracking-wider block truncate">Top Sector</span>
             <span className="text-xs font-semibold text-foreground truncate block">{data.topSectorExposure.sector}</span>
-            <span className="text-lg font-extrabold text-foreground tabular-nums">{data.topSectorExposure.percentage.toFixed(1)}%</span>
+            <span className="text-2xl font-extrabold text-foreground tabular-nums tracking-tight">{data.topSectorExposure.percentage.toFixed(1)}%</span>
           </div>
 
-          <div className="p-3 rounded-xl bg-card/60 border border-border/40 space-y-1">
+          <div className="p-3.5 rounded-xl bg-card/60 border border-border/40 space-y-1">
             <span className="text-[10px] text-muted-foreground uppercase tracking-wider block">Top 5 Holdings</span>
             <span className="text-xs font-semibold text-foreground block">Concentration</span>
-            <span className="text-lg font-extrabold text-foreground tabular-nums">{data.top5HoldingsWeight.toFixed(1)}%</span>
+            <span className="text-2xl font-extrabold text-foreground tabular-nums tracking-tight">{data.top5HoldingsWeight.toFixed(1)}%</span>
           </div>
 
-          <div className="p-3 rounded-xl bg-card/60 border border-border/40 space-y-1">
+          <div className="p-3.5 rounded-xl bg-card/60 border border-border/40 space-y-1">
             <span className="text-[10px] text-muted-foreground uppercase tracking-wider block truncate">Largest Position</span>
             <span className="text-xs font-semibold text-foreground truncate block">{data.largestPosition.symbol}</span>
-            <span className="text-lg font-extrabold text-foreground tabular-nums">{data.largestPosition.percentage.toFixed(1)}%</span>
+            <span className="text-2xl font-extrabold text-foreground tabular-nums tracking-tight">{data.largestPosition.percentage.toFixed(1)}%</span>
           </div>
 
-          <div className="p-3 rounded-xl bg-card/60 border border-border/40 space-y-1">
+          <div className="p-3.5 rounded-xl bg-card/60 border border-border/40 space-y-1">
             <span className="text-[10px] text-muted-foreground uppercase tracking-wider block">Debt Quality</span>
             <span className="text-xs font-semibold text-foreground block">AAA / Sovereign</span>
-            <span className="text-lg font-extrabold text-emerald-400 tabular-nums">{data.debtQualityScore || 85}%</span>
+            <span className="text-2xl font-extrabold text-emerald-400 tabular-nums tracking-tight">{data.debtQualityScore || 85}%</span>
           </div>
         </div>
 

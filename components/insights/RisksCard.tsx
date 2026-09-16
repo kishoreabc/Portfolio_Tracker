@@ -35,7 +35,7 @@ export function RisksCard({ data }: { data?: Risk[] }) {
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full flex-shrink-0 ${getDotColor(risk.severity)}`} />
-                <h4 className="text-body font-semibold text-foreground">{risk.title}</h4>
+                <h4 className="text-sm font-semibold text-foreground">{risk.title}</h4>
               </div>
               <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-sm border flex-shrink-0 ${getSeverityColor(risk.severity)}`}>
                 {risk.severity}

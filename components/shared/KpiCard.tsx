@@ -100,8 +100,8 @@ export function KpiCard({
         href ? 'cursor-pointer hover:bg-white/[0.02]' : 'group cursor-default'
       )}>
         <div>
-          <div className="flex items-start justify-between mb-3">
-            <p className="text-body font-semibold text-muted-foreground uppercase tracking-wider">{title}</p>
+          <div className="flex items-start justify-between mb-2">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{title}</p>
             <div className="flex items-center gap-1.5">
               {showPrivacyToggle && <PrivacyToggle variant="card" />}
               {Icon && (
@@ -114,7 +114,7 @@ export function KpiCard({
 
           <div className="space-y-1">
             <motion.p
-              className={`text-h2 font-bold tabular-nums ${valueClassName || 'text-foreground'}`}
+              className={`text-2xl sm:text-3xl font-extrabold tabular-nums tracking-tight ${valueClassName || 'text-foreground'}`}
               key={displayValue}
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
@@ -124,7 +124,7 @@ export function KpiCard({
             </motion.p>
 
             {displaySubValue && (
-              <p className="text-small text-muted-foreground">{displaySubValue}</p>
+              <p className="text-xs text-muted-foreground font-medium">{displaySubValue}</p>
             )}
 
             {change !== undefined && (
@@ -133,7 +133,7 @@ export function KpiCard({
                 {isNegative && <TrendingDown className="w-3.5 h-3.5 text-red-400" />}
                 {!isPositive && !isNegative && <Minus className="w-3.5 h-3.5 text-slate-500" />}
                 <span className={cn(
-                  'text-small font-semibold',
+                  'text-xs font-semibold',
                   isPositive && 'text-emerald-400',
                   isNegative && 'text-red-400',
                   !isPositive && !isNegative && 'text-slate-500'
@@ -141,14 +141,14 @@ export function KpiCard({
                   {isPositive && '+'}
                   {(change * 100).toFixed(2)}%
                 </span>
-                {changeLabel && <span className="text-small text-muted-foreground">{changeLabel}</span>}
+                {changeLabel && <span className="text-xs text-muted-foreground">{changeLabel}</span>}
               </div>
             )}
           </div>
         </div>
 
         {note && (
-          <p className="text-caption text-muted-foreground/70 mt-2 italic">{note}</p>
+          <p className="text-[11px] text-muted-foreground/70 mt-2 italic">{note}</p>
         )}
       </Card>
   );

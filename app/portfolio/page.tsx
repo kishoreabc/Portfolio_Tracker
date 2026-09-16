@@ -110,7 +110,7 @@ export default function PortfolioPage() {
                 <div className="flex-1">
                   <CardTitle className="text-blue-400">
                     Equity Holdings
-                    <span className="ml-2 text-small text-muted-foreground font-normal">
+                    <span className="ml-2 text-xs text-muted-foreground font-normal">
                       ({equityRows.length} stocks · {fmt(equityTotal, isHidden)})
                     </span>
                   </CardTitle>
@@ -131,15 +131,15 @@ export default function PortfolioPage() {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-border/50 hover:bg-transparent">
-                      <TableHead className="text-body-lg font-semibold text-foreground/90 tracking-wide cursor-pointer hover:text-foreground" onClick={() => toggleSort('name')}>
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-foreground" onClick={() => toggleSort('name')}>
                         Name <SortIcon />
                       </TableHead>
-                      <TableHead className="text-body-lg font-semibold text-foreground/90 tracking-wide">Ticker</TableHead>
-                      <TableHead className="text-body-lg font-semibold text-foreground/90 tracking-wide">Sector</TableHead>
-                      <TableHead className="text-body-lg font-semibold text-foreground/90 tracking-wide text-right cursor-pointer hover:text-foreground" onClick={() => toggleSort('currentValue')}>
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ticker</TableHead>
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Sector</TableHead>
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right cursor-pointer hover:text-foreground" onClick={() => toggleSort('currentValue')}>
                         Value <SortIcon />
                       </TableHead>
-                      <TableHead className="text-body-lg font-semibold text-foreground/90 tracking-wide text-right cursor-pointer hover:text-foreground" onClick={() => toggleSort('localAllocPct')}>
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right cursor-pointer hover:text-foreground" onClick={() => toggleSort('localAllocPct')}>
                         Alloc % <SortIcon />
                       </TableHead>
                     </TableRow>
@@ -152,21 +152,21 @@ export default function PortfolioPage() {
                         className="border-border/30 hover:bg-white/[0.02] transition-colors"
                       >
                         <TableCell
-                          className="text-body font-semibold text-foreground max-w-[200px] truncate cursor-pointer hover:text-blue-300 transition-colors"
+                          className="text-sm font-semibold text-foreground max-w-[200px] truncate cursor-pointer hover:text-blue-300 transition-colors"
                           onClick={() => openStock(row.ticker)}
                         >{row.name}</TableCell>
                         <TableCell
-                          className="text-small font-mono text-blue-400 font-semibold cursor-pointer hover:text-blue-300 hover:underline transition-colors"
+                          className="text-xs font-mono text-blue-400 font-semibold cursor-pointer hover:text-blue-300 hover:underline transition-colors"
                           onClick={() => openStock(row.ticker)}
                         >{row.ticker}</TableCell>
-                        <TableCell className="text-small text-muted-foreground/80 font-normal">{row.sector}</TableCell>
-                        <TableCell className="text-right text-body font-medium tabular-nums text-foreground">{fmt(row.currentValue, isHidden)}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground/80 font-normal">{row.sector}</TableCell>
+                        <TableCell className="text-right text-sm font-medium tabular-nums text-foreground">{fmt(row.currentValue, isHidden)}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
                             <div className="w-12 h-1 rounded-full bg-white/10 overflow-hidden">
                               <div className="h-full bg-blue-400 rounded-full" style={{ width: `${Math.min(row.localAllocPct, 100)}%` }} />
                             </div>
-                            <span className="text-body text-blue-400 font-semibold tabular-nums w-12 text-right">
+                            <span className="text-sm text-blue-400 font-semibold tabular-nums w-12 text-right">
                               {row.localAllocPct.toFixed(2)}%
                             </span>
                           </div>
@@ -176,9 +176,9 @@ export default function PortfolioPage() {
                     {/* Equity subtotal */}
                     {!isLoading && equityRows.length > 0 && (
                       <TableRow className="border-t border-border/50 bg-white/[0.015]">
-                        <TableCell colSpan={3} className="text-body font-bold text-foreground">Total Equity</TableCell>
-                        <TableCell className="text-right text-body font-bold tabular-nums text-foreground">{fmt(equityTotal, isHidden)}</TableCell>
-                        <TableCell className="text-right text-body font-bold text-blue-400">100.00%</TableCell>
+                        <TableCell colSpan={3} className="text-sm font-bold text-foreground">Total Equity</TableCell>
+                        <TableCell className="text-right text-sm font-bold tabular-nums text-foreground">{fmt(equityTotal, isHidden)}</TableCell>
+                        <TableCell className="text-right text-sm font-bold text-blue-400">100.00%</TableCell>
                       </TableRow>
                     )}
                   </TableBody>
@@ -199,7 +199,7 @@ export default function PortfolioPage() {
                 <div className="flex-1">
                   <CardTitle className="text-purple-400">
                     Bond Holdings
-                    <span className="ml-2 text-small text-muted-foreground font-normal">
+                    <span className="ml-2 text-xs text-muted-foreground font-normal">
                       ({bondRows.length} bonds · {fmt(bondTotal, isHidden)})
                     </span>
                   </CardTitle>
@@ -220,15 +220,15 @@ export default function PortfolioPage() {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-border/50 hover:bg-transparent">
-                      <TableHead className="text-body-lg font-semibold text-foreground/90 tracking-wide cursor-pointer hover:text-foreground" onClick={() => toggleSort('name')}>
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-foreground" onClick={() => toggleSort('name')}>
                         Name <SortIcon />
                       </TableHead>
-                      <TableHead className="text-body-lg font-semibold text-foreground/90 tracking-wide">ISIN</TableHead>
-                      <TableHead className="text-body-lg font-semibold text-foreground/90 tracking-wide">Sector</TableHead>
-                      <TableHead className="text-body-lg font-semibold text-foreground/90 tracking-wide text-right cursor-pointer hover:text-foreground" onClick={() => toggleSort('currentValue')}>
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">ISIN</TableHead>
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Sector</TableHead>
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right cursor-pointer hover:text-foreground" onClick={() => toggleSort('currentValue')}>
                         Value <SortIcon />
                       </TableHead>
-                      <TableHead className="text-body-lg font-semibold text-foreground/90 tracking-wide text-right cursor-pointer hover:text-foreground" onClick={() => toggleSort('localAllocPct')}>
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right cursor-pointer hover:text-foreground" onClick={() => toggleSort('localAllocPct')}>
                         Alloc % <SortIcon />
                       </TableHead>
                     </TableRow>
@@ -240,16 +240,16 @@ export default function PortfolioPage() {
                         transition={{ delay: i * 0.015 }}
                         className="border-border/30 hover:bg-white/[0.02] transition-colors"
                       >
-                        <TableCell className="text-body font-semibold text-foreground max-w-[200px] truncate">{row.name}</TableCell>
-                        <TableCell className="text-small font-mono text-muted-foreground">{row.ticker}</TableCell>
-                        <TableCell className="text-small text-muted-foreground/80 font-normal">{row.sector}</TableCell>
-                        <TableCell className="text-right text-body font-medium tabular-nums text-foreground">{fmt(row.currentValue, isHidden)}</TableCell>
+                        <TableCell className="text-sm font-semibold text-foreground max-w-[200px] truncate">{row.name}</TableCell>
+                        <TableCell className="text-xs font-mono text-muted-foreground">{row.ticker}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground/80 font-normal">{row.sector}</TableCell>
+                        <TableCell className="text-right text-sm font-medium tabular-nums text-foreground">{fmt(row.currentValue, isHidden)}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
                             <div className="w-12 h-1 rounded-full bg-white/10 overflow-hidden">
                               <div className="h-full bg-purple-400 rounded-full" style={{ width: `${Math.min(row.localAllocPct, 100)}%` }} />
                             </div>
-                            <span className="text-body text-purple-400 font-semibold tabular-nums w-12 text-right">
+                            <span className="text-sm text-purple-400 font-semibold tabular-nums w-12 text-right">
                               {row.localAllocPct.toFixed(2)}%
                             </span>
                           </div>
@@ -259,9 +259,9 @@ export default function PortfolioPage() {
                     {/* Bond subtotal */}
                     {!isLoading && bondRows.length > 0 && (
                       <TableRow className="border-t border-border/50 bg-white/[0.015]">
-                        <TableCell colSpan={3} className="text-body font-bold text-foreground">Total Bonds</TableCell>
-                        <TableCell className="text-right text-body font-bold tabular-nums text-foreground">{fmt(bondTotal, isHidden)}</TableCell>
-                        <TableCell className="text-right text-body font-bold text-purple-400">100.00%</TableCell>
+                        <TableCell colSpan={3} className="text-sm font-bold text-foreground">Total Bonds</TableCell>
+                        <TableCell className="text-right text-sm font-bold tabular-nums text-foreground">{fmt(bondTotal, isHidden)}</TableCell>
+                        <TableCell className="text-right text-sm font-bold text-purple-400">100.00%</TableCell>
                       </TableRow>
                     )}
                   </TableBody>

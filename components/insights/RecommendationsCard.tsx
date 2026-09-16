@@ -31,7 +31,7 @@ export function RecommendationsCard({ data }: { data?: Recommendation[] }) {
                 </div>
                 <div className="flex-1 space-y-1.5">
                   <div className="flex items-start justify-between gap-3">
-                    <p className="text-body font-semibold text-foreground">{rec.title ?? rec.action}</p>
+                    <p className="text-sm font-semibold text-foreground">{rec.title ?? rec.action}</p>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
                       {rec.timeframe && (
                         <span className="flex items-center gap-1 text-[9px] text-muted-foreground bg-white/5 border border-white/10 px-1.5 py-0.5 rounded">
