@@ -19,6 +19,8 @@ const HEADER_SYNONYMS: Record<string, string[]> = {
   currentValue: ['current value', 'market value', 'value', 'total value'],
   allocationPercent: ['%', 'portfolio %', 'allocation %', 'weight %', 'weight'],
   sector: ['sector', 'industry', 'category'],
+  peRatio: ['pe ratio', 'pe', 'p/e', 'p/e ratio', 'trailing pe', 'price to earnings'],
+  pbRatio: ['pb ratio', 'pb', 'p/b', 'p/b ratio', 'price to book'],
   // Bond-specific
   broker: ['broker', 'brokerage'],
   issuer: ['issuer'],

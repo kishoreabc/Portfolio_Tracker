@@ -34,6 +34,8 @@
   --color-loss-muted: hsl(0 84% 60% / 0.15);
   --color-warn: hsl(38 92% 50%);
   --color-warn-muted: hsl(38 92% 50% / 0.15);
+  --color-destructive: hsl(0 84% 60%);
+  --color-destructive-foreground: hsl(210 40% 98%);
   --chart-1: 221 83% 53%;
   --chart-2: 142 71% 45%;
   --chart-3: 38 92% 50%;

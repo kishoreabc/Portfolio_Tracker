@@ -21,6 +21,10 @@ const securityHeaders = [
     key: 'X-XSS-Protection',
     value: '1; mode=block',
   },
+  {
+    key: 'Vary',
+    value: 'Accept, Accept-Encoding',
+  },
 ];
 
 const nextConfig: NextConfig = {

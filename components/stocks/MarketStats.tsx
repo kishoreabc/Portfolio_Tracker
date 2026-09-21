@@ -35,6 +35,12 @@ export const MarketStats = memo(function MarketStats({ quote, profile, isLoading
   const sector = quote?.sector ?? prof?.assetProfile?.sector ?? prof?.summaryProfile?.sector;
   const industry = quote?.industry ?? prof?.assetProfile?.industry ?? prof?.summaryProfile?.industry;
 
+  const isBank =
+    Boolean((sector as string)?.toLowerCase().includes('bank') ||
+    (industry as string)?.toLowerCase().includes('bank'));
+
+  const pbValue = (quote?.priceToBook ?? prof?.defaultKeyStatistics?.priceToBook?.raw ?? prof?.defaultKeyStatistics?.priceToBook) as number | undefined;
+
   const stats = [
     { label: 'Open', value: fmtPrice(quote?.regularMarketOpen as number) },
     { label: 'High', value: fmtPrice(quote?.regularMarketDayHigh as number) },
@@ -45,7 +51,8 @@ export const MarketStats = memo(function MarketStats({ quote, profile, isLoading
     { label: 'Volume', value: fmtVol(quote?.regularMarketVolume as number) },
     { label: 'Avg Volume', value: fmtVol(quote?.averageDailyVolume3Month as number) },
     { label: 'Market Cap', value: quote?.marketCap ? formatLargeNumber(quote.marketCap as number) : '—' },
-    { label: 'PE Ratio', value: fmtNum(quote?.trailingPE as number) },
+    { label: isBank ? 'PB Ratio (Bank)' : 'PE Ratio', value: fmtNum((isBank ? (pbValue ?? quote?.trailingPE) : quote?.trailingPE) as number) },
+    { label: isBank ? 'PE Ratio' : 'PB Ratio', value: fmtNum((isBank ? quote?.trailingPE : pbValue) as number) },
     { label: 'EPS', value: fmtNum(eps as number) },
     { label: 'Div Yield', value: quote?.dividendYield ? `${((quote.dividendYield as number) * 100).toFixed(2)}%` : '—' },
     { label: 'Sector', value: (sector as string) || '—' },

@@ -9,6 +9,10 @@ export interface EquityHolding {
   currentValue: number;
   allocationPercent: number;
   sector: string;
+  pe?: number | null;
+  pb?: number | null;
+  valuationType?: 'PE' | 'PB' | null;
+  valuationRatio?: number | null;
 }
 
 export type PortfolioRowType = 'equity' | 'bond';

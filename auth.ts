@@ -91,32 +91,66 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user && Object.keys(auth.user).length > 0;
-      const isPublicPath =
-        nextUrl.pathname.startsWith('/login') ||
-        nextUrl.pathname.startsWith('/api/auth') ||
-        nextUrl.pathname.startsWith('/api/market-data') ||
-        nextUrl.pathname.match(/\.(png|jpg|jpeg|svg|gif|ico)$/) ||
-        nextUrl.pathname.startsWith('/_next/');
+      const pathname = nextUrl.pathname;
+
+      // Protected private application routes that strictly require authentication
+      const protectedAppRoutes = [
+        '/portfolio',
+        '/stocks',
+        '/bonds',
+        '/cashflow',
+        '/calendar',
+        '/analytics',
+        '/reports',
+        '/insights',
+        '/news',
+      ];
+
+      const isProtectedAppRoute = protectedAppRoutes.some(
+        (route) => pathname === route || pathname.startsWith(route + '/')
+      );
+
+      // Public API endpoints that do not require authentication
+      const isPublicApiRoute =
+        pathname.startsWith('/api/auth') ||
+        pathname.startsWith('/api/market-data') ||
+        pathname.startsWith('/api/v1') ||
+        pathname.startsWith('/api/mcp') ||
+        pathname.startsWith('/api/openapi') ||
+        pathname === '/api/news/sync/cron';
 
       if (isLoggedIn) {
-        if (nextUrl.pathname.startsWith('/login')) {
+        if (pathname.startsWith('/login')) {
           return Response.redirect(new URL('/', nextUrl));
         }
         return true;
       }
 
-      if (isPublicPath) return true;
+      // If user is not logged in and tries to access a protected app route -> redirect to login
+      if (isProtectedAppRoute) {
+        return false;
+      }
 
-      // For API routes, return HTTP 401 Unauthorized JSON instead of redirecting
-      if (nextUrl.pathname.startsWith('/api/')) {
+      // If accessing an API route that is not public -> return structured JSON 401
+      if (pathname.startsWith('/api/')) {
+        if (isPublicApiRoute) return true;
         return Response.json(
-          { error: 'Unauthorized' },
+          {
+            error: {
+              code: 'UNAUTHORIZED',
+              message: 'Authentication required to access this API resource.',
+              resolution_hint: 'Provide a valid session or API key. For public endpoints, visit /developers or /openapi.json.',
+            },
+            code: 'UNAUTHORIZED',
+            message: 'Authentication required to access this API resource.',
+            resolution_hint: 'Provide a valid session or API key. For public endpoints, visit /developers or /openapi.json.',
+          },
           { status: 401, headers: { 'Cache-Control': 'no-store' } }
         );
       }
 
-      // Redirect to login if not logged in and not on a public path
-      return false;
+      // All other routes (homepage, login, about, contact, privacy, developers, docs, static assets, sitemap, robots, openapi, llms, mcp, and unknown routes for 404 handling)
+      return true;
     },
   },
 });

@@ -60,8 +60,21 @@ export default function StocksPage() {
     );
     if (sortConfig.key) {
       result.sort((a: any, b: any) => {
-        if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === 'asc' ? 1 : -1;
+        const valA = a[sortConfig.key];
+        const valB = b[sortConfig.key];
+
+        if (valA == null && valB == null) return 0;
+        if (valA == null) return 1;
+        if (valB == null) return -1;
+
+        if (typeof valA === 'string') {
+          return sortConfig.direction === 'asc'
+            ? valA.localeCompare(valB)
+            : valB.localeCompare(valA);
+        }
+
+        if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
         return 0;
       });
     }
@@ -157,6 +170,7 @@ export default function StocksPage() {
                     <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('currentPrice')}>CMP <SortIcon columnKey="currentPrice" /></TableHead>
                     <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('currentValue')}>Value <SortIcon columnKey="currentValue" /></TableHead>
                     <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('allocationPercent')}>Alloc % <SortIcon columnKey="allocationPercent" /></TableHead>
+                    <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('valuationRatio')}>P/E (P/B) <SortIcon columnKey="valuationRatio" /></TableHead>
                     <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('priceChange')}>Price Chg <SortIcon columnKey="priceChange" /></TableHead>
                     <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('percentChange')}>Change % <SortIcon columnKey="percentChange" /></TableHead>
                   </TableRow>
@@ -164,7 +178,7 @@ export default function StocksPage() {
                 <TableBody>
                   {isLoading ? Array.from({ length: 8 }).map((_, i) => (
                     <TableRow key={i} className="border-border/30">
-                      {Array.from({ length: 9 }).map((_, j) => (
+                      {Array.from({ length: 10 }).map((_, j) => (
                         <TableCell key={j}><Skeleton className="h-4 bg-white/5" /></TableCell>
                       ))}
                     </TableRow>
@@ -186,6 +200,27 @@ export default function StocksPage() {
                       <TableCell className="text-right text-sm font-medium tabular-nums text-foreground">{fmt(h.currentValue, isHidden)}</TableCell>
                       <TableCell className="text-right text-sm font-medium tabular-nums text-foreground/90">
                         {(h.allocationPercent).toFixed(2)}%
+                      </TableCell>
+                      <TableCell className="text-right text-sm font-medium tabular-nums">
+                        {h.valuationRatio ? (
+                          <div className="inline-flex items-center justify-end gap-1.5">
+                            <span className={h.valuationType === 'PB' ? 'text-amber-400 font-semibold' : 'text-foreground/90 font-medium'}>
+                              {h.valuationRatio.toFixed(2)}x
+                            </span>
+                            <span
+                              className={`text-[10px] font-bold px-1.5 py-0.5 rounded tracking-wider uppercase ${
+                                h.valuationType === 'PB'
+                                  ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                                  : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                              }`}
+                              title={h.valuationType === 'PB' ? 'Price to Book Value (Banking)' : 'Price to Earnings Ratio'}
+                            >
+                              {h.valuationType}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground/40 text-xs">—</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-right text-sm font-medium tabular-nums">
                         <span className={h.priceChange >= 0 ? 'text-emerald-400' : 'text-red-400'}>

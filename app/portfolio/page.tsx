@@ -140,7 +140,7 @@ export default function PortfolioPage() {
                         Value <SortIcon />
                       </TableHead>
                       <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right cursor-pointer hover:text-foreground" onClick={() => toggleSort('localAllocPct')}>
-                        Alloc % <SortIcon />
+                        Alloc<SortIcon />
                       </TableHead>
                     </TableRow>
                   </TableHeader>
@@ -229,7 +229,7 @@ export default function PortfolioPage() {
                         Value <SortIcon />
                       </TableHead>
                       <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right cursor-pointer hover:text-foreground" onClick={() => toggleSort('localAllocPct')}>
-                        Alloc % <SortIcon />
+                        Alloc<SortIcon />
                       </TableHead>
                     </TableRow>
                   </TableHeader>

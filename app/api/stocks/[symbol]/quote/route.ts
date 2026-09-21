@@ -76,6 +76,7 @@ export async function GET(
     averageDailyVolume3Month: rawQuote.averageDailyVolume3Month,
     marketCap: rawQuote.marketCap,
     trailingPE: rawQuote.trailingPE,
+    priceToBook: rawQuote.priceToBook,
     trailingEps: rawQuote.trailingEps,
     dividendYield: rawQuote.dividendYield,
     fiftyTwoWeekHigh: rawQuote.fiftyTwoWeekHigh,

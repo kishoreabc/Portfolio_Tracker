@@ -1,0 +1,385 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Portfolio Dashboard API",
+    "version": "1.0.0",
+    "description": "Comprehensive REST and MCP API for Portfolio Dashboard. Provides real-time Indian equity and index market quotes, portfolio analytics, and AI agent integration tools.",
+    "contact": {
+      "name": "Portfolio Dashboard API Support",
+      "email": "support@portfolio-tracker.example.com",
+      "url": "https://portfolio-tracker-kishoreabcs-projects.vercel.app/developers"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://portfolio-tracker-kishoreabcs-projects.vercel.app",
+      "description": "Production Server"
+    }
+  ],
+  "paths": {
+    "/api/market-data": {
+      "get": {
+        "operationId": "getMarketData",
+        "summary": "Fetch live Indian market indices and stock quotes",
+        "description": "Retrieves real-time percentage changes and market movements for benchmark Indian indices (NIFTY 50, NIFTY BANK, NIFTY IT, etc.) and selected equities.",
+        "responses": {
+          "200": {
+            "description": "Array of real-time market quotes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MarketQuote"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/summary": {
+      "get": {
+        "operationId": "getPublicSummary",
+        "summary": "Retrieve public portfolio tracker capabilities and system status",
+        "description": "Returns system operational status, supported asset classes, market data coverage, and integration capabilities for AI agents and developers.",
+        "responses": {
+          "200": {
+            "description": "System and platform capability summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "operationId": "getApiHealth",
+        "summary": "Check API operational health",
+        "description": "Returns health check status and server timestamp.",
+        "responses": {
+          "200": {
+            "description": "API health status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/.well-known/mcp": {
+      "get": {
+        "operationId": "getMcpManifest",
+        "summary": "Model Context Protocol (MCP) manifest and handshake",
+        "description": "Returns MCP server configuration, capabilities, and list of callable tools for LLMs.",
+        "responses": {
+          "200": {
+            "description": "MCP server manifest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "handleMcpRpc",
+        "summary": "Model Context Protocol (MCP) JSON-RPC handler",
+        "description": "Executes MCP JSON-RPC 2.0 requests such as tools/list and tools/call for AI agents.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["jsonrpc", "method"],
+                "properties": {
+                  "jsonrpc": { "type": "string", "example": "2.0" },
+                  "id": { "type": ["string", "number", "null"], "example": 1 },
+                  "method": { "type": "string", "example": "tools/list" },
+                  "params": { "type": "object" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-RPC response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/portfolio": {
+      "get": {
+        "operationId": "getPortfolioHoldings",
+        "summary": "Retrieve user portfolio holdings and allocation",
+        "description": "Fetches aggregated equity and bond holdings, net worth valuation, and sector weightings for the authenticated user.",
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Aggregated user portfolio holdings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/news": {
+      "get": {
+        "operationId": "getFinancialNews",
+        "summary": "Fetch financial market news articles",
+        "description": "Searches and filters curated financial market news articles with sentiment, category, and portfolio relevance tags.",
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 1 },
+            "description": "Page number for pagination"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 20 },
+            "description": "Number of articles per page (max 50)"
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "Filter by article category"
+          },
+          {
+            "name": "sentiment",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["positive", "neutral", "negative"] },
+            "description": "Filter by article sentiment"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated news articles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "MarketQuote": {
+        "type": "object",
+        "required": ["symbol", "value"],
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Ticker symbol or index name (e.g. NIFTY 50, RELIANCE)",
+            "example": "NIFTY 50"
+          },
+          "value": {
+            "type": "string",
+            "description": "Percentage change formatted with sign",
+            "example": "+0.45%"
+          }
+        }
+      },
+      "PublicSummary": {
+        "type": "object",
+        "required": ["platform", "version", "status", "asset_classes", "indices_supported", "endpoints"],
+        "properties": {
+          "platform": {
+            "type": "string",
+            "example": "Portfolio Dashboard"
+          },
+          "version": {
+            "type": "string",
+            "example": "1.0.0"
+          },
+          "status": {
+            "type": "string",
+            "example": "operational"
+          },
+          "asset_classes": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["Equities", "Corporate Bonds", "Government Bonds", "Cash Flow"]
+          },
+          "indices_supported": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["NIFTY 50", "NIFTY BANK", "NIFTY IT", "INDIA VIX"]
+          },
+          "endpoints": {
+            "type": "object",
+            "properties": {
+              "market_data": { "type": "string" },
+              "openapi": { "type": "string" },
+              "mcp": { "type": "string" },
+              "docs": { "type": "string" }
+            }
+          }
+        }
+      },
+      "HealthResponse": {
+        "type": "object",
+        "required": ["status", "timestamp"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "ok"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-09-21T12:00:00Z"
+          }
+        }
+      },
+      "ErrorDetail": {
+        "type": "object",
+        "required": ["code", "message", "resolution_hint"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "UNAUTHORIZED"
+          },
+          "message": {
+            "type": "string",
+            "example": "Authentication required to access this resource."
+          },
+          "resolution_hint": {
+            "type": "string",
+            "example": "Provide a valid session cookie or API key. For public endpoints, see /developers."
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["error", "code", "message", "resolution_hint"],
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail"
+          },
+          "code": {
+            "type": "string",
+            "example": "UNAUTHORIZED"
+          },
+          "message": {
+            "type": "string",
+            "example": "Authentication required to access this resource."
+          },
+          "resolution_hint": {
+            "type": "string",
+            "example": "Provide a valid session cookie or API key. For public endpoints, see /developers."
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "SessionAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "authjs.session-token",
+        "description": "Session cookie obtained upon successful sign-in via /login"
+      }
+    }
+  }
+}

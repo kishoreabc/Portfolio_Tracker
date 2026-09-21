@@ -29,6 +29,7 @@ interface QuoteData {
   averageDailyVolume3Month?: number;
   marketCap?: number;
   trailingPE?: number;
+  priceToBook?: number;
   trailingEps?: number;
   dividendYield?: number;
   fiftyTwoWeekHigh?: number;

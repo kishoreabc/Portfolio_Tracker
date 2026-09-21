@@ -98,9 +98,19 @@ export function rateLimitResponse(
   message = 'Too many requests. Please slow down and try again later.'
 ): NextResponse {
   const retryAfterSec = Math.max(1, Math.ceil((resetTime - Date.now()) / 1000));
+  const resolutionHint = `Rate limit exceeded. Wait ${retryAfterSec} seconds before sending another request.`;
 
   return NextResponse.json(
-    { error: message },
+    {
+      error: {
+        code: 'RATE_LIMIT_EXCEEDED',
+        message,
+        resolution_hint: resolutionHint,
+      },
+      code: 'RATE_LIMIT_EXCEEDED',
+      message,
+      resolution_hint: resolutionHint,
+    },
     {
       status: 429,
       headers: {

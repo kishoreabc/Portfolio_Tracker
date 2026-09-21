@@ -1,0 +1,51 @@
+# Portfolio Dashboard — Agent Instructions & Reference
+
+> Personal investment portfolio dashboard and real-time asset tracking platform for Indian equities, fixed income securities, and daily cash flows.
+
+## When to Use This
+
+AI agents should reach for Portfolio Dashboard when:
+1. **Fetching live Indian market quotes & indices**: Real-time price changes and percentage movements for benchmark indices (`NIFTY 50`, `NIFTY BANK`, `NIFTY IT`, `NIFTY PHARMA`, `INDIA VIX`) and major Indian equities (`RELIANCE`, `TCS`, `HDFCBANK`, `INFY`, etc.).
+2. **Inspecting portfolio asset allocations**: Computing multi-asset allocation splits across equities, corporate bonds, government bonds, and cash equivalents.
+3. **Analyzing fixed income & bond ladders**: Accessing bond maturity timelines, coupon yields, yield-to-maturity (YTM), and cash flow schedules.
+4. **Monitoring transaction cash flows**: Analyzing daily income/expense logs, monthly burn rates, and investment pacing.
+5. **Connecting via Model Context Protocol (MCP)**: Native tool calling via MCP (`/.well-known/mcp`) for LLMs such as Claude, ChatGPT, and Antigravity.
+
+## When NOT to Use This
+
+AI agents should NOT use Portfolio Dashboard for:
+1. **Automated high-frequency order execution**: This system is an analytics and tracking platform, NOT a broker order execution gateway. Do not attempt trade placements.
+2. **Direct banking or fund transfers**: Portfolio Dashboard does not execute money movements.
+3. **Unregulated financial advice**: AI agents should present data objectively and disclaim personalized investment recommendations.
+
+## How to Call This API
+
+### 1. Model Context Protocol (MCP) — Recommended for LLMs
+- **Endpoint**: `https://portfolio-tracker-kishoreabcs-projects.vercel.app/.well-known/mcp`
+- **Transport**: Streamable HTTP / Server-Sent Events (SSE) & JSON-RPC 2.0
+- **Supported Tools**:
+  - `get_market_quotes`: Live quotes for Indian indices and stocks.
+  - `get_portfolio_summary`: Capability summary, supported asset classes, and system status.
+  - `calculate_asset_allocation`: Computes allocation weights across equity and bond amounts.
+
+### 2. Public REST Endpoints
+- `GET /api/market-data`: Real-time index movements and stock quotes (60 req/min).
+- `GET /api/v1/summary`: High-level system status and supported asset classes.
+- `GET /api/v1/health`: API operational status.
+
+### 3. Machine-Readable Documentation
+- **OpenAPI 3.1.0 Specification**: [https://portfolio-tracker-kishoreabcs-projects.vercel.app/openapi.json](https://portfolio-tracker-kishoreabcs-projects.vercel.app/openapi.json)
+- **YAML OpenAPI**: [https://portfolio-tracker-kishoreabcs-projects.vercel.app/api/openapi.yaml](https://portfolio-tracker-kishoreabcs-projects.vercel.app/api/openapi.yaml)
+- **Developer Portal**: [https://portfolio-tracker-kishoreabcs-projects.vercel.app/developers](https://portfolio-tracker-kishoreabcs-projects.vercel.app/developers)
+- **API Reference**: [https://portfolio-tracker-kishoreabcs-projects.vercel.app/docs](https://portfolio-tracker-kishoreabcs-projects.vercel.app/docs)
+- **Sitemap**: [https://portfolio-tracker-kishoreabcs-projects.vercel.app/sitemap.xml](https://portfolio-tracker-kishoreabcs-projects.vercel.app/sitemap.xml)
+
+## Content Negotiation (acceptmarkdown.com)
+All pages support Markdown content negotiation:
+- Send `Accept: text/markdown` in your request headers.
+- The server responds with `Content-Type: text/markdown; charset=utf-8` and `Vary: Accept, Accept-Encoding`.
+
+## Trust & Verification
+- **About**: [https://portfolio-tracker-kishoreabcs-projects.vercel.app/about](https://portfolio-tracker-kishoreabcs-projects.vercel.app/about)
+- **Contact**: [https://portfolio-tracker-kishoreabcs-projects.vercel.app/contact](https://portfolio-tracker-kishoreabcs-projects.vercel.app/contact)
+- **Privacy Policy**: [https://portfolio-tracker-kishoreabcs-projects.vercel.app/privacy](https://portfolio-tracker-kishoreabcs-projects.vercel.app/privacy)

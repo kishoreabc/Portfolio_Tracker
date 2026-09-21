@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { useSession } from 'next-auth/react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { SidebarProvider, useSidebar } from '@/components/layout/SidebarContext';
 
@@ -15,7 +15,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
         className={[
           'flex-1 min-w-0 transition-[padding-left] duration-300 ease-in-out',
           'pl-0', // mobile
-          isCollapsed ? 'md:pl-16' : 'md:pl-60' // desktop
+          isCollapsed ? 'md:pl-16' : 'md:pl-60', // desktop
         ].join(' ')}
         style={{ paddingTop: '60px' }}
       >
@@ -25,12 +25,36 @@ function AppShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+const AUTH_DASHBOARD_ROUTES = [
+  '/',
+  '/portfolio',
+  '/stocks',
+  '/bonds',
+  '/cashflow',
+  '/calendar',
+  '/analytics',
+  '/reports',
+  '/insights',
+  '/news',
+];
+
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isLoginPage = pathname === '/login';
+  const { data: session } = useSession();
 
-  if (isLoginPage) {
-    return <main className="flex-1">{children}</main>;
+  const isLoggedIn = !!session?.user && Object.keys(session.user).length > 0;
+
+  // The sidebar shell should ONLY be rendered if the user is authenticated
+  // AND the current route is one of the valid dashboard application routes.
+  // Unknown routes (404), public pages, and unauthenticated sessions will not show the sidebar.
+  const isDashboardRoute =
+    isLoggedIn &&
+    AUTH_DASHBOARD_ROUTES.some(
+      (route) => pathname === route || (route !== '/' && pathname.startsWith(route + '/'))
+    );
+
+  if (!isDashboardRoute) {
+    return <main className="flex-1 min-h-screen">{children}</main>;
   }
 
   return (
