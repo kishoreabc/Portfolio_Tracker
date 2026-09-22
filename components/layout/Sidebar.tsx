@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Briefcase, TrendingUp, Building2,
   ArrowLeftRight, BarChart2, CalendarDays, FileText,
-  Sparkles, ChevronLeft, ChevronRight, X, Newspaper,
+  Sparkles, ChevronLeft, ChevronRight, X, Newspaper, Layers,
 } from 'lucide-react';
 import React, { memo } from 'react';
 import { cn } from '@/lib/utils';
@@ -17,6 +17,7 @@ import { useSidebar } from './SidebarContext';
 const NAV_ITEMS = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/portfolio', label: 'Portfolio', icon: Briefcase },
+  { href: '/portfolio/history', label: 'Order History', icon: Layers },
   { href: '/stocks', label: 'Stocks', icon: TrendingUp },
   { href: '/bonds', label: 'Bonds', icon: Building2 },
   { href: '/cashflow', label: 'Cash Flow', icon: ArrowLeftRight },
@@ -43,6 +44,15 @@ const NavContent = memo(function NavContent({
   onToggleCollapse,
 }: NavContentProps) {
   const showLabels = !isCollapsed || forceExpanded;
+  const activeHref = (() => {
+    if (pathname === '/') return '/';
+    const exact = NAV_ITEMS.find((item) => item.href === pathname);
+    if (exact) return exact.href;
+    const prefixMatches = NAV_ITEMS.filter(
+      (item) => item.href !== '/' && pathname.startsWith(item.href + '/')
+    ).sort((a, b) => b.href.length - a.href.length);
+    return prefixMatches[0]?.href;
+  })();
 
   return (
     <>
@@ -79,7 +89,7 @@ const NavContent = memo(function NavContent({
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4 space-y-0.5 px-2">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-          const isActive = href === '/' ? pathname === '/' : pathname.startsWith(href);
+          const isActive = href === activeHref;
           return (
             <Link
               key={href}

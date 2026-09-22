@@ -173,3 +173,57 @@ export function computeOverallAllocation(
 
   return result.sort((a, b) => b.value - a.value);
 }
+
+// ---------------------------------------------------------------------------
+// Dynamic asset allocation — fully driven by assetClass field, not hardcoded
+// ---------------------------------------------------------------------------
+
+/** A deterministic color palette for asset classes (cycles if more than 8) */
+const ASSET_CLASS_COLORS = [
+  'hsl(217, 91%, 60%)',  // Blue  — Equity
+  'hsl(3, 85%, 65%)',    // Salmon — Bonds
+  'hsl(43, 96%, 56%)',   // Gold  — Gold
+  'hsl(142, 71%, 45%)',  // Green — REIT / other
+  'hsl(280, 65%, 60%)',  // Purple
+  'hsl(24, 98%, 50%)',   // Orange
+  'hsl(160, 84%, 39%)',  // Teal
+  'hsl(340, 82%, 52%)',  // Pink
+];
+
+/**
+ * Groups equity + bonds by their assetClass string.
+ * Works with any set of asset classes from the sheet — no hardcoding.
+ * Falls back to 'Equity' for equity holdings without assetClass,
+ * and 'Bonds' for bond holdings.
+ */
+export function computeDynamicAssetAllocation(
+  equity: EquityHolding[],
+  bonds: BondHolding[],
+): AssetClassSummary[] {
+  const classMap = new Map<string, number>();
+
+  for (const h of equity) {
+    // Use assetClass if present on the holding, otherwise default to 'Equity'
+    // (The EquityHolding type doesn't have assetClass yet — cast for forward compat)
+    const cls: string = (h as { assetClass?: string }).assetClass || 'Equity';
+    classMap.set(cls, (classMap.get(cls) ?? 0) + h.currentValue);
+  }
+
+  for (const b of bonds) {
+    const cls = 'Bonds';
+    classMap.set(cls, (classMap.get(cls) ?? 0) + b.totalValue);
+  }
+
+  const total = Array.from(classMap.values()).reduce((s, v) => s + v, 0);
+  if (total === 0) return [];
+
+  // Sort by value descending, then assign colors deterministically
+  const sorted = Array.from(classMap.entries()).sort((a, b) => b[1] - a[1]);
+
+  return sorted.map(([label, value], i) => ({
+    label,
+    value,
+    percent: value / total,
+    color: ASSET_CLASS_COLORS[i % ASSET_CLASS_COLORS.length],
+  }));
+}

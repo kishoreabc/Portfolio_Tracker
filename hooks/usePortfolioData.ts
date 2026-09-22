@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query-keys';
 import type { SanitizedPortfolioData } from '@/lib/server/portfolioService';
+import type { DataQualityReport } from '@/types/dataQuality';
 import { useMemo } from 'react';
 
 async function fetchPortfolioData(force = false): Promise<SanitizedPortfolioData> {
@@ -92,5 +93,12 @@ export function usePortfolioData(force = false) {
     bondMaturityEvents: data?.bondMaturityEvents ?? [],
     bondLadder: data?.bondLadder ?? [],
     creditRatingDistribution: data?.creditRatingDistribution ?? [],
+    dataQuality: data?.dataQuality ?? ({
+      issues: [],
+      completenessPercent: 100,
+      equityOk: true,
+      bondsOk: true,
+      transactionsOk: true,
+    } as DataQualityReport),
   };
 }

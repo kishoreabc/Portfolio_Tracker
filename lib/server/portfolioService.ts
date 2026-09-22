@@ -6,9 +6,11 @@ import { buildUnifiedPortfolio } from '@/lib/mappers/unified';
 import { computeAssetAllocation, computeSectorAllocation, computeOverallAllocation } from '@/lib/calc/allocation';
 import { computeConcentrationRisk, computeWinnersLosers, type ConcentrationRisk, type WinnerLoser } from '@/lib/calc/risk';
 import { buildBondMaturityEvents, buildBondLadder, buildCreditRatingDistribution } from '@/lib/calc/forecast';
+import { validatePortfolioData } from '@/lib/calc/dataQuality';
 import type { EquityHolding, PortfolioRow, SectorAllocation, AssetClassSummary } from '@/types/holdings';
 import type { BondHolding, BondMaturityEvent, BondLadderEntry, CreditRatingBucket } from '@/types/bonds';
 import type { Transaction, CashFlowStats } from '@/types/transactions';
+import type { DataQualityReport } from '@/types/dataQuality';
 
 export interface SanitizedPortfolioData {
   // Holdings
@@ -41,6 +43,7 @@ export interface SanitizedPortfolioData {
     lastFetched: string | null;
     errors: string[];
   };
+  dataQuality: DataQualityReport;
 }
 
 export interface PortfolioSummary {
@@ -84,6 +87,9 @@ export async function getPortfolioData(force = false): Promise<SanitizedPortfoli
   const todaysChange = equity.reduce((s, h) => s + h.priceChange * h.shares, 0);
   const todaysChangePct = netWorth > 0 ? todaysChange / netWorth : 0;
 
+  // Run data quality validation after all normalization
+  const dataQuality = validatePortfolioData(equity, bonds, transactions);
+
   // Sanitize errors: remove any potential internal paths or keys
   const sanitizedErrors = (raw?.meta.errors ?? []).map((err) => {
     if (typeof err === 'string') {
@@ -116,6 +122,7 @@ export async function getPortfolioData(force = false): Promise<SanitizedPortfoli
       lastFetched: raw?.meta.lastFetched ?? null,
       errors: sanitizedErrors,
     },
+    dataQuality,
   };
 }
 

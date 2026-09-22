@@ -16,7 +16,7 @@ const HEADER_SYNONYMS: Record<string, string[]> = {
   priceChange: ['price change', 'change', 'chg', 'day change', 'daily change', 'day chg'],
   percentChange: ['% change', 'pct change', '% chg', 'daily change %', 'change %', 'day change %', 'day % chg', 'chg %'],
   shares: ['# shares', 'shares', 'qty', 'quantity', 'units held', 'units'],
-  currentValue: ['current value', 'market value', 'value', 'total value'],
+  currentValue: ['current value', 'market value', 'value', 'total value', 'portfolio value', 'nav', 'net asset value'],
   allocationPercent: ['%', 'portfolio %', 'allocation %', 'weight %', 'weight'],
   sector: ['sector', 'industry', 'category'],
   peRatio: ['pe ratio', 'pe', 'p/e', 'p/e ratio', 'trailing pe', 'price to earnings'],
@@ -46,6 +46,11 @@ const HEADER_SYNONYMS: Record<string, string[]> = {
   targetPercent: ['target %', 'target percent'],
   targetAmount: ['target amount', 'target'],
   targetAllocation: ['target allocation'],
+  // Dynamic asset class & P&L fields
+  assetClass: ['asset class', 'asset type', 'class', 'type'],
+  investedValue: ['invested value', 'cost', 'invested amount', 'purchase value', 'book value', 'cost value'],
+  pnl: ['p&l', 'pnl', 'profit & loss', 'gain/loss', 'unrealized gain', 'profit loss'],
+  pnlPercent: ['p&l %', 'pnl %', 'gain %', 'return %', 'unrealized gain %'],
 };
 
 /** Equity-like primary key synonyms */

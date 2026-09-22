@@ -12,4 +12,7 @@ export const queryKeys = {
   newsArticle: (id: number) => ['news', id] as const,
   newsSearch: (query: string, semantic: boolean) => ['news', 'search', query, semantic] as const,
   portfolioNews: ['news', 'portfolio'] as const,
+
+  // Orders & Performance
+  orders: (range?: string) => range ? ['orders', range] as const : ['orders'] as const,
 } as const;

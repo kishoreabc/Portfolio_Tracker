@@ -17,6 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
+import { PortfolioPerformanceChart } from '@/components/charts/PortfolioPerformanceChart';
 import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
 
 function formatINR(value: number, isHidden: boolean = false): string {
@@ -217,31 +218,86 @@ export default function DashboardClient() {
                       </TableRow>
                     ))
                   ) : (() => {
-                    const total = equityTotal + bondTotal;
-                    const rows = [
-                      {
-                        id: 'equity',
-                        label: 'Equity',
-                        icon: TrendingUp,
-                        color: 'text-blue-400',
-                        bg: 'bg-blue-500/10',
-                        count: equityCount,
-                        unit: 'stocks',
-                        value: equityTotal,
-                        alloc: total > 0 ? (equityTotal / total) * 100 : 0,
-                      },
-                      {
-                        id: 'bonds',
-                        label: 'Bonds',
-                        icon: Building2,
-                        color: 'text-purple-400',
-                        bg: 'bg-purple-500/10',
-                        count: bondCount,
-                        unit: 'bonds',
-                        value: bondTotal,
-                        alloc: total > 0 ? (bondTotal / total) * 100 : 0,
-                      },
-                    ];
+                    const total = assetAllocation && assetAllocation.length > 0
+                      ? assetAllocation.reduce((s, a) => s + a.value, 0)
+                      : (equityTotal + bondTotal);
+
+                    const rows = (assetAllocation && assetAllocation.length > 0)
+                      ? assetAllocation.map((a, idx) => {
+                          const lower = a.label.toLowerCase();
+                          const isEquity = lower.includes('equity') || lower.includes('stock');
+                          const isBond = lower.includes('bond') || lower.includes('debt');
+                          const isGold = lower.includes('gold') || lower.includes('commodity');
+
+                          let color = 'text-blue-400';
+                          let barColor = 'bg-blue-400';
+                          let bg = 'bg-blue-500/10';
+                          let Icon = TrendingUp;
+                          let unit = isEquity ? 'stocks' : isBond ? 'bonds' : 'holdings';
+                          let count = isEquity
+                            ? equityCount
+                            : isBond
+                            ? bondCount
+                            : equity.filter((h) => h.sector?.toLowerCase() === lower).length || 1;
+
+                          if (isBond) {
+                            color = 'text-purple-400';
+                            barColor = 'bg-purple-400';
+                            bg = 'bg-purple-500/10';
+                            Icon = Building2;
+                          } else if (isGold) {
+                            color = 'text-amber-400';
+                            barColor = 'bg-amber-400';
+                            bg = 'bg-amber-500/10';
+                            Icon = Wallet;
+                          } else if (idx % 2 === 1) {
+                            color = 'text-emerald-400';
+                            barColor = 'bg-emerald-400';
+                            bg = 'bg-emerald-500/10';
+                          }
+
+                          return {
+                            id: a.label.toLowerCase(),
+                            label: a.label,
+                            icon: Icon,
+                            color,
+                            barColor,
+                            bg,
+                            count,
+                            unit,
+                            value: a.value,
+                            alloc: total > 0 ? (a.value / total) * 100 : 0,
+                          };
+                        })
+                      : [
+                          {
+                            id: 'equity',
+                            label: 'Equity',
+                            icon: TrendingUp,
+                            color: 'text-blue-400',
+                            barColor: 'bg-blue-400',
+                            bg: 'bg-blue-500/10',
+                            count: equityCount,
+                            unit: 'stocks',
+                            value: equityTotal,
+                            alloc: total > 0 ? (equityTotal / total) * 100 : 0,
+                          },
+                          {
+                            id: 'bonds',
+                            label: 'Bonds',
+                            icon: Building2,
+                            color: 'text-purple-400',
+                            barColor: 'bg-purple-400',
+                            bg: 'bg-purple-500/10',
+                            count: bondCount,
+                            unit: 'bonds',
+                            value: bondTotal,
+                            alloc: total > 0 ? (bondTotal / total) * 100 : 0,
+                          },
+                        ];
+
+                    const totalHoldings = rows.reduce((s, r) => s + r.count, 0) || (equityCount + bondCount);
+
                     return (
                       <>
                         {rows.map((r, i) => (
@@ -268,8 +324,7 @@ export default function DashboardClient() {
                               <div className="flex items-center justify-end gap-2">
                                 <div className="w-20 h-1.5 rounded-full bg-white/10 overflow-hidden">
                                   <div
-                                    className={`h-full rounded-full transition-all duration-700 ${r.id === 'equity' ? 'bg-blue-400' : 'bg-purple-400'
-                                      }`}
+                                    className={`h-full rounded-full transition-all duration-700 ${r.barColor}`}
                                     style={{ width: `${r.alloc}%` }}
                                   />
                                 </div>
@@ -284,7 +339,7 @@ export default function DashboardClient() {
                         <TableRow className="border-border/50 border-t bg-white/[0.015]">
                           <TableCell className="text-sm font-bold text-foreground">Total Portfolio</TableCell>
                           <TableCell className="text-right text-xs text-muted-foreground/80 font-medium tabular-nums">
-                            {equityCount + bondCount} holdings
+                            {totalHoldings} holdings
                           </TableCell>
                           <TableCell className="text-right text-sm font-bold tabular-nums text-foreground">
                             {formatINR(total, isHidden)}
@@ -336,7 +391,7 @@ export default function DashboardClient() {
           </Card>
         </div>
 
-        {/* Charts row 2 */}
+        {/* Charts row 2: Monthly Cash Flow */}
         <div className="grid grid-cols-1 gap-4">
           <Card className="border-border/50">
             <CardHeader className="pb-5">
@@ -347,6 +402,11 @@ export default function DashboardClient() {
               <CashFlowChart data={cashFlowStats.monthlySummaries} />
             </CardContent>
           </Card>
+        </div>
+
+        {/* Charts row 3: Portfolio Performance (Capital Deployed) */}
+        <div className="grid grid-cols-1 gap-4">
+          <PortfolioPerformanceChart />
         </div>
 
         {/* Quick summary row */}

@@ -37,6 +37,7 @@
     "recharts": "^3.9.2",
     "rss-parser": "^3.13.0",
     "tailwind-merge": "^3.6.0",
+    "xlsx": "^0.18.5",
     "yahoo-finance2": "^4.0.0"
   },
   "devDependencies": {
