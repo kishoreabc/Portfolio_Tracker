@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { RefreshCw, Clock, Wifi, WifiOff, ALargeSmall, Menu, XCircle, X } from 'lucide-react';
+import { RefreshCw, Clock, Wifi, WifiOff, ALargeSmall, Menu, XCircle, X, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import { useRefreshData } from '@/hooks/useRefreshData';
 import { useSession, signOut } from 'next-auth/react';
-import { useSessionWatcher } from '@/components/auth/SessionWatcher';
 import { useSidebar } from '@/components/layout/SidebarContext';
 import { PrivacyToggle } from '@/components/shared/PrivacyToggle';
 
@@ -32,7 +31,6 @@ function applyFontSize(px: number) {
 export function Topbar({ lastFetched, pageTitle = 'Dashboard', apiErrors = [], hideRefresh, customAction, customStatus }: TopbarProps) {
   const { refresh, isRefreshing, error, clearError } = useRefreshData();
   const { data: session } = useSession();
-  const { totalTimeRemaining } = useSessionWatcher();
   const { toggleMobileSidebar, isCollapsed } = useSidebar();
 
   // ── Online status ──────────────────────────────────────────────────────────
@@ -230,22 +228,20 @@ export function Topbar({ lastFetched, pageTitle = 'Dashboard', apiErrors = [], h
               </div>
             )}
 
-            {/* Logout + session timer */}
-            <div className="flex flex-col items-center">
-              <button
-                onClick={() => {
+            {/* Logout */}
+            <button
+              onClick={() => {
+                if (typeof window !== 'undefined') {
                   localStorage.removeItem('portfolio-session-start');
-                  signOut({ callbackUrl: '/login' });
-                }}
-                className="flex flex-col items-center justify-center p-1.5 rounded-lg text-[10px] uppercase font-bold text-slate-400 hover:text-white hover:bg-white/10 transition-all active:scale-95"
-              >
-                Logout
-                <span className="text-[15px] text-slate-200 dark:text-white tabular-nums mt-0.5">
-                  {Math.floor(totalTimeRemaining / 60000)}:
-                  {Math.floor((totalTimeRemaining % 60000) / 1000).toString().padStart(2, '0')}
-                </span>
-              </button>
-            </div>
+                }
+                signOut({ callbackUrl: '/login' });
+              }}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-white/10 border border-white/5 transition-all active:scale-95 cursor-pointer ml-1"
+              title="Logout"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
 
             {/* ── Floating Error Notification (Speech Bubble) ── */}
             <AnimatePresence>

@@ -15,7 +15,6 @@ import {
   PieChart, Pie, Legend,
 } from 'recharts';
 import { BondCashflowDialog } from '@/components/bonds/BondCashflowDialog';
-import { BondMaturityTimeline } from '@/components/bonds/BondMaturityTimeline';
 import { Button } from '@/components/ui/button';
 import { CalendarSearch } from 'lucide-react';
 import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
@@ -273,8 +272,6 @@ export default function BondsPage() {
             </div>
           </CardContent>
         </Card>
-      {/* Bond Maturity & Cashflow Timeline */}
-      <BondMaturityTimeline events={bondMaturityEvents} />
       </div>
 
       <BondCashflowDialog

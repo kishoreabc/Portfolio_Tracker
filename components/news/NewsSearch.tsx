@@ -58,7 +58,7 @@ export function NewsSearch() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Semantic search (e.g. 'companies facing leadership changes')..."
+          placeholder="Search (e.g. 'companies facing leadership changes')..."
           className="w-full h-12 pl-12 pr-10 bg-indigo-500/5 border border-indigo-500/20 rounded-xl text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
         />
         {query && (

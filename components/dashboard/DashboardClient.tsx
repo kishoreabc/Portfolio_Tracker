@@ -17,7 +17,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
-import { PortfolioPerformanceChart } from '@/components/charts/PortfolioPerformanceChart';
 import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
 
 function formatINR(value: number, isHidden: boolean = false): string {
@@ -402,11 +401,6 @@ export default function DashboardClient() {
               <CashFlowChart data={cashFlowStats.monthlySummaries} />
             </CardContent>
           </Card>
-        </div>
-
-        {/* Charts row 3: Portfolio Performance (Capital Deployed) */}
-        <div className="grid grid-cols-1 gap-4">
-          <PortfolioPerformanceChart />
         </div>
 
         {/* Quick summary row */}

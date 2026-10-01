@@ -31,46 +31,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   session: {
     strategy: 'jwt',
-    maxAge: 3600, // 1 hour
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   pages: {
     signIn: '/login',
     error: '/login',
   },
   callbacks: {
-    async jwt({ token, user, account }) {
-      // On initial sign-in, user is defined
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id || user.email || 'test-user';
-        token.loginTime = Date.now();
-        
-        // Initialize global store if needed
-        if (!(globalThis as any).activeSessions) {
-          (globalThis as any).activeSessions = {};
-        }
-        // Record the latest login time for this user
-        (globalThis as any).activeSessions[token.id as string] = token.loginTime;
       }
-
-      // Check if this token is from an older session
-      if (token.id && token.loginTime) {
-        const latestLogin = (globalThis as any).activeSessions?.[token.id as string];
-        if (latestLogin && (token.loginTime as number) < latestLogin) {
-          // Invalidate token by returning empty
-          return {} as any;
-        }
-      }
-
       return token;
     },
     async session({ session, token }) {
-      if (token && Object.keys(token).length > 0) {
-        if (session.user) {
-          (session.user as any).id = token.id;
-        }
-      } else {
-        // If token was cleared (invalidated), remove the user from session
-        (session as any).user = null;
+      if (token && session.user) {
+        (session.user as any).id = token.id;
       }
       return session;
     },
