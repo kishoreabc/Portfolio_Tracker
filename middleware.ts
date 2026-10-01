@@ -43,6 +43,61 @@ export default auth((req) => {
     }
   }
 
+  // ── Authentication Protection ───────────────────────────────────────────────
+  const isLoggedIn = !!req.auth?.user && Object.keys(req.auth.user).length > 0;
+
+  const protectedAppRoutes = [
+    '/portfolio',
+    '/stocks',
+    '/bonds',
+    '/cashflow',
+    '/calendar',
+    '/analytics',
+    '/reports',
+    '/insights',
+    '/news',
+  ];
+
+  const isProtectedAppRoute = protectedAppRoutes.some(
+    (route) => pathname === route || pathname.startsWith(route + '/')
+  );
+
+  // If user is not logged in and tries to access a protected app route -> redirect to /login
+  if (!isLoggedIn && isProtectedAppRoute) {
+    const loginUrl = new URL('/login', req.nextUrl);
+    loginUrl.searchParams.set('callbackUrl', req.nextUrl.pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // If user is already logged in and visits /login -> redirect to /
+  if (isLoggedIn && pathname === '/login') {
+    return NextResponse.redirect(new URL('/', req.nextUrl));
+  }
+
+  // If accessing a protected API route while unauthenticated -> 401 JSON
+  const isPublicApiRoute =
+    pathname.startsWith('/api/auth') ||
+    pathname.startsWith('/api/market-data') ||
+    pathname.startsWith('/api/v1') ||
+    pathname.startsWith('/api/mcp') ||
+    pathname.startsWith('/api/openapi') ||
+    pathname === '/api/news/sync/cron';
+
+  if (!isLoggedIn && pathname.startsWith('/api/') && !isPublicApiRoute) {
+    return NextResponse.json(
+      {
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required to access this API resource.',
+          resolution_hint: 'Provide a valid session or API key. For public endpoints, visit /developers or /openapi.json.',
+        },
+        code: 'UNAUTHORIZED',
+        message: 'Authentication required to access this API resource.',
+      },
+      { status: 401, headers: { 'Cache-Control': 'no-store' } }
+    );
+  }
+
   const response = NextResponse.next();
   response.headers.set('Vary', 'Accept, Accept-Encoding');
   return response;

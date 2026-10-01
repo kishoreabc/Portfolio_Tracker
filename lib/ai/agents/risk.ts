@@ -49,10 +49,10 @@ Bond Duration Score: ${risk.bondDuration}/100
 Issuer Concentration: ${risk.issuerConcentration}/100
 
 Bond Analytics:
-- Weighted Duration: ${risk.bondAnalysis.weightedDuration}Y
+- Weighted Duration: ${risk.bondAnalysis.weightedDuration}Y (${risk.bondAnalysis.weightedDurationMonths ? `${risk.bondAnalysis.weightedDurationMonths}M` : `${Math.round(risk.bondAnalysis.weightedDuration * 12)}M`})
 - Avg YTM: ${risk.bondAnalysis.avgYTM}%
 - Credit Quality: ${risk.bondAnalysis.avgCreditQuality}
-- Duration Risk: ${risk.bondAnalysis.durationRiskBps}bps per 100bps rate shock
+- Duration Risk: ${risk.bondAnalysis.durationRiskBps}bps per 100bps rate shock (${(risk.bondAnalysis.durationRiskBps / 100).toFixed(2)}% price impact)
 
 RISK FLAGS:
 ${riskFlags || 'No critical flags raised.'}

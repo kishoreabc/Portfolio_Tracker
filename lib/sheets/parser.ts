@@ -27,7 +27,7 @@ const HEADER_SYNONYMS: Record<string, string[]> = {
   isin: ['isin', 'isin code'],
   creditRating: ['credit rating', 'rating'],
   maturityDate: ['maturity date', 'maturity', 'expiry date', 'due date'],
-  duration: ['duration'],
+  duration: ['duration', 'duration (years)', 'duration (y)', 'duration (months)', 'duration (m)', 'duration months', 'tenure', 'tenure (months)', 'tenure (m)', 'tenure months'],
   couponRate: ['coupon rate', 'coupon', 'interest rate'],
   ytm: ['ytm', 'yield to maturity', 'yield'],
   faceValue: ['face value', 'par value', 'nominal value'],

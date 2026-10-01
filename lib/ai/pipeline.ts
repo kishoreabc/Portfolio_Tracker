@@ -801,7 +801,11 @@ TODAY'S WINNERS: ${input.winners.slice(0, 3).map((w) => `${w.ticker} +${(w.perce
 TODAY'S LOSERS: ${input.losers.slice(0, 3).map((l) => `${l.ticker} ${(l.percentChange * 100).toFixed(1)}%`).join(', ')}
 
 BONDS (top 5):
-${input.topBonds.slice(0, 5).map((b) => `  ${b.securityName} | ${b.creditRating} | YTM ${(b.ytm * 100).toFixed(2)}% | Duration ${b.duration.toFixed(1)}y | ₹${(b.totalValue / 1e5).toFixed(2)}L`).join('\n')}
+${input.topBonds.slice(0, 5).map((b) => {
+  const durY = b.duration > 12 ? Math.round((b.duration / 12) * 10) / 10 : Math.round(b.duration * 10) / 10;
+  const durM = b.duration > 12 ? b.duration : Math.round(b.duration * 12 * 10) / 10;
+  return `  ${b.securityName} | ${b.creditRating} | YTM ${(b.ytm * 100).toFixed(2)}% | Duration ${durY}y (${durM}m) | ₹${(b.totalValue / 1e5).toFixed(2)}L`;
+}).join('\n')}
 
 DIVERSIFICATION: Score=${input.diversificationScore}/100, HHI=${input.herfindahlIndex.toFixed(4)}, Top-5 concentration=${(input.top5Percent * 100).toFixed(1)}%
 

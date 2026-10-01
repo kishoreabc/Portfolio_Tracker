@@ -5,7 +5,7 @@
     "requests": 0,
     "estimated_tokens": 0,
     "tavily_credits": 0,
-    "updated_at": "2026-10-01T14:21:10.808Z"
+    "updated_at": "2026-10-01T16:43:05.708Z"
   },
   {
     "provider": "groq",
@@ -13,7 +13,7 @@
     "requests": 1,
     "estimated_tokens": 1200,
     "tavily_credits": 0,
-    "updated_at": "2026-10-01T14:21:10.808Z"
+    "updated_at": "2026-10-01T16:43:05.708Z"
   },
   {
     "provider": "tavily",
@@ -21,7 +21,7 @@
     "requests": 1,
     "estimated_tokens": 0,
     "tavily_credits": 1,
-    "updated_at": "2026-10-01T14:21:10.808Z"
+    "updated_at": "2026-10-01T16:43:05.708Z"
   },
   {
     "provider": "yahoo",
@@ -29,6 +29,6 @@
     "requests": 0,
     "estimated_tokens": 0,
     "tavily_credits": 0,
-    "updated_at": "2026-10-01T14:21:10.808Z"
+    "updated_at": "2026-10-01T16:43:05.708Z"
   }
 ]

@@ -22,6 +22,7 @@ export interface BondHoldingRisk {
   issuer: string;
   weightPct: number;
   duration: number;
+  durationMonths?: number;
   ytm: number;
   creditRating: string;
   totalValue: number;
@@ -59,6 +60,8 @@ export interface BondRiskAnalysis {
 
   /** Weighted duration in years */
   weightedDuration: number;
+  /** Weighted duration in months */
+  weightedDurationMonths: number;
   /** Average yield to maturity % */
   avgYTM: number;
   /** Dominant / average credit quality */
@@ -99,6 +102,7 @@ export interface BondRiskAnalysis {
     severity: 'red' | 'orange' | 'yellow' | 'green';
     title: string;
     description: string;
+    evidence: string;
     actionable: string;
   }>;
 
@@ -122,6 +126,7 @@ export function runBondRiskAnalysis(
       bondCount: 0,
       bondAllocationPct: 0,
       weightedDuration: 0,
+      weightedDurationMonths: 0,
       avgYTM: 0,
       creditQualityDistribution: { sovereignAndAAA: 100, aaTier: 0, subAA: 0 },
       primaryRating: 'N/A',
@@ -168,7 +173,30 @@ export function runBondRiskAnalysis(
 
   for (const b of bonds) {
     const val = b.totalValue;
-    const duration = b.duration || 2.0; // fallback conservative 2yr
+    const rawDuration = b.duration || 0;
+
+    // Detect if duration is specified in months:
+    // 1. If rawDuration > 12: retail debt tenures are almost exclusively quoted in months (e.g. 14.15m, 18m, 24m, 36m)
+    // 2. If maturityDate is provided and rawDuration indicates month-scale relative to maturity (ratio > 5)
+    let isMonths = rawDuration > 12;
+    if (b.maturityDate && !isMonths && rawDuration > 0) {
+      const maturity = new Date(b.maturityDate);
+      if (!isNaN(maturity.getTime())) {
+        const diffMs = maturity.getTime() - Date.now();
+        const yearsToMaturity = Math.max(0.1, diffMs / (1000 * 60 * 60 * 24 * 365.25));
+        if (rawDuration / yearsToMaturity > 5) {
+          isMonths = true;
+        }
+      }
+    }
+
+    const duration = isMonths
+      ? Math.round((rawDuration / 12) * 100) / 100
+      : (rawDuration || 1.5);
+    const durationMonths = isMonths
+      ? rawDuration
+      : Math.round(duration * 12 * 10) / 10;
+
     const ytm = b.ytm || b.couponRate || 7.0;
     const weightInBonds = (val / totalBondValue) * 100;
 
@@ -194,6 +222,7 @@ export function runBondRiskAnalysis(
       issuer,
       weightPct: Math.round(weightInBonds * 10) / 10,
       duration,
+      durationMonths,
       ytm,
       creditRating: b.creditRating || 'Unrated',
       totalValue: val,
@@ -202,6 +231,7 @@ export function runBondRiskAnalysis(
   }
 
   const weightedDuration = Math.round((weightedDurationSum / totalBondValue) * 100) / 100;
+  const weightedDurationMonths = Math.round(weightedDuration * 12 * 10) / 10;
   const avgYTM = Math.round((weightedYTMSum / totalBondValue) * 100) / 100;
 
   // Issuer concentration & HHI
@@ -312,11 +342,13 @@ export function runBondRiskAnalysis(
   const bondFlags: BondRiskAnalysis['bondFlags'] = [];
 
   if (weightedDuration > BOND_RISK_THRESHOLDS.mediumDuration) {
+    const durationRiskBps = Math.round(weightedDuration * 100);
     bondFlags.push({
       type: 'duration',
       severity: weightedDuration > BOND_RISK_THRESHOLDS.longDuration ? 'red' : 'orange',
       title: 'Elevated Bond Duration Risk',
-      description: `Weighted portfolio duration is ${weightedDuration} years. A 100bps upward yield shift will impact fixed income by ~${Math.round(weightedDuration * 10) / 10}%.`,
+      description: `Weighted portfolio duration is ${weightedDuration} years (${weightedDurationMonths} months). A 100bps upward yield shift will impact fixed income by ~${Math.round(weightedDuration * 10) / 10}%.`,
+      evidence: `Duration: ${weightedDuration}y (${weightedDurationMonths}m), ${durationRiskBps}bps rate sensitivity`,
       actionable: 'Consider trimming long-duration papers into shorter 1-3 year target maturity or floating rate instruments.',
     });
   }
@@ -327,6 +359,7 @@ export function runBondRiskAnalysis(
       severity: 'orange',
       title: `Single Issuer Concentration: ${topIssuerName}`,
       description: `${topIssuerName} accounts for ${topIssuerPct}% of the debt portfolio.`,
+      evidence: `${topIssuerName}: ${topIssuerPct}% of debt portfolio (HHI: ${issuerHHI})`,
       actionable: `Diversify debt holdings across multiple distinct issuers or sovereign/SDL instruments.`,
     });
   }
@@ -337,12 +370,13 @@ export function runBondRiskAnalysis(
       severity: creditQualityDistribution.subAA > 25 ? 'red' : 'yellow',
       title: 'Sub-AA Credit Rating Exposure',
       description: `${creditQualityDistribution.subAA}% of debt is rated below AA, carrying elevated credit spread and default risk.`,
+      evidence: `Sub-AA debt: ${creditQualityDistribution.subAA}% of debt portfolio (Primary rating: ${primaryRating})`,
       actionable: 'Review credit fundamentals and monitor rating revision updates for non-AAA debt.',
     });
   }
 
   const interpretation = `Fixed income allocation is ${Math.round(bondAllocationPct * 10) / 10}% (₹${totalBondValue.toLocaleString('en-IN')}) across ${bonds.length} bonds. ` +
-    `Weighted duration: ${weightedDuration}y, Average YTM: ${avgYTM}%. Credit profile: ${primaryRating} (${creditQualityDistribution.sovereignAndAAA}% AAA/Gov). ` +
+    `Weighted duration: ${weightedDuration}y (${weightedDurationMonths}m), Average YTM: ${avgYTM}%. Credit profile: ${primaryRating} (${creditQualityDistribution.sovereignAndAAA}% AAA/Gov). ` +
     `Duration risk score: ${durationScore}/100, Issuer diversification score: ${issuerScore}/100.`;
 
   // Evidence logging
@@ -376,6 +410,7 @@ export function runBondRiskAnalysis(
     bondCount: bonds.length,
     bondAllocationPct: Math.round(bondAllocationPct * 10) / 10,
     weightedDuration,
+    weightedDurationMonths,
     avgYTM,
     creditQualityDistribution,
     primaryRating,

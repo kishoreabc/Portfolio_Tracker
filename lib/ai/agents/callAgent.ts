@@ -14,14 +14,15 @@ import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { getInsightsModelManager } from '@/lib/ai/models';
 import { budgetManager } from '@/lib/ai/budgetManager';
 
-/** Extract JSON string from model output — handles ```json ... ``` wrappers */
+/** Extract JSON string from model output — handles ```json ... ``` wrappers and reasoning tags */
 function extractJSON(text: string): string {
-  const fenced = text.match(/```(?:json)?\s*([\s\S]+?)```/);
+  const stripped = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+  const fenced = stripped.match(/```(?:json)?\s*([\s\S]+?)```/);
   if (fenced) return fenced[1].trim();
-  const firstBrace = text.indexOf('{');
-  const lastBrace = text.lastIndexOf('}');
-  if (firstBrace !== -1 && lastBrace !== -1) return text.slice(firstBrace, lastBrace + 1);
-  return text.trim();
+  const firstBrace = stripped.indexOf('{');
+  const lastBrace = stripped.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace !== -1) return stripped.slice(firstBrace, lastBrace + 1);
+  return stripped.trim();
 }
 
 /**
@@ -97,10 +98,11 @@ export async function callAgent<T>(
       try {
         await manager.applyPacingDelay(1500);
 
+        const invokeOptions = provider === 'groq' ? ({ response_format: { type: 'json_object' } } as any) : undefined;
         const response = await model.invoke([
           new SystemMessage(securedSystemPrompt),
           new HumanMessage(prompt),
-        ]);
+        ], invokeOptions);
 
         const text = typeof response.content === 'string'
           ? response.content
@@ -125,8 +127,12 @@ export async function callAgent<T>(
         try {
           parsed = JSON.parse(cleaned);
         } catch {
-          cleaned = cleaned.replace(/:\s*"([^"]*)"([^",}\]]*)/g, '$1\\"$2');
-          parsed = JSON.parse(cleaned);
+          try {
+            const repaired = cleaned.replace(/(:\s*"[^"]*)"([^",}\]]*)/g, '$1\\"$2');
+            parsed = JSON.parse(repaired);
+          } catch {
+            parsed = JSON.parse(cleaned); // Throw original parse error with full context
+          }
         }
 
         // Validate with Zod

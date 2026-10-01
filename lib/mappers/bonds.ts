@@ -14,7 +14,7 @@ export function mapBondHoldings(sheet: ParsedSheet | null): BondHolding[] {
       sector: String(row.sector ?? 'Unknown').trim(),
       creditRating: String(row.creditRating ?? 'NR').trim(),
       maturityDate: row.maturityDate ? String(row.maturityDate).trim() : null,
-      duration: Number(row.duration ?? 0),
+      duration: Number(row.duration ?? row.durationMonths ?? row.tenure ?? 0),
       couponRate: Number(row.couponRate ?? 0),
       ytm: Number(row.ytm ?? 0),
       faceValue: Number(row.faceValue ?? 0),

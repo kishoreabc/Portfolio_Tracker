@@ -104,7 +104,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       // If user is not logged in and tries to access a protected app route -> redirect to login
       if (isProtectedAppRoute) {
-        return false;
+        const loginUrl = new URL('/login', nextUrl);
+        loginUrl.searchParams.set('callbackUrl', pathname);
+        return Response.redirect(loginUrl);
       }
 
       // If accessing an API route that is not public -> return structured JSON 401

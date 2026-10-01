@@ -119,6 +119,7 @@ function buildInsightsLlm(spec: string, temperature: number): { llm: BaseChatMod
         apiKey: groqKey,
         model: modelName,
         temperature,
+        maxTokens: modelName.includes('qwen') ? 1000 : 4096,
         maxRetries: 0,
       }),
       name: `groq:${modelName}`,

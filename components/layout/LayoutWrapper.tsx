@@ -1,7 +1,8 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { SidebarProvider, useSidebar } from '@/components/layout/SidebarContext';
 
@@ -40,9 +41,29 @@ const AUTH_DASHBOARD_ROUTES = [
 
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const router = useRouter();
+  const { data: session, status } = useSession();
 
   const isLoggedIn = !!session?.user && Object.keys(session.user).length > 0;
+
+  const isProtectedAppRoute = AUTH_DASHBOARD_ROUTES.some(
+    (route) => route !== '/' && (pathname === route || pathname.startsWith(route + '/'))
+  );
+
+  useEffect(() => {
+    if (status === 'unauthenticated' && isProtectedAppRoute) {
+      router.replace(`/login?callbackUrl=${encodeURIComponent(pathname)}`);
+    }
+  }, [status, isProtectedAppRoute, pathname, router]);
+
+  // If unauthenticated on a protected dashboard route, render a clean loading spinner while redirecting
+  if (status === 'unauthenticated' && isProtectedAppRoute) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-[#070b14]">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
+      </div>
+    );
+  }
 
   // The sidebar shell should ONLY be rendered if the user is authenticated
   // AND the current route is one of the valid dashboard application routes.

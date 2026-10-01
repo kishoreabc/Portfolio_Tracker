@@ -55,6 +55,7 @@ CRITICAL DIRECTIVES:
    - MONITOR: Showing early signs of friction, elevated valuation, or technical softening.
    - REVIEW: Fundamental deterioration or broken thesis.
    - INVALIDATED: Original investment thesis demonstrably violated.
+8. Output Budget & Conciseness: Keep each field focused and punchy (1-2 sentences per field, not lengthy essays).
 
 Format strictly as JSON adhering to the specified schema.
 `;

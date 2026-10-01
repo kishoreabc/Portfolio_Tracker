@@ -30,6 +30,7 @@ export interface RiskDecomposition {
   /** Bond analytics */
   bondAnalysis: {
     weightedDuration: number;
+    weightedDurationMonths?: number;
     avgYTM: number;
     avgCreditQuality: string;
     durationRiskBps: number; // estimated portfolio impact from 100bps rate shock
@@ -135,7 +136,7 @@ export function runRiskAnalysis(
       severity: bf.severity,
       title: bf.title,
       description: bf.description,
-      evidence: `Duration: ${weightedDuration}y, ${durationRiskBps}bps rate sensitivity`,
+      evidence: bf.evidence || `Duration: ${weightedDuration}y (${bondRisk.weightedDurationMonths}m), ${durationRiskBps}bps rate sensitivity`,
       actionRecommendation: bf.actionable,
     });
   }
@@ -177,7 +178,7 @@ export function runRiskAnalysis(
     `Risk Score: ${overallRiskScore}/100. Decomposition: Position ${positionScore}, Sector ${sectorScore}, ` +
     `Bond Duration ${bondDurationScore}, Issuer ${issuerScore}. ` +
     `Top-5 holdings: ${top5Pct.toFixed(1)}%, HHI: ${portfolio.concentration.herfindahlIndex.toFixed(4)}, ` +
-    `Bond duration: ${weightedDuration.toFixed(1)}Y, Credit quality: ${avgCreditQuality}. ` +
+    `Bond duration: ${weightedDuration.toFixed(1)}Y (${bondRisk.weightedDurationMonths}M), Credit quality: ${avgCreditQuality}. ` +
     `${flags.length} risk flags raised.`;
 
   return {
@@ -189,7 +190,8 @@ export function runRiskAnalysis(
     flags,
     bondAnalysis: {
       weightedDuration: Math.round(weightedDuration * 10) / 10,
-      avgYTM: Math.round(weightedYTM * 10000) / 100,
+      weightedDurationMonths: bondRisk.weightedDurationMonths,
+      avgYTM: Math.round((weightedYTM > 1 ? weightedYTM : weightedYTM * 100) * 100) / 100,
       avgCreditQuality,
       durationRiskBps,
     },
