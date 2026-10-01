@@ -42,25 +42,43 @@ function buildLlmFromSpec(spec: string, options?: { temperature?: number }) {
 function getLLMChain(options?: { temperature?: number }) {
   const modelSpecs: string[] = [];
 
-  if (process.env.GEMINI_MODEL) {
-    const geminiSpecs = process.env.GEMINI_MODEL.split(',').map(s => s.trim()).filter(Boolean);
-    modelSpecs.push(...geminiSpecs);
-  } else {
-    modelSpecs.push('gemini:gemini-2.5-flash');
-  }
-
   if (process.env.FALLBACK_MODELS) {
     const fallbackSpecs = process.env.FALLBACK_MODELS.split(',').map(s => s.trim()).filter(Boolean);
     modelSpecs.push(...fallbackSpecs);
-  } else if (modelSpecs.length <= 1) {
-    modelSpecs.push('groq:openai/gpt-oss-120b', 'groq:qwen/qwen3.6-27b');
+  }
+
+  if (process.env.GEMINI_MODEL) {
+    const geminiSpecs = process.env.GEMINI_MODEL.split(',').map(s => s.trim()).filter(Boolean);
+    modelSpecs.push(...geminiSpecs);
   }
 
   if (modelSpecs.length === 0) {
-    throw new Error('No models configured for LLM chain');
+    modelSpecs.push(
+      'groq:openai/gpt-oss-120b',
+      'groq:qwen/qwen3.8-27b',
+      'groq:openai/gpt-oss-20b',
+      'gemini:gemini-3.1-flash-lite',
+      'gemini:gemini-3.5-flash-lite',
+      'gemini:gemini-3-flash',
+      'gemini:gemini-3.5-flash',
+      'gemini:gemini-3.6-flash',
+      'gemini:gemini-3.7-flash',
+      'gemini:gemini-3.8-flash',
+    );
   }
 
-  const llms = modelSpecs.map(spec => buildLlmFromSpec(spec, options));
+  // Deduplicate and prioritize higher limits first (1000 RPD -> 500 RPD -> 20 RPD)
+  const unique = Array.from(new Set(modelSpecs));
+  unique.sort((a, b) => {
+    const getScore = (s: string) => {
+      if (s.startsWith('groq:')) return 1000;
+      if (s.includes('flash-lite')) return 500;
+      return 20;
+    };
+    return getScore(b) - getScore(a);
+  });
+
+  const llms = unique.map(spec => buildLlmFromSpec(spec, options));
   return llms;
 }
 

@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { buildAIInsights, type PortfolioInput } from '@/lib/ai/pipeline';
+import { buildAIInsightsV2 } from '@/lib/ai/pipeline-v2';
+import type { PortfolioInput } from '@/lib/ai/pipeline';
 import type { AgentActivityEvent } from '@/types/agent-activity';
 import { checkRateLimit, rateLimitResponse } from '@/lib/server/rateLimiter';
 import { methodNotAllowed, privateNoStoreHeaders, unauthorizedResponse } from '@/lib/server/apiHelpers';
 
-// Cache: 15-minute window, isolated per user ID
+// Cache: 15-minute window, isolated per user ID (Section 47)
 const userInsightCache = new Map<string, { prompt_hash: string; result: unknown; fetchedAt: number }>();
 const CACHE_MS = 15 * 60 * 1000;
+
+// Active runs registry to prevent duplicate concurrent runs (Section 48)
+const activeUserRuns = new Set<string>();
 
 function hashString(s: string): string {
   let h = 0;
@@ -47,7 +51,7 @@ export async function POST(request: NextRequest) {
 
   const userId = session.user.id || session.user.email || 'user';
 
-  // Rate limit: maximum 10 generation runs per 10-minute window per user
+  // Rate limit: maximum 10 generation runs per 10-minute window per user (Section 48)
   const limitResult = checkRateLimit(`insights:${userId}`, 10, 10 * 60 * 1000);
   if (!limitResult.allowed) {
     return rateLimitResponse(
@@ -56,18 +60,19 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const insightsKey = process.env.GEMINI_INSIGHTS_API_KEY || process.env.GEMINI_API_KEY;
-  if (!insightsKey) {
-    return NextResponse.json(
-      { error: 'AI Insights service is currently unavailable', insights: null },
-      { status: 503, headers: privateNoStoreHeaders }
-    );
-  }
-
   try {
-    const body: PortfolioInput & { force?: boolean } = await request.json();
-    const { force, ...inputPayload } = body;
+    const body: PortfolioInput & { force?: boolean; mode?: 'quick' | 'deep' | 'auto' } = await request.json();
+    const { force, mode = 'auto', ...inputPayload } = body;
     const promptHash = hashString(JSON.stringify(inputPayload));
+    const runKey = `${userId}:${promptHash}:${mode}`;
+
+    // Single active analysis protection (Section 48)
+    if (activeUserRuns.has(runKey)) {
+      return NextResponse.json(
+        { error: 'An identical analysis is already in progress. Please wait for it to complete.', active: true },
+        { status: 429, headers: privateNoStoreHeaders }
+      );
+    }
 
     const userCache = userInsightCache.get(userId);
     // Serve from user-specific server cache if not forced and within cache window
@@ -82,6 +87,9 @@ export async function POST(request: NextRequest) {
         { headers: privateNoStoreHeaders }
       );
     }
+
+    // Register active run
+    activeUserRuns.add(runKey);
 
     // Server-Sent Events (SSE) stream for live agent activity execution
     const encoder = new TextEncoder();
@@ -99,9 +107,18 @@ export async function POST(request: NextRequest) {
     // Execute multi-agent workflow and stream operational telemetry
     (async () => {
       try {
-        const insights = await buildAIInsights(inputPayload as PortfolioInput, (event: AgentActivityEvent) => {
-          sendEvent({ type: 'agent_event', event });
-        });
+        const insights = await buildAIInsightsV2(
+          inputPayload as PortfolioInput,
+          (event: AgentActivityEvent) => {
+            sendEvent({ type: 'agent_event', event });
+          },
+          userId,
+          {
+            mode,
+            force,
+            abortSignal: request.signal,
+          }
+        );
 
         // Cache strictly scoped to this authenticated user
         userInsightCache.set(userId, { prompt_hash: promptHash, result: insights, fetchedAt: Date.now() });
@@ -111,6 +128,7 @@ export async function POST(request: NextRequest) {
         console.error('[api/insights/stream] Execution error:', message);
         await sendEvent({ type: 'pipeline_failed', error: 'Failed to complete AI insights analysis. Please try again later.' });
       } finally {
+        activeUserRuns.delete(runKey);
         try {
           await writer.close();
         } catch {}
@@ -132,16 +150,4 @@ export async function POST(request: NextRequest) {
       { status: 500, headers: privateNoStoreHeaders }
     );
   }
-}
-
-export async function PUT() {
-  return methodNotAllowed(['GET', 'POST']);
-}
-
-export async function DELETE() {
-  return methodNotAllowed(['GET', 'POST']);
-}
-
-export async function PATCH() {
-  return methodNotAllowed(['GET', 'POST']);
 }

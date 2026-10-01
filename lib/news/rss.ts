@@ -30,7 +30,7 @@ export async function fetchRssFeed(): Promise<RssItem[]> {
       const feed = await parser.parseURL(RSS_URL);
 
       const items: RssItem[] = (feed.items ?? []).map((item) => {
-        const raw = item as any;
+        const raw = item as unknown as Record<string, unknown>;
         return {
           guid: (raw.guid as string) || (item.link as string) || '',
           title: (item.title as string) || '',

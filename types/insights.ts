@@ -281,7 +281,8 @@ export interface ThesisHolding {
   valuationStatus: 'Undervalued' | 'Moderate' | 'Elevated' | 'Fair';
   technicalStatus: 'Bullish' | 'Neutral' | 'Bearish';
   riskLevel: 'Low' | 'Medium' | 'High';
-  thesisStatus: 'Intact' | 'Monitor' | 'Review';
+  thesisStatus: 'Intact' | 'Monitor' | 'Review' | 'Invalidated';
+  invalidationCondition?: string;
   explanation: string;
 }
 
@@ -305,6 +306,57 @@ export interface AIConfidence {
   reason: string;
   metricsAvailableCount: number;
   metricsTotalExpected: number;
+}
+
+export interface AnalysisMetadata {
+  runId: string;
+  snapshotHash: string;
+  analysisMode: 'quick' | 'deep' | 'no_ai' | 'deterministic_only';
+  analyticsVersion: string;
+  promptVersion: string;
+  generatedAt: string;
+  dataAsOf: {
+    portfolio?: string;
+    market?: string;
+    macro?: string;
+    news?: string;
+  };
+  provider?: string;
+  model?: string;
+  apiUsageEstimate?: {
+    llmCalls: number;
+    tavilyCalls: number;
+  };
+  overallConfidence: 'high' | 'medium' | 'low';
+  degradationState: 'full' | 'degraded' | 'partial' | 'failed';
+  llmCallsCount?: number;
+  tavilyCreditsUsed?: number;
+  claimCoverage?: ClaimCoverageMetrics;
+  evidenceCount?: number;
+  executionTimeMs?: number;
+  isDegraded?: boolean;
+  degradationReason?: string;
+  idempotencyKey?: string;
+}
+
+export interface IntegratedView {
+  symbol: string;
+  fundamentals: string;
+  valuation: string;
+  technicals: string;
+  macroExposure: string;
+  newsContext: string;
+  interaction: 'aligned' | 'partially_aligned' | 'conflicting' | 'insufficient_data';
+  conclusion: string;
+  evidenceIds: string[];
+  confidence: number;
+}
+
+export interface ClaimCoverageMetrics {
+  factualClaimCount: number;
+  validatedClaimCount: number;
+  unsupportedClaimCount: number;
+  claimCoveragePercent: number;
 }
 
 export interface AIInsightsResponse {
@@ -337,5 +389,10 @@ export interface AIInsightsResponse {
   thesisMonitor?: ThesisHolding[];
   portfolioChanges?: PortfolioChanges;
   aiConfidence?: AIConfidence;
+
+  // Sections 37, 59, 64 Extensions
+  metadata?: AnalysisMetadata;
+  claimCoverage?: ClaimCoverageMetrics;
+  integratedViews?: IntegratedView[];
 }
 

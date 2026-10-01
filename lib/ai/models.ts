@@ -2,13 +2,26 @@
  * lib/ai/models.ts
  *
  * Dedicated ModelManager for the AI Insights agentic pipeline.
- * Uses GEMINI_INSIGHTS_API_KEY (falls back to GEMINI_API_KEY) so it can be
- * rate-limited and billed separately from the news/translation workflow.
- * Reads the same GEMINI_MODEL + FALLBACK_MODELS env vars as the rest of the app.
- * Features:
- *  - Circular (round-robin) model switching
- *  - Rate limit & API key error blacklisting with automatic cooldowns
- *  - Inter-call pacing delays to avoid burst 429 errors
+ * Uses GEMINI_INSIGHTS_API_KEY (falls back to GEMINI_API_KEY) and GROQ_API_KEY.
+ *
+ * Priority-Based Tiered Model Selection:
+ * Models are prioritized strictly by verified quota limits (RPD: Requests Per Day, RPM: Requests Per Minute).
+ *
+ * Tier 1 (Highest Quota: 1,000 RPD, 30 RPM):
+ *  - groq:openai/gpt-oss-120b
+ *  - groq:qwen/qwen3.8-27b
+ *  - groq:openai/gpt-oss-20b
+ *
+ * Tier 2 (High Quota: 500 RPD, 15 RPM):
+ *  - gemini:gemini-3.1-flash-lite
+ *  - gemini:gemini-3.5-flash-lite
+ *
+ * Tier 3 (Standard / Reserve Quota: 20 RPD, 5-10 RPM):
+ *  - gemini:gemini-3-flash (5 RPM, 20 RPD)
+ *  - gemini:gemini-3.5-flash (5 RPM, 20 RPD)
+ *  - gemini:gemini-3.6-flash (5 RPM, 20 RPD)
+ *  - gemini:gemini-3.7-flash (5 RPM, 20 RPD)
+ *  - gemini:gemini-3.8-flash (5 RPM, 20 RPD)
  */
 
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
@@ -16,7 +29,6 @@ import { ChatGroq } from '@langchain/groq';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
 function requireInsightsKey(): string {
-  // Prefer dedicated key; fall back to general key
   const key = process.env.GEMINI_INSIGHTS_API_KEY || process.env.GEMINI_API_KEY;
   if (!key) {
     throw new Error(
@@ -27,10 +39,44 @@ function requireInsightsKey(): string {
   return key;
 }
 
+export interface ModelLimitInfo {
+  rpd: number; // Daily requests limit
+  rpm: number; // Requests per minute
+}
+
+/** Verified quota limits mapped directly from Google AI Studio & Groq dashboard */
+export const KNOWN_MODEL_LIMITS: Record<string, ModelLimitInfo> = {
+  // Groq (Highest daily and minute limits: 1,000 RPD, 30 RPM)
+  'groq:openai/gpt-oss-120b': { rpd: 1000, rpm: 30 },
+  'groq:qwen/qwen3.8-27b': { rpd: 1000, rpm: 30 },
+  'groq:openai/gpt-oss-20b': { rpd: 1000, rpm: 30 },
+
+  // Gemini High Capacity (500 RPD, 15 RPM)
+  'gemini:gemini-3.1-flash-lite': { rpd: 500, rpm: 15 },
+  'gemini:gemini-3.5-flash-lite': { rpd: 500, rpm: 15 },
+
+  // Gemini Standard / Reserve (20 RPD, 5-10 RPM)
+  'gemini:gemini-3-flash': { rpd: 20, rpm: 5 },
+  'gemini:gemini-3.5-flash': { rpd: 20, rpm: 5 },
+  'gemini:gemini-3.6-flash': { rpd: 20, rpm: 5 },
+  'gemini:gemini-3.7-flash': { rpd: 20, rpm: 5 },
+  'gemini:gemini-3.8-flash': { rpd: 20, rpm: 5 },
+};
+
+export function getModelLimit(name: string): ModelLimitInfo {
+  if (KNOWN_MODEL_LIMITS[name]) return KNOWN_MODEL_LIMITS[name];
+  if (name.startsWith('groq:')) return { rpd: 1000, rpm: 30 };
+  if (name.includes('flash-lite')) return { rpd: 500, rpm: 15 };
+  if (name.includes('flash')) return { rpd: 20, rpm: 5 };
+  return { rpd: 20, rpm: 5 };
+}
+
 export interface ModelEntry {
   llm: BaseChatModel;
   name: string;
   provider: string;
+  rpd: number;
+  rpm: number;
   blacklistedUntil: number;
 }
 
@@ -83,29 +129,62 @@ function buildInsightsLlm(spec: string, temperature: number): { llm: BaseChatMod
   throw new Error(`Unknown provider in model spec: "${spec}"`);
 }
 
-function buildInsightsChain(temperature = 0.3): { llm: BaseChatModel; name: string; provider: string }[] {
+function buildInsightsChain(temperature = 0.3): { llm: BaseChatModel; name: string; provider: string; rpd: number; rpm: number }[] {
   const specs: string[] = [];
 
-  if (process.env.GEMINI_MODEL) {
-    specs.push(...process.env.GEMINI_MODEL.split(',').map((s) => s.trim()).filter(Boolean));
-  } else {
-    specs.push('gemini:gemini-3.1-flash-lite', 'gemini:gemini-3.5-flash-lite');
-  }
-
+  // Prioritize configured models from env
   if (process.env.FALLBACK_MODELS) {
     specs.push(...process.env.FALLBACK_MODELS.split(',').map((s) => s.trim()).filter(Boolean));
-  } else if (specs.length <= 1) {
-    specs.push('groq:openai/gpt-oss-120b', 'groq:qwen/qwen3.6-27b');
+  }
+  if (process.env.GEMINI_MODEL) {
+    specs.push(...process.env.GEMINI_MODEL.split(',').map((s) => s.trim()).filter(Boolean));
   }
 
-  if (specs.length === 0) throw new Error('No models configured for AI Insights pipeline.');
+  // If no specs configured, include all 12 available models across Groq and Gemini
+  if (specs.length === 0) {
+    specs.push(
+      // Groq (1000 RPD, 30 RPM)
+      'groq:openai/gpt-oss-120b',
+      'groq:qwen/qwen3.8-27b',
+      'groq:openai/gpt-oss-20b',
+      // Gemini High Limit (500 RPD, 15 RPM)
+      'gemini:gemini-3.1-flash-lite',
+      'gemini:gemini-3.5-flash-lite',
+      // Gemini Reserve (20 RPD)
+      'gemini:gemini-3-flash',
+      'gemini:gemini-3.5-flash',
+      'gemini:gemini-3.6-flash',
+      'gemini:gemini-3.7-flash',
+      'gemini:gemini-3.8-flash',
+    );
+  }
 
-  return specs.map((spec) => buildInsightsLlm(spec, temperature));
+  // Deduplicate
+  const uniqueSpecs = Array.from(new Set(specs));
+
+  // Build model instances and attach quota limits
+  const built = uniqueSpecs.map((spec) => {
+    const item = buildInsightsLlm(spec, temperature);
+    const limit = getModelLimit(item.name);
+    return {
+      ...item,
+      rpd: limit.rpd,
+      rpm: limit.rpm,
+    };
+  });
+
+  // Sort strictly by priority: Higher Limits First (RPD descending, then RPM descending)
+  built.sort((a, b) => {
+    if (b.rpd !== a.rpd) return b.rpd - a.rpd;
+    return b.rpm - a.rpm;
+  });
+
+  return built;
 }
 
 export class InsightsModelManager {
   private models: ModelEntry[];
-  private currentIndex: number = 0;
+  private tierPointers: Map<number, number> = new Map();
   private lastCallTimestamp: number = 0;
 
   constructor(temperature = 0.3) {
@@ -113,12 +192,14 @@ export class InsightsModelManager {
       llm: item.llm,
       name: item.name,
       provider: item.provider,
+      rpd: item.rpd,
+      rpm: item.rpm,
       blacklistedUntil: 0,
     }));
   }
 
   /**
-   * Applies an inter-call pacing delay to avoid triggering burst rate-limits.
+   * Applies an inter-call pacing delay to avoid burst rate limits.
    */
   async applyPacingDelay(minIntervalMs = 1200): Promise<void> {
     const now = Date.now();
@@ -131,50 +212,66 @@ export class InsightsModelManager {
   }
 
   /**
-   * Selects the next available model in circular (round-robin) order.
-   * If all models are currently blacklisted, waits for the shortest cooldown and resets.
+   * Selects the next available model prioritizing higher quota limits.
+   *
+   * Algorithm:
+   * 1. Evaluates priority tiers ordered by RPD descending (1,000 RPD -> 500 RPD -> 20 RPD).
+   * 2. Within the highest available tier, round-robins across models to balance RPM.
+   * 3. Falls through to the next tier ONLY if all models in the higher tier are blacklisted.
+   * 4. As soon as a higher-tier model's cooldown expires, subsequent requests immediately resume using the higher tier.
    */
   async getNext(): Promise<{ model: BaseChatModel; index: number; name: string; provider: string }> {
     const total = this.models.length;
     const now = Date.now();
 
-    // Check if all models are blacklisted
+    // Check if ALL models across all tiers are blacklisted
     const allBlacklisted = this.models.every((m) => m.blacklistedUntil > now);
     if (allBlacklisted) {
       const remainingTimes = this.models.map((m) => Math.max(1000, m.blacklistedUntil - now));
       const minWait = Math.min(...remainingTimes, 10_000);
       console.warn(
-        `[InsightsModelManager] All ${total} models rate-limited/cooling down. Waiting ${(minWait / 1000).toFixed(1)}s before circular retry...`
+        `[InsightsModelManager] All ${total} models cooling down. Waiting ${(minWait / 1000).toFixed(1)}s before retry...`
       );
       await new Promise((resolve) => setTimeout(resolve, minWait));
-      // Reset cooldowns to allow next cycle
       this.models.forEach((m) => (m.blacklistedUntil = 0));
     }
 
-    // Circular search starting from currentIndex
-    for (let step = 0; step < total; step++) {
-      const idx = (this.currentIndex + step) % total;
-      const entry = this.models[idx];
+    // Group models by distinct priority tiers (RPD descending)
+    const tiers = Array.from(new Set(this.models.map((m) => m.rpd))).sort((a, b) => b - a);
 
-      if (entry.blacklistedUntil <= Date.now()) {
-        // Advance pointer circularly for next request
-        this.currentIndex = (idx + 1) % total;
+    for (const tierRpd of tiers) {
+      const tierIndices: number[] = [];
+      for (let i = 0; i < this.models.length; i++) {
+        if (this.models[i].rpd === tierRpd) {
+          tierIndices.push(i);
+        }
+      }
+
+      // Filter to available models in this tier
+      const availableIndices = tierIndices.filter((idx) => this.models[idx].blacklistedUntil <= Date.now());
+
+      if (availableIndices.length > 0) {
+        // Round-robin within this tier to distribute load
+        const currentTierPtr = this.tierPointers.get(tierRpd) ?? 0;
+        const selectedIdx = availableIndices[currentTierPtr % availableIndices.length];
+        this.tierPointers.set(tierRpd, (currentTierPtr + 1) % availableIndices.length);
+
+        const entry = this.models[selectedIdx];
         return {
           model: entry.llm,
-          index: idx,
+          index: selectedIdx,
           name: entry.name,
           provider: entry.provider,
         };
       }
+      // Higher tier is completely cooling down; fall through to next tier
     }
 
-    // Fallback: pick current index
-    const fallbackIdx = this.currentIndex % total;
-    this.currentIndex = (fallbackIdx + 1) % total;
-    const fallback = this.models[fallbackIdx];
+    // Fallback: pick index 0
+    const fallback = this.models[0];
     return {
       model: fallback.llm,
-      index: fallbackIdx,
+      index: 0,
       name: fallback.name,
       provider: fallback.provider,
     };
@@ -184,7 +281,7 @@ export class InsightsModelManager {
     if (index >= 0 && index < this.models.length) {
       this.models[index].blacklistedUntil = Date.now() + durationMs;
       console.warn(
-        `[InsightsModelManager] Model ${index + 1}/${this.models.length} (${this.models[index].name}) blacklisted for ${durationMs / 1000}s [Reason: ${reason}]`
+        `[InsightsModelManager] Model ${index + 1}/${this.models.length} (${this.models[index].name} [${this.models[index].rpd} RPD]) blacklisted for ${durationMs / 1000}s [Reason: ${reason}]`
       );
     }
   }
@@ -192,9 +289,18 @@ export class InsightsModelManager {
   get count() {
     return this.models.length;
   }
+
+  get modelList(): ReadonlyArray<{ name: string; provider: string; rpd: number; rpm: number }> {
+    return this.models.map((m) => ({
+      name: m.name,
+      provider: m.provider,
+      rpd: m.rpd,
+      rpm: m.rpm,
+    }));
+  }
 }
 
-/** Singleton — one manager per process lifetime (reused across requests) */
+/** Singleton — one manager per process lifetime */
 let _insightsManager: InsightsModelManager | null = null;
 
 export function getInsightsModelManager(): InsightsModelManager {

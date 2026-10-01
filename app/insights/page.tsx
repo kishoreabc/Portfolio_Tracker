@@ -6,7 +6,7 @@ import { Topbar } from '@/components/layout/Topbar';
 import { usePortfolioData } from '@/hooks/usePortfolioData';
 import { useAiInsights } from '@/hooks/useAiInsights';
 import { useState, useMemo } from 'react';
-import { Sparkles, AlertCircle, RefreshCw, Brain, Globe, TrendingUp, Network, Download, FileText, CheckCircle2 } from 'lucide-react';
+import { Sparkles, AlertCircle, RefreshCw, Brain, Globe, TrendingUp, Network, Download, FileText, CheckCircle2, Zap, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePrivacy, maskInsightsData } from '@/lib/privacy-context';
@@ -97,6 +97,8 @@ export default function InsightsPage() {
     }
   };
 
+  const [selectedMode, setSelectedMode] = useState<'quick' | 'deep' | 'auto'>('auto');
+
   const handleGenerate = async () => {
     const sortedEquity = [...equity].sort((a, b) => (b.currentValue || 0) - (a.currentValue || 0));
     const sortedBonds = [...bonds].sort((a, b) => (b.totalValue || 0) - (a.totalValue || 0));
@@ -177,7 +179,7 @@ export default function InsightsPage() {
         return undefined;
       })(),
     };
-    await fetchInsights(payload);
+    await fetchInsights(payload, true, selectedMode);
   };
 
   const pipelineSteps = [
@@ -226,6 +228,46 @@ export default function InsightsPage() {
                 ))}
               </div>
 
+              {/* Mode Selection Options */}
+              <div className="flex flex-col sm:flex-row items-center gap-2.5 p-1.5 bg-black/20 rounded-xl border border-white/5 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setSelectedMode('auto')}
+                  className={`px-3.5 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1.5 ${
+                    selectedMode === 'auto'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Auto Trigger (Adaptive)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedMode('quick')}
+                  className={`px-3.5 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1.5 ${
+                    selectedMode === 'quick'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Zap className="w-3.5 h-3.5 text-amber-300" />
+                  Quick Mode (1 LLM, Free Tier)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedMode('deep')}
+                  className={`px-3.5 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1.5 ${
+                    selectedMode === 'deep'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
+                  Deep Mode (3 Agents, Adversarial)
+                </button>
+              </div>
+
               <motion.button
                 id="generate-insights-btn"
                 onClick={handleGenerate}
@@ -238,7 +280,7 @@ export default function InsightsPage() {
                 Generate Intelligence Dossier
               </motion.button>
               <p className="text-xs text-muted-foreground/60">
-                Calculates live moving averages, P/E multiples, and macro news grounding. Cached for 15 minutes.
+                Deterministic calculations first. Safe external grounding with verified claims.
               </p>
             </CardContent>
           </Card>
@@ -248,14 +290,26 @@ export default function InsightsPage() {
         {(insights || insightLoading || error) && (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-4">
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-[10px] font-bold tracking-widest text-indigo-400 uppercase bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
-                  AI INTELLIGENCE V2
+                  AI INTELLIGENCE V2.1
                 </span>
                 {cached && (
                   <span className="text-[10px] text-muted-foreground bg-white/5 px-2 py-0.5 rounded border border-white/10 font-mono">
                     Cached
                   </span>
+                )}
+                {insights?.metadata && (
+                  <>
+                    <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                      {insights.metadata.analysisMode} mode ({insights.metadata.llmCallsCount} LLM, {insights.metadata.tavilyCreditsUsed} Tavily)
+                    </span>
+                    {insights.metadata.claimCoverage && (
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        {insights.metadata.claimCoverage.claimCoveragePercent}% Claims Validated ({insights.metadata.claimCoverage.validatedClaimCount}/{insights.metadata.claimCoverage.factualClaimCount})
+                      </span>
+                    )}
+                  </>
                 )}
               </div>
               <h2 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2 mt-1">
@@ -270,6 +324,23 @@ export default function InsightsPage() {
             </div>
 
             <div className="flex items-center gap-2.5 flex-wrap">
+              {/* Mode Selector for Re-run */}
+              <div className="flex items-center rounded-lg bg-card border border-border/40 p-0.5 text-xs">
+                {(['auto', 'quick', 'deep'] as const).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setSelectedMode(m)}
+                    className={`px-2.5 py-1 rounded capitalize font-medium transition-all ${
+                      selectedMode === m
+                        ? 'bg-indigo-600 text-white shadow-xs'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+
               {insights && (
                 <Button
                   variant="outline"
@@ -374,6 +445,18 @@ export default function InsightsPage() {
               exit={{ opacity: 0, scale: 0.98 }}
               className="space-y-6"
             >
+              {/* Resilience / Degradation Notice if active */}
+              {displayInsights.metadata?.isDegraded && (
+                <div className="p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/10 flex items-center gap-3 text-xs text-amber-200">
+                  <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>
+                    <strong>Degraded Resilience Mode:</strong>{' '}
+                    {displayInsights.metadata.degradationReason ||
+                      'External AI/search failed or exceeded quota. All quantitative calculations, portfolio metrics, and valuations remain 100% accurate and mathematically verified.'}
+                  </span>
+                </div>
+              )}
+
               {/* 1. Health Score Banner (Computed Non-LLM Scoring Engine) */}
               <HealthScoreBanner
                 breakdown={

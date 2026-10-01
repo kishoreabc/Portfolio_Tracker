@@ -1,0 +1,34 @@
+[
+  {
+    "provider": "gemini",
+    "date": "2026-10-01",
+    "requests": 0,
+    "estimated_tokens": 0,
+    "tavily_credits": 0,
+    "updated_at": "2026-10-01T14:21:10.808Z"
+  },
+  {
+    "provider": "groq",
+    "date": "2026-10-01",
+    "requests": 1,
+    "estimated_tokens": 1200,
+    "tavily_credits": 0,
+    "updated_at": "2026-10-01T14:21:10.808Z"
+  },
+  {
+    "provider": "tavily",
+    "date": "2026-10-01",
+    "requests": 1,
+    "estimated_tokens": 0,
+    "tavily_credits": 1,
+    "updated_at": "2026-10-01T14:21:10.808Z"
+  },
+  {
+    "provider": "yahoo",
+    "date": "2026-10-01",
+    "requests": 0,
+    "estimated_tokens": 0,
+    "tavily_credits": 0,
+    "updated_at": "2026-10-01T14:21:10.808Z"
+  }
+]

@@ -87,7 +87,11 @@ export function useAiInsights() {
     });
   }, []);
 
-  const fetchInsights = async (payload: PortfolioInput, force = true) => {
+  const fetchInsights = async (
+    payload: PortfolioInput,
+    force = true,
+    mode: 'quick' | 'deep' | 'auto' = 'auto'
+  ) => {
     setIsLoading(true);
     setError(null);
     setInsights(null);
@@ -105,7 +109,7 @@ export function useAiInsights() {
       const res = await fetch('/api/insights', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...payload, force }),
+        body: JSON.stringify({ ...payload, force, mode }),
       });
 
       if (!res.ok) {

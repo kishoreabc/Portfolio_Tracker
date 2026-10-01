@@ -1,0 +1,42 @@
+[
+  {
+    "snapshotId": "snap_1790863572158",
+    "snapshotHash": "h_1935894167",
+    "asOf": "2026-10-01T14:06:12.158Z",
+    "netWorth": 282280.66,
+    "equityTotal": 211244.02999999997,
+    "bondTotal": 71036.63,
+    "equityCount": 19,
+    "bondCount": 5,
+    "top5Percent": 0.4529052751966783,
+    "herfindahlIndex": 0.06892213914189782,
+    "diversificationScore": 97,
+    "weightedPE": 18.8,
+    "breadthPct": 26,
+    "niftyPrice": 22421.95,
+    "usdInr": 96.305,
+    "brentCrude": 100.87,
+    "us10y": 5.325,
+    "goldPrice": 4193.2
+  },
+  {
+    "snapshotId": "snap_1790862248010",
+    "snapshotHash": "h_1935894167",
+    "asOf": "2026-10-01T13:44:08.010Z",
+    "netWorth": 282280.66,
+    "equityTotal": 211244.02999999997,
+    "bondTotal": 71036.63,
+    "equityCount": 19,
+    "bondCount": 5,
+    "top5Percent": 0.4529052751966783,
+    "herfindahlIndex": 0.06892213914189782,
+    "diversificationScore": 97,
+    "weightedPE": 18.8,
+    "breadthPct": 26,
+    "niftyPrice": 22421.95,
+    "usdInr": 96.315,
+    "brentCrude": 99.93,
+    "us10y": 5.319,
+    "goldPrice": 4200.6
+  }
+]

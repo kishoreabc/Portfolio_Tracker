@@ -1,0 +1,41 @@
+{
+  "netWorth": 3500000,
+  "equityTotal": 3150000,
+  "bondTotal": 350000,
+  "equityCount": 4,
+  "bondCount": 1,
+  "diversificationScore": 55,
+  "herfindahlIndex": 0.29,
+  "top5Percent": 90,
+  "topEquity": [
+    { "ticker": "TATAMOTORS.NS", "name": "Tata Motors Ltd", "sector": "Automobile", "currentValue": 1100000, "percentChange": -5.2, "allocationPercent": 31.4, "shares": 1200 },
+    { "ticker": "M&M.NS", "name": "Mahindra & Mahindra Ltd", "sector": "Automobile", "currentValue": 850000, "percentChange": 2.1, "allocationPercent": 24.3, "shares": 300 },
+    { "ticker": "TATASTEEL.NS", "name": "Tata Steel Ltd", "sector": "Metals & Mining", "currentValue": 700000, "percentChange": -9.8, "allocationPercent": 20.0, "shares": 4500 },
+    { "ticker": "ONGC.NS", "name": "Oil & Natural Gas Corp", "sector": "Energy", "currentValue": 500000, "percentChange": 14.2, "allocationPercent": 14.3, "shares": 1900 }
+  ],
+  "topBonds": [
+    { "isin": "IN0020230085", "securityName": "7.18% GS 2033", "sector": "Sovereign", "creditRating": "SOV", "ytm": 7.08, "couponRate": 7.18, "duration": 6.8, "totalValue": 350000, "maturityDate": "2033-08-14" }
+  ],
+  "winners": [
+    { "ticker": "ONGC.NS", "name": "Oil & Natural Gas Corp", "sector": "Energy", "currentValue": 500000, "percentChange": 14.2, "allocationPercent": 14.3, "shares": 1900 }
+  ],
+  "losers": [
+    { "ticker": "TATASTEEL.NS", "name": "Tata Steel Ltd", "sector": "Metals & Mining", "currentValue": 700000, "percentChange": -9.8, "allocationPercent": 20.0, "shares": 4500 },
+    { "ticker": "TATAMOTORS.NS", "name": "Tata Motors Ltd", "sector": "Automobile", "currentValue": 1100000, "percentChange": -5.2, "allocationPercent": 31.4, "shares": 1200 }
+  ],
+  "assetAllocation": [
+    { "label": "Equity", "percent": 90 },
+    { "label": "Bonds", "percent": 10 }
+  ],
+  "sectorAllocation": [
+    { "sector": "Automobile", "percent": 55.7 },
+    { "sector": "Metals & Mining", "percent": 20.0 },
+    { "sector": "Energy", "percent": 14.3 },
+    { "sector": "Sovereign Debt", "percent": 10.0 }
+  ],
+  "totalInvestment": 3200000,
+  "totalExpenses": 65000,
+  "monthlyAvgInvestment": 50000,
+  "lastMonthInvestment": 50000,
+  "lastMonthExpenses": 68000
+}
