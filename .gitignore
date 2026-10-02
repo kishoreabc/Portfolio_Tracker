@@ -1,6 +1,11 @@
+# ==============================================================================
+# Portfolio Tracker Dashboard — Comprehensive .gitignore
+# ==============================================================================
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
+# ------------------------------------------------------------------------------
+# Dependencies & Package Managers
+# ------------------------------------------------------------------------------
 /node_modules
 /.pnp
 .pnp.*
@@ -9,56 +14,126 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+package-lock.json.bak
 
-# testing
-/coverage
-
-# next.js
+# ------------------------------------------------------------------------------
+# Next.js Build Outputs & Production Artifacts
+# ------------------------------------------------------------------------------
 /.next/
 /out/
-
-# production
 /build
+dist/
 
-# misc
-.DS_Store
+# ------------------------------------------------------------------------------
+# Testing & Code Coverage
+# ------------------------------------------------------------------------------
+/coverage
+.nyc_output
+
+# ------------------------------------------------------------------------------
+# Local Caches & Runtime State
+# ------------------------------------------------------------------------------
+.cache
+.cache/
+.eslintcache
+.turbo/
+.parcel-cache/
+.swc/
+
+# ------------------------------------------------------------------------------
+# Environment Variables & Sensitive Credentials
+# (Never commit live credentials, API keys, or secret files)
+# ------------------------------------------------------------------------------
+.env
+.env.*
+.env*.local
+*.env
+
+# Explicitly allow safe documentation / template environment files
+!.env.example
+!env_example.txt
+
+# SSL / TLS Certificates, Keys & Cloud Service Accounts
 *.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+service-account*.json
+google-credentials*.json
+serviceAccountKey.json
 
-# debug
+# ------------------------------------------------------------------------------
+# Logging & Debug Output
+# ------------------------------------------------------------------------------
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
+# ------------------------------------------------------------------------------
+# Hosting Platforms & Deployments
+# ------------------------------------------------------------------------------
 .vercel
 
-# typescript
+# ------------------------------------------------------------------------------
+# TypeScript & Build Metadata
+# ------------------------------------------------------------------------------
 *.tsbuildinfo
 next-env.d.ts
 
-# IDE / Editor Files
-.vscode/
+# ------------------------------------------------------------------------------
+# Operating System Generated Files
+# ------------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ------------------------------------------------------------------------------
+# IDEs & Editor Configuration
+# ------------------------------------------------------------------------------
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
 .idea/
+*.swp
+*.swo
+*~
+*.sublime-workspace
+*.sublime-project
 
-# Scratch/Temporary Scripts
+# ------------------------------------------------------------------------------
+# Scratch Scripts, Temporary Test Dumps & Local Exports
+# ------------------------------------------------------------------------------
 scratch_*
-scratch.js
-scratch.ts
+scratch.*
+scratch/
+tmp/
+.temp/
 
-# Explicitly allow example env files
-!.env.example
-!env_example.txt
-
-
-# Docker image archives
+# ------------------------------------------------------------------------------
+# Archives, Compressed Bundles & Large Binaries
+# ------------------------------------------------------------------------------
 *.tar
 *.tar.gz
 *.zip
+*.7z
+*.rar
+*.iso
 
-skills-lock.json
+# ------------------------------------------------------------------------------
+# Antigravity & Agent Tooling Customizations
+# ------------------------------------------------------------------------------
 .agents
-.cache/
+.agents/
+skills-lock.json

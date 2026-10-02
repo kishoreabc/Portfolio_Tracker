@@ -13,21 +13,26 @@ yarn-error.log*
 .next
 out
 build
+dist
+.cache
 *.tsbuildinfo
 
 # Environment variables
 .env
 .env.*
-.env.local
+.env*.local
 !.env.example
+!env_example.txt
 
 # Test & non-production files
 __tests__
 coverage
 scripts
 supabase
+fixtures
 *.md
 install-dependencies.txt
+scratch*
 
 # Docker & Archive artifacts
 Dockerfile*
@@ -36,9 +41,15 @@ docker-compose*.yml
 *.tar
 *.tar.gz
 *.zip
+*.7z
 
 # OS & Editor files
 .DS_Store
 .vscode
 .idea
 *.pem
+*.key
+
+# Agent tooling
+.agents
+skills-lock.json
