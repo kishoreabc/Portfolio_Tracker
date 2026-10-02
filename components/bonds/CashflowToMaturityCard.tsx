@@ -115,110 +115,249 @@ export function CashflowToMaturityCard({ bonds, isLoading = false }: CashflowToM
     return Math.max(540, timelineData.length * 52);
   }, [timelineData.length]);
 
-  const chartContent = (height = 230, minWidthPx = chartWidth, isFullWidth = false) => (
-    <div
-      style={{
-        width: isFullWidth ? '100%' : `${minWidthPx}px`,
-        minWidth: `${minWidthPx}px`,
-        height: `${height}px`,
-      }}
-    >
-      <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart
-          data={timelineData}
-          margin={{ top: 22, right: 16, left: -16, bottom: 8 }}
-          barCategoryGap="25%"
-        >
-          <XAxis
-            dataKey="key"
-            interval={0}
-            tickLine={false}
-            axisLine={false}
-            tick={<CustomMonthYearTick data={timelineData} />}
-            height={36}
-          />
-          <YAxis
-            domain={[0, yAxisMax]}
-            tickLine={false}
-            axisLine={false}
-            tickFormatter={(v) => formatYAxis(v, isHidden)}
-            tick={{ fontSize: 10, fill: 'hsl(215 20% 55%)' }}
-          />
-          <Tooltip
-            cursor={{ fill: 'currentColor', opacity: 0.04 }}
-            content={({ active, payload }) => {
-              if (!active || !payload?.length) return null;
-              const data: MonthlyCashflowItem = payload[0].payload;
-              return (
-                <div className="bg-slate-900 border border-slate-800 text-white rounded-lg shadow-xl p-3 text-xs min-w-[170px]">
-                  <div className="font-semibold text-slate-200 border-b border-slate-800 pb-1.5 mb-2">
-                    {data.label}
-                  </div>
-                  <div className="flex items-center justify-between gap-3 text-emerald-400 py-0.5">
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-sm bg-[#22c55e]" />
-                      Interest:
-                    </span>
-                    <span className="font-semibold tabular-nums">
-                      {fmtCurrency(data.interest, isHidden)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-3 text-purple-300 py-0.5">
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-sm bg-[#7c3aed]" />
-                      Principal:
-                    </span>
-                    <span className="font-semibold tabular-nums">
-                      {fmtCurrency(data.principal, isHidden)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-3 text-white border-t border-slate-800/80 pt-1.5 mt-1 font-bold">
-                    <span>Total:</span>
-                    <span className="tabular-nums">{fmtCurrency(data.total, isHidden)}</span>
-                  </div>
-                </div>
-              );
-            }}
-          />
-          <Bar
-            dataKey="interest"
-            stackId="cashflow"
-            fill="#22c55e"
-            name="Interest"
-            maxBarSize={28}
-            radius={[0, 0, 0, 0]}
-          />
-          <Bar
-            dataKey="principal"
-            stackId="cashflow"
-            fill="#7c3aed"
-            name="Principal"
-            maxBarSize={28}
-            radius={[3, 3, 0, 0]}
-          />
-          <Line
-            type="monotone"
-            dataKey="total"
-            stroke="transparent"
-            strokeWidth={0}
-            dot={false}
-            activeDot={false}
-            isAnimationActive={false}
-            legendType="none"
-            tooltipType="none"
+  // Calculate min and max positive interest across full 5y horizon for consistent visual scale
+  const { minInterest, maxInterest } = useMemo(() => {
+    const fullTimeline = calculateCashflowTimeline(bonds, 5);
+    const positiveInterests = fullTimeline
+      .map((d) => d.interest)
+      .filter((v) => v > 0);
+    if (positiveInterests.length === 0) {
+      return { minInterest: 100, maxInterest: 100 };
+    }
+    return {
+      minInterest: Math.min(...positiveInterests),
+      maxInterest: Math.max(...positiveInterests),
+    };
+  }, [bonds]);
+
+  const computeInterestHeight = (interestVal: number, plotHeight: number): number => {
+    if (!interestVal || interestVal <= 0) return 0;
+
+    // Smallest coupon (e.g. ₹82/₹84) gets a neat visible 5px (or 6px in expanded modal)
+    const minH = plotHeight > 250 ? 6 : 5;
+    // Largest coupon (e.g. ₹1.4K) gets 20px (or 28px in expanded modal)
+    // This gives a dramatic 4x visual height contrast between ₹84 and ₹1.4K
+    const maxH = plotHeight > 250 ? 28 : 20;
+
+    if (maxInterest <= minInterest) {
+      return maxH;
+    }
+
+    const ratio = Math.max(0, Math.min(1, (interestVal - minInterest) / (maxInterest - minInterest)));
+    return minH + ratio * (maxH - minH);
+  };
+
+  const computePrincipalHeight = (principalVal: number, plotHeight: number): number => {
+    if (!principalVal || principalVal <= 0) return 0;
+    const labelHeadroom = 20;
+    const maxInterestH = plotHeight > 250 ? 28 : 20;
+    const availablePrincipalH = Math.max(20, plotHeight - maxInterestH - labelHeadroom);
+    const linearH = (principalVal / yAxisMax) * availablePrincipalH;
+    return Math.max(linearH, 8);
+  };
+
+  const renderInterestBar = (props: any, plotHeight: number, baselineY: number) => {
+    const { x, width, payload } = props;
+    if (!payload || !payload.interest || payload.interest <= 0) {
+      return null;
+    }
+
+    const effectiveBaseline = typeof props.stackedBarStart === 'number' ? props.stackedBarStart : baselineY;
+    const finalHeight = computeInterestHeight(payload.interest, plotHeight);
+    const finalY = effectiveBaseline - finalHeight;
+    const hasPrincipal = payload.principal > 0;
+
+    const r = Math.min(3, width / 2, finalHeight / 2);
+    if (!hasPrincipal && r > 0) {
+      const pathD = `M ${x},${finalY + r} A ${r} ${r} 0 0 1 ${x + r},${finalY} L ${x + width - r},${finalY} A ${r} ${r} 0 0 1 ${x + width},${finalY + r} L ${x + width},${effectiveBaseline} L ${x},${effectiveBaseline} Z`;
+      return <path d={pathD} fill="#22c55e" />;
+    }
+
+    return (
+      <rect
+        x={x}
+        y={finalY}
+        width={width}
+        height={finalHeight}
+        fill="#22c55e"
+      />
+    );
+  };
+
+  const renderPrincipalBar = (props: any, plotHeight: number, baselineY: number) => {
+    const { x, width, payload } = props;
+    if (!payload || !payload.principal || payload.principal <= 0) {
+      return null;
+    }
+
+    const effectiveBaseline = typeof props.stackedBarStart === 'number' ? props.stackedBarStart : baselineY;
+    const interestH = computeInterestHeight(payload.interest, plotHeight);
+    const finalHeight = computePrincipalHeight(payload.principal, plotHeight);
+    // Sits directly on top of interest bar (or baseline if interest is 0) with zero gap
+    const principalBottom = payload.interest > 0 ? (effectiveBaseline - interestH) : effectiveBaseline;
+    const finalY = principalBottom - finalHeight;
+
+    const r = Math.min(3, width / 2, finalHeight / 2);
+    if (r > 0) {
+      const pathD = `M ${x},${finalY + r} A ${r} ${r} 0 0 1 ${x + r},${finalY} L ${x + width - r},${finalY} A ${r} ${r} 0 0 1 ${x + width},${finalY + r} L ${x + width},${principalBottom} L ${x},${principalBottom} Z`;
+      return <path d={pathD} fill="#7c3aed" />;
+    }
+
+    return (
+      <rect
+        x={x}
+        y={finalY}
+        width={width}
+        height={finalHeight}
+        fill="#7c3aed"
+      />
+    );
+  };
+
+  const renderCustomBarLabel = (props: any, plotHeight: number, baselineY: number) => {
+    const { x, value, index } = props;
+    const numVal = Number(value);
+    if (!numVal || numVal <= 0) return null;
+
+    const formatted = formatBarAmount(numVal, isHidden);
+    if (!formatted) return null;
+
+    const item = timelineData[index];
+    if (!item) return null;
+
+    const interestH = computeInterestHeight(item.interest, plotHeight);
+    const principalH = computePrincipalHeight(item.principal, plotHeight);
+
+    let barTopY: number;
+    if (item.principal > 0) {
+      const principalBottom = item.interest > 0 ? (baselineY - interestH) : baselineY;
+      barTopY = principalBottom - principalH;
+    } else {
+      barTopY = baselineY - interestH;
+    }
+
+    const finalY = barTopY - 6;
+
+    return (
+      <text
+        x={x}
+        y={finalY}
+        textAnchor="middle"
+        fontSize={10}
+        fontWeight={600}
+        fill="hsl(215 20% 75%)"
+      >
+        {formatted}
+      </text>
+    );
+  };
+
+  const chartContent = (height = 230, minWidthPx = chartWidth, isFullWidth = false) => {
+    const plotHeight = height - 66;
+    const baselineY = height - 44;
+    return (
+      <div
+        style={{
+          width: isFullWidth ? '100%' : `${minWidthPx}px`,
+          minWidth: `${minWidthPx}px`,
+          height: `${height}px`,
+        }}
+      >
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart
+            data={timelineData}
+            margin={{ top: 22, right: 16, left: -16, bottom: 8 }}
+            barCategoryGap="25%"
           >
-            <LabelList
-              dataKey="total"
-              position="top"
-              offset={6}
-              formatter={(v: any) => formatBarAmount(Number(v), isHidden)}
-              style={{ fontSize: 10, fontWeight: 600, fill: 'hsl(215 20% 75%)' }}
+            <XAxis
+              dataKey="key"
+              interval={0}
+              tickLine={false}
+              axisLine={false}
+              tick={<CustomMonthYearTick data={timelineData} />}
+              height={36}
             />
-          </Line>
-        </ComposedChart>
-      </ResponsiveContainer>
-    </div>
-  );
+            <YAxis
+              domain={[0, yAxisMax]}
+              tickLine={false}
+              axisLine={false}
+              tickFormatter={(v) => formatYAxis(v, isHidden)}
+              tick={{ fontSize: 10, fill: 'hsl(215 20% 55%)' }}
+            />
+            <Tooltip
+              cursor={{ fill: 'currentColor', opacity: 0.04 }}
+              content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const data: MonthlyCashflowItem = payload[0].payload;
+                return (
+                  <div className="bg-slate-900 border border-slate-800 text-white rounded-lg shadow-xl p-3 text-xs min-w-[170px]">
+                    <div className="font-semibold text-slate-200 border-b border-slate-800 pb-1.5 mb-2">
+                      {data.label}
+                    </div>
+                    <div className="flex items-center justify-between gap-3 text-emerald-400 py-0.5">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-sm bg-[#22c55e]" />
+                        Interest:
+                      </span>
+                      <span className="font-semibold tabular-nums">
+                        {fmtCurrency(data.interest, isHidden)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3 text-purple-300 py-0.5">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-sm bg-[#7c3aed]" />
+                        Principal:
+                      </span>
+                      <span className="font-semibold tabular-nums">
+                        {fmtCurrency(data.principal, isHidden)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3 text-white border-t border-slate-800/80 pt-1.5 mt-1 font-bold">
+                      <span>Total:</span>
+                      <span className="tabular-nums">{fmtCurrency(data.total, isHidden)}</span>
+                    </div>
+                  </div>
+                );
+              }}
+            />
+            <Bar
+              dataKey="interest"
+              stackId="cashflow"
+              fill="#22c55e"
+              name="Interest"
+              maxBarSize={28}
+              shape={(props: any) => renderInterestBar(props, plotHeight, baselineY)}
+            />
+            <Bar
+              dataKey="principal"
+              stackId="cashflow"
+              fill="#7c3aed"
+              name="Principal"
+              maxBarSize={28}
+              shape={(props: any) => renderPrincipalBar(props, plotHeight, baselineY)}
+            />
+            <Line
+              type="monotone"
+              dataKey="total"
+              stroke="transparent"
+              strokeWidth={0}
+              dot={false}
+              activeDot={false}
+              isAnimationActive={false}
+              legendType="none"
+              tooltipType="none"
+            >
+              <LabelList
+                dataKey="total"
+                position="top"
+                content={(props: any) => renderCustomBarLabel(props, plotHeight, baselineY)}
+              />
+            </Line>
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+    );
+  };
 
   return (
     <>

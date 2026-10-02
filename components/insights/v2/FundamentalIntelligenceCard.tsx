@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart3, CheckCircle2, AlertTriangle, ShieldCheck, Quote } from 'lucide-react';
+import { BarChart3, CheckCircle2, AlertTriangle, ShieldCheck, Quote, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import type { FundamentalIntelligence } from '@/types/insights';
 
 interface FundamentalIntelligenceCardProps {
@@ -65,6 +65,44 @@ export function FundamentalIntelligenceCard({ data, equity }: FundamentalIntelli
         return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
     }
   };
+
+  type FundamentalSortKey = 'symbol' | 'weight' | 'pe' | 'forwardPe' | 'pb' | 'dividendYield' | 'status';
+  const [sortKey, setSortKey] = useState<FundamentalSortKey | null>('weight');
+  const [sortAsc, setSortAsc] = useState(false);
+
+  const toggleSort = (key: FundamentalSortKey) => {
+    if (sortKey === key) setSortAsc(!sortAsc);
+    else { setSortKey(key); setSortAsc(false); }
+  };
+
+  const renderSortIcon = (columnKey: FundamentalSortKey) => {
+    if (sortKey !== columnKey) {
+      return (
+        <ArrowUpDown className="inline-block ml-1.5 w-3.5 h-3.5 text-muted-foreground/35 group-hover:text-muted-foreground/80 transition-colors" />
+      );
+    }
+    return sortAsc ? (
+      <ArrowUp className="inline-block ml-1.5 w-3.5 h-3.5 text-primary font-bold transition-transform" />
+    ) : (
+      <ArrowDown className="inline-block ml-1.5 w-3.5 h-3.5 text-primary font-bold transition-transform" />
+    );
+  };
+
+  const sortedHoldings = useMemo(() => {
+    if (!sortKey) return holdingsList;
+    return [...holdingsList].sort((a, b) => {
+      let valA: any = a[sortKey];
+      let valB: any = b[sortKey];
+      if (valA == null && valB == null) return 0;
+      if (valA == null) return 1;
+      if (valB == null) return -1;
+      if (typeof valA === 'string') {
+        const cmp = valA.localeCompare(String(valB));
+        return sortAsc ? cmp : -cmp;
+      }
+      return sortAsc ? valA - valB : valB - valA;
+    });
+  }, [holdingsList, sortKey, sortAsc]);
 
   return (
     <Card className="border-border/50 bg-gradient-to-br from-card via-card/70 to-card/40 shadow-sm">
@@ -155,17 +193,32 @@ export function FundamentalIntelligenceCard({ data, equity }: FundamentalIntelli
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-border/40 bg-white/5 text-muted-foreground">
-                    <th className="p-2.5 font-semibold">Stock</th>
-                    <th className="p-2.5 font-semibold text-right">Weight</th>
-                    <th className="p-2.5 font-semibold text-right">P/E</th>
-                    <th className="p-2.5 font-semibold text-right">Fwd P/E</th>
-                    <th className="p-2.5 font-semibold text-right">P/B</th>
-                    <th className="p-2.5 font-semibold text-right">Div Yield</th>
-                    <th className="p-2.5 font-semibold text-center">Status</th>
+                    {[
+                      { key: 'symbol' as const, label: 'Stock', align: 'left' },
+                      { key: 'weight' as const, label: 'Weight', align: 'right' },
+                      { key: 'pe' as const, label: 'P/E', align: 'right' },
+                      { key: 'forwardPe' as const, label: 'Fwd P/E', align: 'right' },
+                      { key: 'pb' as const, label: 'P/B', align: 'right' },
+                      { key: 'dividendYield' as const, label: 'Div Yield', align: 'right' },
+                      { key: 'status' as const, label: 'Status', align: 'center' },
+                    ].map((col) => (
+                      <th
+                        key={col.key}
+                        className={`p-2.5 text-sm font-semibold uppercase tracking-wider select-none cursor-pointer group transition-colors hover:text-foreground ${
+                          col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'
+                        } ${sortKey === col.key ? 'text-foreground font-bold' : 'text-muted-foreground'}`}
+                        onClick={() => toggleSort(col.key)}
+                      >
+                        <span className={`inline-flex items-center ${col.align === 'right' ? 'justify-end' : col.align === 'center' ? 'justify-center' : ''}`}>
+                          {col.label}
+                          {renderSortIcon(col.key)}
+                        </span>
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/20 font-mono">
-                  {holdingsList.map((h, idx) => (
+                  {sortedHoldings.map((h, idx) => (
                     <tr key={idx} className="hover:bg-white/[0.02] transition-colors">
                       <td className="p-2.5 font-sans font-medium text-foreground">
                         <div>{h.symbol}</div>

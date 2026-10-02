@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, TrendingUp, TrendingDown, ArrowUpDown } from 'lucide-react';
+import { Search, TrendingUp, TrendingDown, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -81,9 +81,18 @@ export default function StocksPage() {
     return result;
   }, [equity, search, sortConfig]);
 
-  const SortIcon = ({ columnKey }: { columnKey: string }) => (
-    <ArrowUpDown className={`inline-block ml-1 w-3 h-3 transition-colors ${sortConfig.key === columnKey ? 'text-foreground' : 'text-muted-foreground/50'}`} />
-  );
+  const SortIcon = ({ columnKey }: { columnKey: string }) => {
+    if (sortConfig.key !== columnKey) {
+      return (
+        <ArrowUpDown className="inline-block ml-1.5 w-3.5 h-3.5 text-muted-foreground/35 group-hover:text-muted-foreground/80 transition-colors" />
+      );
+    }
+    return sortConfig.direction === 'asc' ? (
+      <ArrowUp className="inline-block ml-1.5 w-3.5 h-3.5 text-primary font-bold transition-transform" />
+    ) : (
+      <ArrowDown className="inline-block ml-1.5 w-3.5 h-3.5 text-primary font-bold transition-transform" />
+    );
+  };
 
   return (
     <>
@@ -163,16 +172,38 @@ export default function StocksPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-border/50 hover:bg-transparent">
-                    <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground cursor-pointer select-none" onClick={() => handleSort('ticker')}>Symbol <SortIcon columnKey="ticker" /></TableHead>
-                    <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground cursor-pointer select-none" onClick={() => handleSort('name')}>Name <SortIcon columnKey="name" /></TableHead>
-                    <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground cursor-pointer select-none" onClick={() => handleSort('sector')}>Sector <SortIcon columnKey="sector" /></TableHead>
-                    <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('shares')}>Shares <SortIcon columnKey="shares" /></TableHead>
-                    <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('currentPrice')}>CMP <SortIcon columnKey="currentPrice" /></TableHead>
-                    <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('currentValue')}>Value <SortIcon columnKey="currentValue" /></TableHead>
-                    <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('allocationPercent')}>Alloc % <SortIcon columnKey="allocationPercent" /></TableHead>
-                    <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('valuationRatio')}>P/E (P/B) <SortIcon columnKey="valuationRatio" /></TableHead>
-                    <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('priceChange')}>Price Chg <SortIcon columnKey="priceChange" /></TableHead>
-                    <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground cursor-pointer select-none text-right" onClick={() => handleSort('percentChange')}>Change % <SortIcon columnKey="percentChange" /></TableHead>
+                    {[
+                      { key: 'ticker', label: 'Symbol', align: 'left' },
+                      { key: 'name', label: 'Name', align: 'left' },
+                      { key: 'sector', label: 'Sector', align: 'left' },
+                      { key: 'shares', label: 'Shares', align: 'right' },
+                      { key: 'currentPrice', label: 'CMP', align: 'right' },
+                      { key: 'currentValue', label: 'Value', align: 'right' },
+                      { key: 'allocationPercent', label: 'Alloc %', align: 'right' },
+                      { key: 'valuationRatio', label: 'P/E (P/B)', align: 'right' },
+                      { key: 'priceChange', label: 'Price Chg', align: 'right' },
+                      { key: 'percentChange', label: 'Change %', align: 'right' },
+                    ].map((col) => (
+                      <TableHead
+                        key={col.key}
+                        className={`text-sm font-semibold uppercase tracking-wider whitespace-nowrap select-none transition-colors cursor-pointer group hover:text-foreground ${
+                          col.align === 'right' ? 'text-right' : 'text-left'
+                        } ${sortConfig.key === col.key ? 'text-foreground font-bold' : 'text-muted-foreground'}`}
+                        onClick={() => handleSort(col.key)}
+                        aria-sort={
+                          sortConfig.key === col.key
+                            ? sortConfig.direction === 'asc'
+                              ? 'ascending'
+                              : 'descending'
+                            : undefined
+                        }
+                      >
+                        <span className={`inline-flex items-center ${col.align === 'right' ? 'justify-end' : ''}`}>
+                          {col.label}
+                          <SortIcon columnKey={col.key} />
+                        </span>
+                      </TableHead>
+                    ))}
                   </TableRow>
                 </TableHeader>
                 <TableBody>

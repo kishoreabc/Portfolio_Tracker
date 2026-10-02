@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 
-import { Calendar, CheckCircle2, Clock, AlertCircle, RefreshCw, Landmark, ArrowUpRight } from 'lucide-react';
+import { Calendar, CheckCircle2, Clock, AlertCircle, RefreshCw, Landmark, ArrowUpRight, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import type { NsdlCashFlowResponse, NsdlCashFlowItem } from '@/types/bonds';
 import { format, parseISO, isValid, isBefore, isAfter, startOfDay } from 'date-fns';
 import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
@@ -86,6 +86,28 @@ export function BondCashflowDialog({
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'completed'>('upcoming');
   const cacheRef = useRef<Record<string, NsdlCashFlowResponse>>({});
 
+  type CashflowSortKey = 'eventType' | 'recordDate' | 'payoutDate' | 'amount' | 'status';
+  const [sortKey, setSortKey] = useState<CashflowSortKey | null>('payoutDate');
+  const [sortAsc, setSortAsc] = useState(true);
+
+  const toggleSort = (key: CashflowSortKey) => {
+    if (sortKey === key) setSortAsc(!sortAsc);
+    else { setSortKey(key); setSortAsc(true); }
+  };
+
+  const renderSortIcon = (columnKey: CashflowSortKey) => {
+    if (sortKey !== columnKey) {
+      return (
+        <ArrowUpDown className="inline-block ml-1.5 w-3.5 h-3.5 text-muted-foreground/35 group-hover:text-muted-foreground/80 transition-colors" />
+      );
+    }
+    return sortAsc ? (
+      <ArrowUp className="inline-block ml-1.5 w-3.5 h-3.5 text-primary font-bold transition-transform" />
+    ) : (
+      <ArrowDown className="inline-block ml-1.5 w-3.5 h-3.5 text-primary font-bold transition-transform" />
+    );
+  };
+
   const fetchCashflow = async (force = false) => {
     if (!isin) return;
 
@@ -152,6 +174,38 @@ export function BondCashflowDialog({
     if (filter === 'completed') return schedule.filter((s) => s.isPast);
     return schedule;
   }, [schedule, filter]);
+
+  const sortedSchedule = useMemo(() => {
+    if (!sortKey) return filteredSchedule;
+    return [...filteredSchedule].sort((a, b) => {
+      let valA: any;
+      let valB: any;
+      if (sortKey === 'eventType') {
+        valA = a.cashFlowsEvent || '';
+        valB = b.cashFlowsEvent || '';
+      } else if (sortKey === 'recordDate') {
+        const dA = parseDate(a.recordDate || a.actualRecordDate);
+        const dB = parseDate(b.recordDate || b.actualRecordDate);
+        valA = dA ? dA.getTime() : 0;
+        valB = dB ? dB.getTime() : 0;
+      } else if (sortKey === 'payoutDate') {
+        valA = a.parsedDueDate ? a.parsedDueDate.getTime() : 0;
+        valB = b.parsedDueDate ? b.parsedDueDate.getTime() : 0;
+      } else if (sortKey === 'amount') {
+        valA = unitsHeld > 0 ? a.totalAmt : a.amtPerUnit;
+        valB = unitsHeld > 0 ? b.totalAmt : b.amtPerUnit;
+      } else if (sortKey === 'status') {
+        valA = a.isPast ? 1 : 0;
+        valB = b.isPast ? 1 : 0;
+      }
+
+      if (typeof valA === 'string') {
+        const cmp = valA.localeCompare(String(valB));
+        return sortAsc ? cmp : -cmp;
+      }
+      return sortAsc ? valA - valB : valB - valA;
+    });
+  }, [filteredSchedule, sortKey, sortAsc, unitsHeld]);
 
   const upcomingCount = useMemo(() => schedule.filter((s) => !s.isPast).length, [schedule]);
   const completedCount = useMemo(() => schedule.filter((s) => s.isPast).length, [schedule]);
@@ -286,20 +340,38 @@ export function BondCashflowDialog({
           ) : (
             <Table wrapperClassName="h-[380px] overflow-y-auto pr-2 custom-scrollbar">
               <TableHeader className="sticky top-0 bg-[#0f172a] z-20">
-                  <TableRow className="border-border/50 hover:bg-transparent">
-                    <TableHead className="text-xs font-semibold text-muted-foreground">Event Type</TableHead>
-                    <TableHead className="text-xs font-semibold text-muted-foreground">Record Date</TableHead>
-                    <TableHead className="text-xs font-semibold text-muted-foreground">Due / Payout Date</TableHead>
-                    {unitsHeld > 0 ? (
-                      <TableHead className="text-xs font-semibold text-muted-foreground text-right">Total Amount (₹)</TableHead>
-                    ) : (
-                      <TableHead className="text-xs font-semibold text-muted-foreground text-right">Per Unit (₹)</TableHead>
-                    )}
-                    <TableHead className="text-xs font-semibold text-muted-foreground text-center">Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredSchedule.map((item, idx) => {
+                <TableRow className="border-border/50 hover:bg-transparent">
+                  {[
+                    { key: 'eventType' as const, label: 'Event Type', align: 'left' },
+                    { key: 'recordDate' as const, label: 'Record Date', align: 'left' },
+                    { key: 'payoutDate' as const, label: 'Due / Payout Date', align: 'left' },
+                    { key: 'amount' as const, label: unitsHeld > 0 ? 'Total Amount (₹)' : 'Per Unit (₹)', align: 'right' },
+                    { key: 'status' as const, label: 'Status', align: 'center' },
+                  ].map((col) => (
+                    <TableHead
+                      key={col.key}
+                      className={`text-sm font-semibold uppercase tracking-wider whitespace-nowrap select-none transition-colors cursor-pointer group hover:text-foreground ${
+                        col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'
+                      } ${sortKey === col.key ? 'text-foreground font-bold' : 'text-muted-foreground'}`}
+                      onClick={() => toggleSort(col.key)}
+                      aria-sort={
+                        sortKey === col.key
+                          ? sortAsc
+                            ? 'ascending'
+                            : 'descending'
+                          : undefined
+                      }
+                    >
+                      <span className={`inline-flex items-center ${col.align === 'right' ? 'justify-end' : col.align === 'center' ? 'justify-center' : ''}`}>
+                        {col.label}
+                        {renderSortIcon(col.key)}
+                      </span>
+                    </TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedSchedule.map((item, idx) => {
                     const isRedemption = item.cashFlowsEvent?.toLowerCase().includes('redemption');
                     const isInterest = item.cashFlowsEvent?.toLowerCase().includes('interest');
 

@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { PieChart, Quote, Scale, ArrowDown, ArrowUp } from 'lucide-react';
+import { PieChart, Quote, Scale, ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 import type { ValuationIntelligence } from '@/types/insights';
 import { getSectorPE, evaluateValuation } from '@/lib/calc/valuation';
 
@@ -45,6 +45,45 @@ export function ValuationIntelligenceCard({ data, equity }: ValuationIntelligenc
 
     return base;
   }, [data?.holdingsValuation, equity]);
+
+  type ValuationSortKey = 'symbol' | 'pe' | 'sectorPe' | 'status';
+  const [sortKey, setSortKey] = useState<ValuationSortKey | null>('pe');
+  const [sortAsc, setSortAsc] = useState(false);
+
+  const toggleSort = (key: ValuationSortKey) => {
+    if (sortKey === key) setSortAsc(!sortAsc);
+    else { setSortKey(key); setSortAsc(false); }
+  };
+
+  const renderSortIcon = (columnKey: ValuationSortKey) => {
+    if (sortKey !== columnKey) {
+      return (
+        <ArrowUpDown className="inline-block ml-1.5 w-3.5 h-3.5 text-muted-foreground/35 group-hover:text-muted-foreground/80 transition-colors" />
+      );
+    }
+    return sortAsc ? (
+      <ArrowUp className="inline-block ml-1.5 w-3.5 h-3.5 text-primary font-bold transition-transform" />
+    ) : (
+      <ArrowDown className="inline-block ml-1.5 w-3.5 h-3.5 text-primary font-bold transition-transform" />
+    );
+  };
+
+  const sortedHoldings = useMemo(() => {
+    if (!sortKey) return holdingsList;
+    return [...holdingsList].sort((a, b) => {
+      const getSector = (h: any) => h.sectorPe ?? (typeof h.benchmarkPe === 'number' && h.benchmarkPe !== 22.8 ? h.benchmarkPe : undefined) ?? getSectorPE(undefined, h.symbol);
+      let valA: any = sortKey === 'sectorPe' ? getSector(a) : (a as any)[sortKey];
+      let valB: any = sortKey === 'sectorPe' ? getSector(b) : (b as any)[sortKey];
+      if (valA == null && valB == null) return 0;
+      if (valA == null) return 1;
+      if (valB == null) return -1;
+      if (typeof valA === 'string') {
+        const cmp = valA.localeCompare(String(valB));
+        return sortAsc ? cmp : -cmp;
+      }
+      return sortAsc ? valA - valB : valB - valA;
+    });
+  }, [holdingsList, sortKey, sortAsc]);
 
   if (!data && holdingsList.length === 0) return null;
 
@@ -136,14 +175,29 @@ export function ValuationIntelligenceCard({ data, equity }: ValuationIntelligenc
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-border/40 bg-white/5 text-muted-foreground">
-                    <th className="p-2.5 font-semibold">Stock</th>
-                    <th className="p-2.5 font-semibold text-right">Holding P/E</th>
-                    <th className="p-2.5 font-semibold text-right">Sector P/E</th>
-                    <th className="p-2.5 font-semibold text-center">Valuation Stance</th>
+                    {[
+                      { key: 'symbol' as const, label: 'Stock', align: 'left' },
+                      { key: 'pe' as const, label: 'Holding P/E', align: 'right' },
+                      { key: 'sectorPe' as const, label: 'Sector P/E', align: 'right' },
+                      { key: 'status' as const, label: 'Valuation Stance', align: 'center' },
+                    ].map((col) => (
+                      <th
+                        key={col.key}
+                        className={`p-2.5 text-sm font-semibold uppercase tracking-wider select-none cursor-pointer group transition-colors hover:text-foreground ${
+                          col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'
+                        } ${sortKey === col.key ? 'text-foreground font-bold' : 'text-muted-foreground'}`}
+                        onClick={() => toggleSort(col.key)}
+                      >
+                        <span className={`inline-flex items-center ${col.align === 'right' ? 'justify-end' : col.align === 'center' ? 'justify-center' : ''}`}>
+                          {col.label}
+                          {renderSortIcon(col.key)}
+                        </span>
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/20 font-mono">
-                  {holdingsList.map((h, idx) => {
+                  {sortedHoldings.map((h, idx) => {
                     const sectorPe = h.sectorPe ?? (typeof h.benchmarkPe === 'number' && h.benchmarkPe !== 22.8 ? h.benchmarkPe : undefined) ?? getSectorPE(undefined, h.symbol);
                     return (
                       <tr key={idx} className="hover:bg-white/[0.02]">

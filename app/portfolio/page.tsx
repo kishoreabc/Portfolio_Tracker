@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Search, ArrowUpDown, TrendingUp, Building2 } from 'lucide-react';
+import { Search, ArrowUpDown, ArrowUp, ArrowDown, TrendingUp, Building2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -22,7 +22,7 @@ function fmt(v: number, isHidden: boolean = false) {
   return `₹${v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-type SortKey = 'name' | 'currentValue' | 'localAllocPct';
+type SortKey = 'name' | 'ticker' | 'sector' | 'currentValue' | 'localAllocPct';
 
 function SkeletonRows({ cols }: { cols: number }) {
   return (
@@ -43,16 +43,34 @@ export default function PortfolioPage() {
   const { isHidden } = usePrivacy();
   const [equitySearch, setEquitySearch] = useState('');
   const [bondSearch, setBondSearch] = useState('');
-  const [sortKey, setSortKey] = useState<SortKey>('currentValue');
-  const [sortAsc, setSortAsc] = useState(false);
+  const [equitySortKey, setEquitySortKey] = useState<SortKey>('currentValue');
+  const [equitySortAsc, setEquitySortAsc] = useState(false);
+  const [bondSortKey, setBondSortKey] = useState<SortKey>('currentValue');
+  const [bondSortAsc, setBondSortAsc] = useState(false);
   const { openStock } = useStockModal();
 
-  const toggleSort = (key: SortKey) => {
-    if (sortKey === key) setSortAsc(!sortAsc);
-    else { setSortKey(key); setSortAsc(false); }
+  const toggleEquitySort = (key: SortKey) => {
+    if (equitySortKey === key) setEquitySortAsc(!equitySortAsc);
+    else { setEquitySortKey(key); setEquitySortAsc(false); }
   };
 
-  const SortIcon = () => <ArrowUpDown className="w-3 h-3 inline ml-1 opacity-60" />;
+  const toggleBondSort = (key: SortKey) => {
+    if (bondSortKey === key) setBondSortAsc(!bondSortAsc);
+    else { setBondSortKey(key); setBondSortAsc(false); }
+  };
+
+  const renderSortIcon = (currentKey: SortKey, columnKey: SortKey, isAsc: boolean) => {
+    if (currentKey !== columnKey) {
+      return (
+        <ArrowUpDown className="inline-block ml-1.5 w-3.5 h-3.5 text-muted-foreground/35 group-hover:text-muted-foreground/80 transition-colors" />
+      );
+    }
+    return isAsc ? (
+      <ArrowUp className="inline-block ml-1.5 w-3.5 h-3.5 text-primary font-bold transition-transform" />
+    ) : (
+      <ArrowDown className="inline-block ml-1.5 w-3.5 h-3.5 text-primary font-bold transition-transform" />
+    );
+  };
 
   const equityRows = useMemo(() => {
     const lc = equitySearch.toLowerCase();
@@ -66,12 +84,12 @@ export default function PortfolioPage() {
     return eq
       .map((r) => ({ ...r, localAllocPct: eqTotal > 0 ? (r.currentValue / eqTotal) * 100 : 0 }))
       .sort((a, b) => {
-        const av = sortKey === 'localAllocPct' ? a.localAllocPct : (a as any)[sortKey] ?? 0;
-        const bv = sortKey === 'localAllocPct' ? b.localAllocPct : (b as any)[sortKey] ?? 0;
-        if (typeof av === 'string') return sortAsc ? av.localeCompare(String(bv)) : String(bv).localeCompare(av);
-        return sortAsc ? (av as number) - (bv as number) : (bv as number) - (av as number);
+        const av = equitySortKey === 'localAllocPct' ? a.localAllocPct : (a as any)[equitySortKey] ?? 0;
+        const bv = equitySortKey === 'localAllocPct' ? b.localAllocPct : (b as any)[equitySortKey] ?? 0;
+        if (typeof av === 'string') return equitySortAsc ? av.localeCompare(String(bv)) : String(bv).localeCompare(av);
+        return equitySortAsc ? (av as number) - (bv as number) : (bv as number) - (av as number);
       });
-  }, [portfolio, equitySearch, sortKey, sortAsc]);
+  }, [portfolio, equitySearch, equitySortKey, equitySortAsc]);
 
   const bondRows = useMemo(() => {
     const lc = bondSearch.toLowerCase();
@@ -85,12 +103,12 @@ export default function PortfolioPage() {
     return bd
       .map((r) => ({ ...r, localAllocPct: bdTotal > 0 ? (r.currentValue / bdTotal) * 100 : 0 }))
       .sort((a, b) => {
-        const av = sortKey === 'localAllocPct' ? a.localAllocPct : (a as any)[sortKey] ?? 0;
-        const bv = sortKey === 'localAllocPct' ? b.localAllocPct : (b as any)[sortKey] ?? 0;
-        if (typeof av === 'string') return sortAsc ? av.localeCompare(String(bv)) : String(bv).localeCompare(av);
-        return sortAsc ? (av as number) - (bv as number) : (bv as number) - (av as number);
+        const av = bondSortKey === 'localAllocPct' ? a.localAllocPct : (a as any)[bondSortKey] ?? 0;
+        const bv = bondSortKey === 'localAllocPct' ? b.localAllocPct : (b as any)[bondSortKey] ?? 0;
+        if (typeof av === 'string') return bondSortAsc ? av.localeCompare(String(bv)) : String(bv).localeCompare(av);
+        return bondSortAsc ? (av as number) - (bv as number) : (bv as number) - (av as number);
       });
-  }, [portfolio, bondSearch, sortKey, sortAsc]);
+  }, [portfolio, bondSearch, bondSortKey, bondSortAsc]);
 
   const equityTotal = equityRows.reduce((s, r) => s + r.currentValue, 0);
   const bondTotal = bondRows.reduce((s, r) => s + r.currentValue, 0);
@@ -131,17 +149,33 @@ export default function PortfolioPage() {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-border/50 hover:bg-transparent">
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-foreground" onClick={() => toggleSort('name')}>
-                        Name <SortIcon />
-                      </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ticker</TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Sector</TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right cursor-pointer hover:text-foreground" onClick={() => toggleSort('currentValue')}>
-                        Value <SortIcon />
-                      </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right cursor-pointer hover:text-foreground" onClick={() => toggleSort('localAllocPct')}>
-                        Alloc<SortIcon />
-                      </TableHead>
+                      {[
+                        { key: 'name' as const, label: 'Name', align: 'left' },
+                        { key: 'ticker' as const, label: 'Ticker', align: 'left' },
+                        { key: 'sector' as const, label: 'Sector', align: 'left' },
+                        { key: 'currentValue' as const, label: 'Value', align: 'right' },
+                        { key: 'localAllocPct' as const, label: 'Alloc', align: 'right' },
+                      ].map((col) => (
+                        <TableHead
+                          key={col.key}
+                          className={`text-sm font-semibold uppercase tracking-wider whitespace-nowrap select-none transition-colors cursor-pointer group hover:text-foreground ${
+                            col.align === 'right' ? 'text-right' : 'text-left'
+                          } ${equitySortKey === col.key ? 'text-foreground font-bold' : 'text-muted-foreground'}`}
+                          onClick={() => toggleEquitySort(col.key)}
+                          aria-sort={
+                            equitySortKey === col.key
+                              ? equitySortAsc
+                                ? 'ascending'
+                                : 'descending'
+                              : undefined
+                          }
+                        >
+                          <span className={`inline-flex items-center ${col.align === 'right' ? 'justify-end' : ''}`}>
+                            {col.label}
+                            {renderSortIcon(equitySortKey, col.key, equitySortAsc)}
+                          </span>
+                        </TableHead>
+                      ))}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -220,17 +254,33 @@ export default function PortfolioPage() {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-border/50 hover:bg-transparent">
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-foreground" onClick={() => toggleSort('name')}>
-                        Name <SortIcon />
-                      </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">ISIN</TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Sector</TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right cursor-pointer hover:text-foreground" onClick={() => toggleSort('currentValue')}>
-                        Value <SortIcon />
-                      </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right cursor-pointer hover:text-foreground" onClick={() => toggleSort('localAllocPct')}>
-                        Alloc<SortIcon />
-                      </TableHead>
+                      {[
+                        { key: 'name' as const, label: 'Name', align: 'left' },
+                        { key: 'ticker' as const, label: 'ISIN', align: 'left' },
+                        { key: 'sector' as const, label: 'Sector', align: 'left' },
+                        { key: 'currentValue' as const, label: 'Value', align: 'right' },
+                        { key: 'localAllocPct' as const, label: 'Alloc', align: 'right' },
+                      ].map((col) => (
+                        <TableHead
+                          key={col.key}
+                          className={`text-sm font-semibold uppercase tracking-wider whitespace-nowrap select-none transition-colors cursor-pointer group hover:text-foreground ${
+                            col.align === 'right' ? 'text-right' : 'text-left'
+                          } ${bondSortKey === col.key ? 'text-foreground font-bold' : 'text-muted-foreground'}`}
+                          onClick={() => toggleBondSort(col.key)}
+                          aria-sort={
+                            bondSortKey === col.key
+                              ? bondSortAsc
+                                ? 'ascending'
+                                : 'descending'
+                              : undefined
+                          }
+                        >
+                          <span className={`inline-flex items-center ${col.align === 'right' ? 'justify-end' : ''}`}>
+                            {col.label}
+                            {renderSortIcon(bondSortKey, col.key, bondSortAsc)}
+                          </span>
+                        </TableHead>
+                      ))}
                     </TableRow>
                   </TableHeader>
                   <TableBody>

@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import type { MonthlySummary } from '@/types/transactions';
 import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
+import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 
 function fmt(v: number, isHidden: boolean = false) {
   if (isHidden) return PRIVACY_MASK;
@@ -41,6 +42,28 @@ export default function CashFlowPage() {
   const [selectedMonth, setSelectedMonth] = useState<MonthlySummary | null>(null);
   const [showTooltip, setShowTooltip] = useState(false);
 
+  type MonthlySortKey = 'label' | 'investment' | 'foodAndEntertainment' | 'others' | 'totalExpenses';
+  const [monthlySortKey, setMonthlySortKey] = useState<MonthlySortKey | null>(null);
+  const [monthlySortAsc, setMonthlySortAsc] = useState(false);
+
+  const toggleMonthlySort = (key: MonthlySortKey) => {
+    if (monthlySortKey === key) setMonthlySortAsc(!monthlySortAsc);
+    else { setMonthlySortKey(key); setMonthlySortAsc(false); }
+  };
+
+  const sortedSummaries = useMemo(() => {
+    if (!monthlySortKey) return [...summaries].reverse();
+    return [...summaries].sort((a, b) => {
+      let valA = a[monthlySortKey];
+      let valB = b[monthlySortKey];
+      if (typeof valA === 'string') {
+        const cmp = valA.localeCompare(String(valB));
+        return monthlySortAsc ? cmp : -cmp;
+      }
+      return monthlySortAsc ? (valA as number) - (valB as number) : (valB as number) - (valA as number);
+    });
+  }, [summaries, monthlySortKey, monthlySortAsc]);
+
   const selectedTransactions = useMemo(() => {
     if (!selectedMonth) return [];
     return transactions.filter(t =>
@@ -48,6 +71,37 @@ export default function CashFlowPage() {
       t.date.getMonth() === selectedMonth.month
     );
   }, [selectedMonth, transactions]);
+
+  type DailySortKey = 'date' | 'foodAndEntertainment' | 'investment' | 'others' | 'dailyTotal';
+  const [dailySortKey, setDailySortKey] = useState<DailySortKey | null>(null);
+  const [dailySortAsc, setDailySortAsc] = useState(false);
+
+  const toggleDailySort = (key: DailySortKey) => {
+    if (dailySortKey === key) setDailySortAsc(!dailySortAsc);
+    else { setDailySortKey(key); setDailySortAsc(false); }
+  };
+
+  const sortedTransactions = useMemo(() => {
+    if (!dailySortKey) return selectedTransactions;
+    return [...selectedTransactions].sort((a, b) => {
+      let valA = dailySortKey === 'date' ? a.date.getTime() : a[dailySortKey];
+      let valB = dailySortKey === 'date' ? b.date.getTime() : b[dailySortKey];
+      return dailySortAsc ? (valA as number) - (valB as number) : (valB as number) - (valA as number);
+    });
+  }, [selectedTransactions, dailySortKey, dailySortAsc]);
+
+  const renderSortIcon = (currentKey: string | null, colKey: string, isAsc: boolean) => {
+    if (currentKey !== colKey) {
+      return (
+        <ArrowUpDown className="inline-block ml-1.5 w-3.5 h-3.5 text-muted-foreground/35 group-hover:text-muted-foreground/80 transition-colors" />
+      );
+    }
+    return isAsc ? (
+      <ArrowUp className="inline-block ml-1.5 w-3.5 h-3.5 text-primary font-bold transition-transform" />
+    ) : (
+      <ArrowDown className="inline-block ml-1.5 w-3.5 h-3.5 text-primary font-bold transition-transform" />
+    );
+  };
 
   const pieData = useMemo(() => {
     if (!selectedMonth) return [];
@@ -103,8 +157,32 @@ export default function CashFlowPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-border/50 hover:bg-transparent">
-                    {['Month', 'Investment', 'Food & Ent.', 'Others', 'Total Expenses'].map(h => (
-                      <TableHead key={h} className="text-xs font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">{h}</TableHead>
+                    {[
+                      { key: 'label' as const, label: 'Month' },
+                      { key: 'investment' as const, label: 'Investment' },
+                      { key: 'foodAndEntertainment' as const, label: 'Food & Ent.' },
+                      { key: 'others' as const, label: 'Others' },
+                      { key: 'totalExpenses' as const, label: 'Total Expenses' },
+                    ].map((col) => (
+                      <TableHead
+                        key={col.key}
+                        className={`text-sm font-semibold uppercase tracking-wider whitespace-nowrap select-none transition-colors cursor-pointer group hover:text-foreground ${
+                          monthlySortKey === col.key ? 'text-foreground font-bold' : 'text-muted-foreground'
+                        }`}
+                        onClick={() => toggleMonthlySort(col.key)}
+                        aria-sort={
+                          monthlySortKey === col.key
+                            ? monthlySortAsc
+                              ? 'ascending'
+                              : 'descending'
+                            : undefined
+                        }
+                      >
+                        <span className="inline-flex items-center">
+                          {col.label}
+                          {renderSortIcon(monthlySortKey, col.key, monthlySortAsc)}
+                        </span>
+                      </TableHead>
                     ))}
                   </TableRow>
                 </TableHeader>
@@ -113,7 +191,7 @@ export default function CashFlowPage() {
                     <TableRow key={i} className="border-border/30">
                       {Array.from({ length: 5 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 bg-white/5" /></TableCell>)}
                     </TableRow>
-                  )) : [...summaries].reverse().map((m, i) => (
+                  )) : sortedSummaries.map((m, i) => (
                     <motion.tr key={m.label} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.02 }}
                       className="border-border/30 hover:bg-white/[0.05] cursor-pointer transition-colors"
                       onClick={() => setSelectedMonth(m)}>
@@ -171,13 +249,37 @@ export default function CashFlowPage() {
               <Table wrapperClassName="flex-1 overflow-auto rounded-xl">
                 <TableHeader className="sticky top-0 bg-surface-100 z-10 shadow-sm">
                   <TableRow className="border-border/50 hover:bg-transparent">
-                    {['Date', 'Food & Ent.', 'Investment', 'Others', 'Total'].map(h => (
-                      <TableHead key={h} className="text-xs sm:text-sm md:text-base font-semibold text-foreground/90 tracking-wide whitespace-nowrap">{h}</TableHead>
+                    {[
+                      { key: 'date' as const, label: 'Date' },
+                      { key: 'foodAndEntertainment' as const, label: 'Food & Ent.' },
+                      { key: 'investment' as const, label: 'Investment' },
+                      { key: 'others' as const, label: 'Others' },
+                      { key: 'dailyTotal' as const, label: 'Total' },
+                    ].map((col) => (
+                      <TableHead
+                        key={col.key}
+                        className={`text-sm font-semibold uppercase tracking-wider whitespace-nowrap select-none transition-colors cursor-pointer group hover:text-foreground ${
+                          dailySortKey === col.key ? 'text-foreground font-bold' : 'text-muted-foreground'
+                        }`}
+                        onClick={() => toggleDailySort(col.key)}
+                        aria-sort={
+                          dailySortKey === col.key
+                            ? dailySortAsc
+                              ? 'ascending'
+                              : 'descending'
+                            : undefined
+                        }
+                      >
+                        <span className="inline-flex items-center">
+                          {col.label}
+                          {renderSortIcon(dailySortKey, col.key, dailySortAsc)}
+                        </span>
+                      </TableHead>
                     ))}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {selectedTransactions.map((t, i) => (
+                  {sortedTransactions.map((t, i) => (
                     <TableRow key={i} className="border-border/30 hover:bg-white/[0.02]">
                       <TableCell className="text-[10px] sm:text-xs md:text-sm font-medium text-muted-foreground whitespace-nowrap">{t.date.toLocaleDateString('en-IN')}</TableCell>
                       <TableCell className="text-[10px] sm:text-xs md:text-sm text-amber-400 tabular-nums whitespace-nowrap">{fmt(t.foodAndEntertainment, isHidden)}</TableCell>

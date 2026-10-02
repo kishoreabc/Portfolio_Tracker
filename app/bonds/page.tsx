@@ -187,13 +187,13 @@ export default function BondsPage() {
   const SortIcon = ({ columnKey }: { columnKey: string }) => {
     if (sortConfig.key !== columnKey) {
       return (
-        <ArrowUpDown className="inline-block ml-1.5 w-3 h-3 text-muted-foreground/35 group-hover:text-muted-foreground/80 transition-colors" />
+        <ArrowUpDown className="inline-block ml-1.5 w-3.5 h-3.5 text-muted-foreground/35 group-hover:text-muted-foreground/80 transition-colors" />
       );
     }
     return sortConfig.direction === 'asc' ? (
-      <ArrowUp className="inline-block ml-1.5 w-3 h-3 text-primary font-bold transition-transform" />
+      <ArrowUp className="inline-block ml-1.5 w-3.5 h-3.5 text-primary font-bold transition-transform" />
     ) : (
-      <ArrowDown className="inline-block ml-1.5 w-3 h-3 text-primary font-bold transition-transform" />
+      <ArrowDown className="inline-block ml-1.5 w-3.5 h-3.5 text-primary font-bold transition-transform" />
     );
   };
 
@@ -209,7 +209,7 @@ export default function BondsPage() {
         <Card className="border-border/50">
           <CardHeader className="pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <CardTitle>Upcoming Maturities</CardTitle>
+              <CardTitle>Holdings</CardTitle>
               <CardDescription className="text-xs text-muted-foreground mt-0.5">
                 {bonds.length} holdings • Click column headers to sort by security, rating, maturity, yield, or value
               </CardDescription>
@@ -223,7 +223,7 @@ export default function BondsPage() {
                   {BOND_COLUMNS.map((col) => (
                     <TableHead
                       key={col.label}
-                      className={`text-xs font-semibold uppercase tracking-wider whitespace-nowrap select-none transition-colors ${
+                      className={`text-sm font-semibold uppercase tracking-wider whitespace-nowrap select-none transition-colors ${
                         col.key
                           ? 'hover:text-foreground cursor-pointer group text-muted-foreground'
                           : 'text-muted-foreground cursor-default'

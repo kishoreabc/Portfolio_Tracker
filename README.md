@@ -323,11 +323,9 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | `GOOGLE_SHEETS_API_KEY` | **Yes** | `AIzaSy...` | Google Cloud API key with access to Google Sheets API v4. |
 | `AUTH_SECRET` | **Yes** | `32-byte-hex-string` | Secret key used to encrypt NextAuth JWT session tokens. |
 | `AUTH_URL` | **Yes** | `http://localhost:3000` | Canonical base URL of the deployment. |
-| `LOGIN_USERNAME` | **Yes** | `test` | Username for Credentials-based login. |
-| `LOGIN_PASSWORD` | **Yes** | `test` | Password for Credentials-based login. |
-| `GOOGLE_CLIENT_ID` | No | `*.apps.googleusercontent.com` | Google OAuth client ID for Google sign-in. |
-| `GOOGLE_CLIENT_SECRET`| No | `GOCSPX-...` | Google OAuth client secret. |
-| `ALLOWED_EMAILS` | No | `user@example.com,admin@example.com` | Comma-separated list of emails permitted to authenticate via Google. |
+| `GOOGLE_CLIENT_ID` | **Yes** | `*.apps.googleusercontent.com` | Google OAuth client ID for Google sign-in. |
+| `GOOGLE_CLIENT_SECRET`| **Yes** | `GOCSPX-...` | Google OAuth client secret. |
+| `ALLOWED_EMAILS` | No | `user@example.com,admin@example.com` | Comma-separated list of valid email IDs permitted to toggle privacy mode and view unmasked numbers. Non-allowed users can log in with privacy mode permanently hidden. |
 | `GEMINI_API_KEY` | **Yes** | `AIzaSy...` | Primary Google Gemini API key for translation, summarization, and AI Insights. |
 | `GEMINI_INSIGHTS_API_KEY` | No | `AIzaSy...` | Dedicated Gemini key for the agentic pipeline (falls back to `GEMINI_API_KEY`). |
 | `GEMINI_EMBEDDING_API_KEY`| No | `AIzaSy...` | Dedicated Gemini key for embedding generation (falls back to `GEMINI_API_KEY`). |

@@ -1,6 +1,6 @@
 import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
-import Credentials from 'next-auth/providers/credentials';
+import { recordUserLogin, isAllowedEmail } from '@/lib/auth/user-logins';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -13,21 +13,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         },
       },
     }),
-    Credentials({
-      credentials: {
-        username: { label: "Username", type: "text" },
-        password: { label: "Password", type: "password" }
-      },
-      async authorize(credentials) {
-        const validUsername = process.env.LOGIN_USERNAME;
-        const validPassword = process.env.LOGIN_PASSWORD;
-        
-        if (credentials?.username === validUsername && credentials?.password === validPassword) {
-          return { id: 'test-user', name: 'Test User', email: 'test@example.com' };
-        }
-        return null;
-      }
-    })
   ],
   session: {
     strategy: 'jwt',
@@ -37,33 +22,39 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     signIn: '/login',
     error: '/login',
   },
+  events: {
+    async signIn({ user, account }) {
+      if (user?.email) {
+        await recordUserLogin({
+          email: user.email,
+          name: user.name,
+          image: user.image,
+          provider: account?.provider || 'google',
+        });
+      }
+    },
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id || user.email || 'test-user';
+        token.id = user.id || user.email;
+        token.email = user.email;
+        token.name = user.name;
+        token.picture = user.image;
       }
+      token.canTogglePrivacy = isAllowedEmail(token.email as string);
       return token;
     },
     async session({ session, token }) {
       if (token && session.user) {
-        (session.user as any).id = token.id;
+        session.user.id = (token.id as string) || (token.email as string) || 'user';
+        session.user.canTogglePrivacy = Boolean(token.canTogglePrivacy);
       }
       return session;
     },
-    async signIn({ user, account }) {
-      if (account?.provider === 'credentials') {
-        return true;
-      }
-      
-      const allowedEmailsStr = process.env.ALLOWED_EMAILS;
-      if (allowedEmailsStr) {
-        const allowedEmails = allowedEmailsStr.split(',').map(e => e.trim().toLowerCase());
-        if (user.email && allowedEmails.includes(user.email.toLowerCase())) {
-          return true;
-        }
-        return false; // Deny access
-      }
-      return true; // Allow all if ALLOWED_EMAILS is not configured
+    async signIn({ user }) {
+      // Any authenticated user can log in
+      return true;
     },
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user && Object.keys(auth.user).length > 0;

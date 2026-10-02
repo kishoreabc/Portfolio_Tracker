@@ -17,7 +17,12 @@ export function PrivacyToggle({
   className,
   id = 'privacy-toggle-btn',
 }: PrivacyToggleProps) {
-  const { isHidden, togglePrivacy } = usePrivacy();
+  const { isHidden, togglePrivacy, canTogglePrivacy } = usePrivacy();
+
+  // Only valid email IDs can toggle the privacy menu. Do not show the button for other users.
+  if (!canTogglePrivacy) {
+    return null;
+  }
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();

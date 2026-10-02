@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useCallback, ReactNode, useSyncExternalStore } from 'react';
+import { useSession } from 'next-auth/react';
 
 export const PRIVACY_MASK = '••••••';
 const STORAGE_KEY = 'portfolio-privacy-mode';
@@ -28,6 +29,7 @@ function getServerSnapshot(): boolean {
 
 interface PrivacyContextValue {
   isHidden: boolean;
+  canTogglePrivacy: boolean;
   togglePrivacy: () => void;
   setHidden: (hidden: boolean) => void;
   maskAmount: (val: string | number, fallback?: string) => string;
@@ -35,10 +37,11 @@ interface PrivacyContextValue {
 }
 
 const PrivacyContext = createContext<PrivacyContextValue>({
-  isHidden: false,
+  isHidden: true,
+  canTogglePrivacy: false,
   togglePrivacy: () => {},
   setHidden: () => {},
-  maskAmount: (val) => String(val),
+  maskAmount: (val, fallback = PRIVACY_MASK) => fallback,
   maskText: (text) => text,
 });
 
@@ -129,9 +132,19 @@ export function maskInsightsData<T>(
 }
 
 export function PrivacyProvider({ children }: { children: ReactNode }) {
-  const isHidden = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const { data: session } = useSession();
+  const rawIsHidden = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+
+  // Only users with verified allowed emails can toggle privacy mode.
+  // For all other users (unauthorized emails or unauthenticated visitors),
+  // the default and permanent state is strictly locked to hidden privacy state.
+  const canTogglePrivacy = Boolean(session?.user?.canTogglePrivacy);
+
+  // If user cannot toggle privacy, isHidden is permanently locked to TRUE.
+  const isHidden = canTogglePrivacy ? rawIsHidden : true;
 
   const togglePrivacy = useCallback(() => {
+    if (!canTogglePrivacy) return;
     const current = getSnapshot();
     const next = !current;
     try {
@@ -140,16 +153,17 @@ export function PrivacyProvider({ children }: { children: ReactNode }) {
     } catch {
       // ignore
     }
-  }, []);
+  }, [canTogglePrivacy]);
 
   const setHidden = useCallback((hidden: boolean) => {
+    if (!canTogglePrivacy) return;
     try {
       localStorage.setItem(STORAGE_KEY, String(hidden));
       window.dispatchEvent(new Event('portfolio-privacy-change'));
     } catch {
       // ignore
     }
-  }, []);
+  }, [canTogglePrivacy]);
 
   const maskAmount = useCallback(
     (val: string | number, fallback: string = PRIVACY_MASK): string => {
@@ -172,6 +186,7 @@ export function PrivacyProvider({ children }: { children: ReactNode }) {
     <PrivacyContext.Provider
       value={{
         isHidden,
+        canTogglePrivacy,
         togglePrivacy,
         setHidden,
         maskAmount,

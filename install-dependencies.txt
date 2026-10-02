@@ -52,9 +52,7 @@ npm install -D typescript @types/node @types/react @types/react-dom tailwindcss 
 # AUTH_URL                       — App base URL (http://localhost:3000 for local)
 # GOOGLE_CLIENT_ID               — OAuth 2.0 client ID
 # GOOGLE_CLIENT_SECRET           — OAuth 2.0 client secret
-# ALLOWED_EMAILS                 — Comma-separated allowed login emails
-# LOGIN_USERNAME                 — Basic auth username
-# LOGIN_PASSWORD                 — Basic auth password
+# ALLOWED_EMAILS                 — Comma-separated valid email IDs with privacy toggle privileges
 # GEMINI_MODEL                   — Primary model(s) e.g. gemini-2.5-flash
 # FALLBACK_MODELS                — Fallback model(s) e.g. groq:llama-3.3-70b-versatile
 # CRON_SECRET                    — Secret for cron job authentication
