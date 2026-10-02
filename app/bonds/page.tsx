@@ -10,14 +10,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Topbar } from '@/components/layout/Topbar';
 import { usePortfolioData } from '@/hooks/usePortfolioData';
 import { format } from 'date-fns';
-import {
-  BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell,
-  PieChart, Pie, Legend,
-} from 'recharts';
 import { BondCashflowDialog } from '@/components/bonds/BondCashflowDialog';
 import { Button } from '@/components/ui/button';
 import { CalendarSearch } from 'lucide-react';
 import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
+
+import { BondAnalyticsOverview } from '@/components/bonds/BondAnalyticsOverview';
 
 function fmt(v: number, isHidden: boolean = false) {
   if (isHidden) return PRIVACY_MASK;
@@ -70,21 +68,8 @@ function getPayoutStyle(payoutType: string) {
   return PAYOUT_TYPE_COLORS['at maturity'];
 }
 
-const RADIAN = Math.PI / 180;
-function CustomLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) {
-  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-  const y = cy + radius * Math.sin(-midAngle * RADIAN);
-  if (percent < 0.05) return null;
-  return (
-    <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="text-xs font-semibold">
-      {`${(percent * 100).toFixed(1)}%`}
-    </text>
-  );
-}
-
 export default function BondsPage() {
-  const { bonds, bondLadder, creditRatingDistribution, bondMaturityEvents, isLoading, lastFetched, apiErrors } = usePortfolioData();
+  const { bonds, bondMaturityEvents, isLoading, lastFetched, apiErrors } = usePortfolioData();
   const { isHidden } = usePrivacy();
 
   const [selectedBond, setSelectedBond] = useState<{ isin: string; securityName: string; unitsHeld: number; faceValue: number } | null>(null);
@@ -128,58 +113,10 @@ export default function BondsPage() {
   return (
     <>
       <Topbar lastFetched={lastFetched} pageTitle="Bonds" apiErrors={apiErrors} />
-      <div className="p-3 sm:p-4 md:p-6 space-y-4 animate-fade-in-up">
+      <div className="p-3 sm:p-4 md:p-6 space-y-6 animate-fade-in-up">
 
-        {/* Bond Ladder + Rating Distribution */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Card className="border-border/50">
-            <CardHeader className="pb-5">
-              <CardTitle>Bond Maturity Ladder</CardTitle>
-              <CardDescription>Total value maturing per year</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? <Skeleton className="h-[220px] bg-white/5" /> : (
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={bondLadder} margin={{ left: 0, right: 8, top: 4, bottom: 4 }}>
-                    <XAxis dataKey="year" tick={{ fontSize: 11, fill: 'hsl(215 20% 55%)' }} axisLine={false} tickLine={false} />
-                    <YAxis tickFormatter={(v) => fmt(v, isHidden)} tick={{ fontSize: 10, fill: 'hsl(215 20% 55%)' }} axisLine={false} tickLine={false} />
-                    <Tooltip formatter={((v: number) => [fmt(v, isHidden), 'Maturing Value']) as never}
-                      contentStyle={{ background: 'hsl(222 47% 13%)', border: '1px solid hsl(222 47% 20%)', borderRadius: '8px', color: 'white', fontSize: 12 }} 
-                      itemStyle={{ color: 'white', fontWeight: 500 }} />
-                    <Bar dataKey="totalValue" radius={[4, 4, 0, 0]} maxBarSize={36} fill="hsl(142 71% 45%)" />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="border-border/50">
-            <CardHeader className="pb-5">
-              <CardTitle>Credit Rating Distribution</CardTitle>
-              <CardDescription>By total bond value</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? <Skeleton className="h-[220px] bg-white/5" /> : (
-                <ResponsiveContainer width="100%" height={220}>
-                  <PieChart>
-                    <Pie stroke="none" data={creditRatingDistribution} dataKey="totalValue" nameKey="rating"
-                      cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={2}
-                      labelLine={false} label={CustomLabel as never}>
-                      {creditRatingDistribution.map((entry, i) => (
-                        <Cell key={i} fill={getRatingColor(entry.rating)} stroke="transparent" />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={((v: number, name: string) => [fmt(v, isHidden), name]) as never}
-                      contentStyle={{ background: 'hsl(222 47% 13%)', border: '1px solid hsl(222 47% 20%)', borderRadius: '8px', color: 'white', fontSize: 12 }} 
-                      itemStyle={{ color: 'white', fontWeight: 500 }} />
-                    <Legend iconType="circle" iconSize={8}
-                      formatter={(value, entry: any) => <span style={{ color: entry.color || 'hsl(215 20% 65%)', fontSize: 11, fontWeight: 500 }}>{value}</span>} />
-                  </PieChart>
-                </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+        {/* Bond Analytics: 4 Purple KPI Cards + 4 Analytics Charts in 2x2 Grid */}
+        <BondAnalyticsOverview bonds={bonds} isLoading={isLoading} />
 
         {/* Upcoming maturities */}
         <Card className="border-border/50">

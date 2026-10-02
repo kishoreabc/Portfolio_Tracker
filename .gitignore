@@ -61,3 +61,4 @@ scratch.ts
 
 skills-lock.json
 .agents
+.cache/

@@ -122,14 +122,24 @@ export function portfolioInputToSnapshot(input: PortfolioInput): PortfolioSnapsh
       todaysChangePct: 0,
     },
     allocation: {
-      assetAllocation: input.assetAllocation.map((a) => ({ label: a.label, value: 0, percent: a.percent })),
-      sectorAllocation: input.sectorAllocation.map((s) => ({
-        sector: s.sector,
-        equityValue: 0,
-        bondValue: 0,
-        totalValue: 0,
-        percent: s.percent,
-      })),
+      assetAllocation: (input.assetAllocation || []).map((a) => {
+        const normPct = a.percent > 1 ? a.percent / 100 : a.percent;
+        return {
+          label: a.label,
+          value: Math.round(normPct * (input.netWorth || 0)),
+          percent: normPct,
+        };
+      }),
+      sectorAllocation: (input.sectorAllocation || []).map((s) => {
+        const normPct = s.percent > 1 ? s.percent / 100 : s.percent;
+        return {
+          sector: s.sector,
+          equityValue: 0,
+          bondValue: 0,
+          totalValue: 0,
+          percent: normPct,
+        };
+      }),
     },
     concentration: {
       top5Holdings: input.topEquity.slice(0, 5).map((e) => ({
@@ -364,8 +374,23 @@ export async function buildAIInsightsV2(
     us10y: market.us10y ? { price: market.us10y.price, changePct: market.us10y.changePct || 0 } : undefined,
   });
 
-  const equityWeightPct = portfolio.aggregates.netWorth > 0 ? (portfolio.aggregates.equityTotal / portfolio.aggregates.netWorth) * 100 : 0;
-  const bondWeightPct = portfolio.aggregates.netWorth > 0 ? (portfolio.aggregates.bondTotal / portfolio.aggregates.netWorth) * 100 : 0;
+  const equityAsset = portfolio.allocation.assetAllocation.find((a) => a.label.toLowerCase() === 'equity');
+  const bondAsset = portfolio.allocation.assetAllocation.find((a) => ['bond', 'bonds', 'fixed income'].includes(a.label.toLowerCase()));
+  const goldAsset = portfolio.allocation.assetAllocation.find((a) =>
+    ['gold', 'precious metal', 'commodity', 'commodities'].some((k) => a.label.toLowerCase().includes(k))
+  );
+
+  const equityWeightPct = equityAsset
+    ? equityAsset.percent * 100
+    : portfolio.aggregates.netWorth > 0 ? (portfolio.aggregates.equityTotal / portfolio.aggregates.netWorth) * 100 : 0;
+
+  const bondWeightPct = bondAsset
+    ? bondAsset.percent * 100
+    : portfolio.aggregates.netWorth > 0 ? (portfolio.aggregates.bondTotal / portfolio.aggregates.netWorth) * 100 : 0;
+
+  const goldWeightPct = goldAsset
+    ? goldAsset.percent * 100
+    : 0;
   const itPharmaWeight = input.sectorAllocation
     .filter((s) => ['information technology', 'it', 'tech', 'pharmaceuticals', 'pharma'].some((k) => s.sector.toLowerCase().includes(k)))
     .reduce((sum, s) => sum + s.percent * 100, 0);
@@ -728,7 +753,9 @@ export async function buildAIInsightsV2(
 
   const allocationCommentary = synthesizerOut?.allocationCommentary ||
     unifiedAnalystOut?.allocationCommentary ||
-    `Equity represents ${equityWeightPct.toFixed(1)}% and Fixed Income represents ${bondWeightPct.toFixed(1)}% of net worth.`;
+    (goldWeightPct > 0
+      ? `Equity represents ${equityWeightPct.toFixed(1)}%, Fixed Income represents ${bondWeightPct.toFixed(1)}%, and Gold represents ${goldWeightPct.toFixed(1)}% of net worth.`
+      : `Equity represents ${equityWeightPct.toFixed(1)}% and Fixed Income represents ${bondWeightPct.toFixed(1)}% of net worth.`);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // STEP 10: Response Assembly
@@ -745,9 +772,9 @@ export async function buildAIInsightsV2(
     allocation: {
       equity: Math.round(equityWeightPct * 10) / 10,
       bonds: Math.round(bondWeightPct * 10) / 10,
-      gold: 0,
+      gold: Math.round(goldWeightPct * 10) / 10,
       cash: 0,
-      other: Math.round(Math.max(0, 100 - equityWeightPct - bondWeightPct) * 10) / 10,
+      other: Math.round(Math.max(0, 100 - equityWeightPct - bondWeightPct - goldWeightPct) * 10) / 10,
       commentary: allocationCommentary,
     },
     opportunities: (unifiedAnalystOut?.opportunities && unifiedAnalystOut.opportunities.length > 0)
@@ -799,15 +826,31 @@ export async function buildAIInsightsV2(
       net: input.totalInvestment - input.totalExpenses,
       summary: 'Consistent personal investment rate.',
     },
-    recommendations: (unifiedAnalystOut?.priorityActions || []).map((p: any) => ({
-      title: p.title,
-      action: p.potentialConsideration || p.actionable || 'Monitor allocation',
-      rationale: `${p.observation} — ${p.interpretation}`,
-      priority: p.priority,
-      evidence: p.monitorCondition,
-      timeframe: p.priority === 'High' ? 'Immediate' : 'Next 30 days',
-      category: p.category,
-    })),
+    recommendations: (unifiedAnalystOut?.priorityActions || []).map((p: any) => {
+      let title = p.title;
+      let action = p.potentialConsideration || p.actionable || 'Monitor allocation';
+      let rationale = `${p.observation} — ${p.interpretation}`;
+
+      if (goldWeightPct >= 4 && (
+        /add\s+(?:inflation\s+)?hedge/i.test(title) ||
+        /allocate.*(?:gold|inflation-linked)/i.test(action) ||
+        /buy\s+gold/i.test(action)
+      )) {
+        title = 'Maintain Existing Inflation Hedge';
+        action = `Hold current ${goldWeightPct.toFixed(1)}% gold allocation as an inflation and currency hedge against macro pressures.`;
+        rationale = `Macro environment signals inflation risks (oil at $${market.brentCrude?.price?.toFixed(1) || '100+'}/bbl, INR depreciation). Existing ${goldWeightPct.toFixed(1)}% gold allocation provides valuable portfolio insulation without requiring additional capital commitment.`;
+      }
+
+      return {
+        title,
+        action,
+        rationale,
+        priority: p.priority,
+        evidence: p.monitorCondition,
+        timeframe: p.priority === 'High' ? 'Immediate' : 'Next 30 days',
+        category: p.category,
+      };
+    }),
     summary: executiveSummary,
     diversification: {
       score: portfolio.concentration.diversificationScore,
@@ -958,7 +1001,9 @@ export async function buildAIInsightsV2(
         weight: l.allocationPercent,
         type: 'loss',
       })),
-      interpretation: `Portfolio allocation: ${equityWeightPct.toFixed(1)}% equity, ${bondWeightPct.toFixed(1)}% fixed income.`,
+      interpretation: goldWeightPct > 0
+        ? `Portfolio allocation: ${equityWeightPct.toFixed(1)}% equity, ${bondWeightPct.toFixed(1)}% fixed income, ${goldWeightPct.toFixed(1)}% gold.`
+        : `Portfolio allocation: ${equityWeightPct.toFixed(1)}% equity, ${bondWeightPct.toFixed(1)}% fixed income.`,
       assetAllocationSummary: portfolio.allocation.assetAllocation.map((a) => ({ asset: a.label, percentage: Math.round(a.percent * 1000) / 10 })),
       sectorAllocationSummary: portfolio.allocation.sectorAllocation.slice(0, 6).map((s) => ({ sector: s.sector, percentage: Math.round(s.percent * 1000) / 10 })),
     },

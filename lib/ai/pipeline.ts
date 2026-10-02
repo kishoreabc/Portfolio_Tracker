@@ -1198,9 +1198,13 @@ Return JSON:
   }
 
   // Calculate percentages from portfolio inputs
+  const goldAsset = state.input.assetAllocation?.find((a) =>
+    ['gold', 'precious metal', 'commodity', 'commodities'].some((k) => a.label.toLowerCase().includes(k))
+  );
+  const goldPct = goldAsset ? (goldAsset.percent > 1 ? goldAsset.percent : goldAsset.percent * 100) : 0;
   const equityPct = state.input.netWorth > 0 ? (state.input.equityTotal / state.input.netWorth) * 100 : 0;
   const bondPct = state.input.netWorth > 0 ? (state.input.bondTotal / state.input.netWorth) * 100 : 0;
-  const otherPct = Math.max(0, 100 - equityPct - bondPct);
+  const otherPct = Math.max(0, 100 - equityPct - bondPct - goldPct);
 
   const fallbackSummary = `This portfolio of ₹${(state.input.netWorth / 1e5).toFixed(2)}L demonstrates disciplined regular savings with an asset allocation of ${Math.round(equityPct)}% equities and ${Math.round(bondPct)}% fixed income. ${state.scoringResult.summary} Under the prevailing ${macro.marketStatus?.toLowerCase() || 'volatile'} macroeconomic environment, performance remains sensitive to interest rate policy and sector adjustments. ${strategy.longTermStrategy ? strategy.longTermStrategy.split('. ').slice(0, 2).join('. ') + '.' : 'Strategic priorities emphasize pruning fragmented equity positions and re-anchoring corporate debt into sovereign or AAA-rated instruments for optimal compounding stability.'}`;
 
@@ -1778,7 +1782,7 @@ Return JSON:
     allocation: {
       equity: Math.round(equityPct * 10) / 10,
       bonds: Math.round(bondPct * 10) / 10,
-      gold: 0,
+      gold: Math.round(goldPct * 10) / 10,
       cash: 0,
       other: Math.round(otherPct * 10) / 10,
       commentary: finalAllocationCommentary,

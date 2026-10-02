@@ -67,10 +67,15 @@ export async function runSynthesizer(input: SynthesizerInput): Promise<Synthesiz
     ? Math.round((portfolio.aggregates.bondTotal / portfolio.aggregates.netWorth) * 100)
     : 0;
 
+  const allocDetails = (portfolio.allocation.assetAllocation || []).length > 0
+    ? portfolio.allocation.assetAllocation.map((a) => `${(a.percent * 100).toFixed(1)}% ${a.label}`).join(', ')
+    : `${equityPct}% Equity, ${bondPct}% Fixed Income`;
+
   const system = `You are a SEBI-registered Chief Investment Officer writing an executive portfolio intelligence report.
 You receive synthesized findings from multiple specialist agents, deterministic cross-factor calculations, and a cross-examiner's quality assessment.
 Write a professional, comprehensive executive summary with evidence-backed insights.
 Explicitly address any CONFLICTING SIGNALS (e.g. strong fundamentals vs deteriorating technical breadth) and explain why that tension matters.
+Respect existing asset classes: Acknowledge any existing Gold or commodity hedges in the portfolio allocation; do not propose adding a gold hedge if one already exists.
 Do NOT include placeholder brackets or template text.
 Strict Output Budget: Provide exactly 3 to 5 key findings.
 This report will be presented directly to the investor.
@@ -78,7 +83,7 @@ Always respond with JSON only.`;
 
   const prompt = `PORTFOLIO OVERVIEW:
 Net Worth: ₹${(portfolio.aggregates.netWorth / 1e5).toFixed(2)}L
-Allocation: ${equityPct}% Equity, ${bondPct}% Fixed Income
+Allocation: ${allocDetails}
 Holdings: ${portfolio.holdings.equity.length} stocks, ${portfolio.holdings.bonds.length} bonds
 
 COMPOSITE SCORES:

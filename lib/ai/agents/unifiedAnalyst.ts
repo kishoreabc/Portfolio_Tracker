@@ -56,6 +56,10 @@ CRITICAL DIRECTIVES:
    - REVIEW: Fundamental deterioration or broken thesis.
    - INVALIDATED: Original investment thesis demonstrably violated.
 8. Output Budget & Conciseness: Keep each field focused and punchy (1-2 sentences per field, not lengthy essays).
+9. Respect Existing Asset Allocation & Hedges:
+   - Carefully review the VERIFIED ASSET ALLOCATION and COMMODITY & INFLATION HEDGE HOLDINGS.
+   - If the portfolio already holds Gold or Commodities (>= 3-5%), DO NOT recommend initiating or adding a new 5% gold hedge.
+   - Instead, explicitly acknowledge the existing hedge (e.g. "Gold/Commodities already comprise X% of net worth") and evaluate whether to maintain, trim, or rebalance it relative to current macro inflationary pressures.
 
 Format strictly as JSON adhering to the specified schema.
 `;
@@ -107,6 +111,28 @@ export async function runUnifiedAnalyst(input: UnifiedAnalystInput): Promise<Uni
     evidenceIds: cf.evidenceIds,
   }));
 
+  const goldHoldings = portfolio.holdings.equity.filter((h) =>
+    ['gold', 'silver', 'precious metal', 'commodity', 'commodities', 'bullion'].some((kw) =>
+      (h.sector || '').toLowerCase().includes(kw) ||
+      (h.name || '').toLowerCase().includes(kw) ||
+      (h.ticker || '').toLowerCase().includes(kw)
+    )
+  );
+
+  const goldHoldingsSummary = goldHoldings.map((h) => {
+    const weight = (h.allocationPercent && h.allocationPercent > 0)
+      ? h.allocationPercent
+      : (portfolio.aggregates.netWorth > 0 ? (h.currentValue / portfolio.aggregates.netWorth) * 100 : 0);
+    return `- ${h.ticker} (${h.name}): ${weight.toFixed(1)}% of portfolio (₹${Math.round(h.currentValue).toLocaleString('en-IN')})`;
+  }).join('\n');
+
+  const assetAllocationSummary = (portfolio.allocation.assetAllocation || []).length > 0
+    ? portfolio.allocation.assetAllocation.map((a) => {
+        const valStr = a.value > 0 ? ` (₹${Math.round(a.value).toLocaleString('en-IN')})` : '';
+        return `- ${a.label}: ${(a.percent * 100).toFixed(1)}%${valStr}`;
+      }).join('\n')
+    : `- Equity: ₹${(portfolio.aggregates.equityTotal / 1e5).toFixed(2)}L\n- Fixed Income: ₹${(portfolio.aggregates.bondTotal / 1e5).toFixed(2)}L`;
+
   const userPrompt = `
 === VERIFIED PORTFOLIO DATA (DETERMINISTIC GROUND TRUTH) ===
 Net Worth: ₹${(portfolio.aggregates.netWorth / 1e5).toFixed(2)} Lakhs
@@ -114,6 +140,10 @@ Equity Holdings: ${portfolio.aggregates.equityCount} (₹${(portfolio.aggregates
 Bond Holdings: ${portfolio.aggregates.bondCount} (₹${(portfolio.aggregates.bondTotal / 1e5).toFixed(2)}L)
 Top 5 Holdings Concentration: ${(portfolio.concentration.top5Percent * 100).toFixed(1)}% (HHI: ${portfolio.concentration.herfindahlIndex.toFixed(3)})
 Diversification Score: ${portfolio.concentration.diversificationScore}/100
+
+=== VERIFIED ASSET ALLOCATION (GROUND TRUTH) ===
+${assetAllocationSummary}
+${goldHoldingsSummary ? `\n=== COMMODITY & INFLATION HEDGE HOLDINGS ===\n${goldHoldingsSummary}\n` : ''}
 
 === VERIFIED ANALYTICS ENGINES ===
 - Fundamentals: Score ${fundamental.portfolioScore}/100, Weighted P/E ${fundamental.weightedPE}x (Earnings Yield Spread: ${fundamental.earningsYieldSpreadBps} bps)

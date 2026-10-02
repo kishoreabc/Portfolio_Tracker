@@ -61,7 +61,7 @@ Your role is PORTFOLIO-LEVEL strategy — not individual stock analysis.
 Focus on:
 1. Portfolio-level implications: what matters given ALL the evidence together
 2. Priority issues requiring action (ranked by urgency)
-3. Actionable opportunities (Nifty index SIPs, TMFs, SGBs, tax harvesting)
+3. Actionable opportunities (Nifty index SIPs, TMFs, SGBs, tax harvesting). If the portfolio already holds Gold or Commodities (>= 3-5%), DO NOT recommend initiating a new gold position; instead evaluate maintaining or rebalancing the existing hedge.
 4. Risks with specific mitigations
 5. Investment thesis status for each holding
 6. Tax efficiency using Indian tax framework (LTCG ${(taxRules.equityLtcgRate * 100).toFixed(1)}%, STCG ${(taxRules.equityStcgRate * 100).toFixed(0)}%, exemption ₹${(taxRules.equityLtcgExemption / 1000).toFixed(0)}K)
@@ -69,8 +69,13 @@ Focus on:
 You must provide the "whatWouldChangeTheView" for your overall strategy assessment.
 Always respond with JSON only.`;
 
+  const assetAllocationSummary = (portfolio.allocation.assetAllocation || []).length > 0
+    ? portfolio.allocation.assetAllocation.map((a) => `${a.label}: ${(a.percent * 100).toFixed(1)}%`).join(', ')
+    : `Equity: ₹${(portfolio.aggregates.equityTotal / 1e5).toFixed(2)}L, Bonds: ₹${(portfolio.aggregates.bondTotal / 1e5).toFixed(2)}L`;
+
   const prompt = `PORTFOLIO CONTEXT:
 Net Worth: ₹${(portfolio.aggregates.netWorth / 1e5).toFixed(2)}L
+Asset Allocation: ${assetAllocationSummary}
 Equity: ₹${(portfolio.aggregates.equityTotal / 1e5).toFixed(2)}L (${portfolio.holdings.equity.length} holdings)
 Bonds: ₹${(portfolio.aggregates.bondTotal / 1e5).toFixed(2)}L (${portfolio.holdings.bonds.length} holdings)
 Cash Flow: Monthly avg ₹${(portfolio.cashFlow.monthlyAvgInvestment / 1000).toFixed(1)}K
