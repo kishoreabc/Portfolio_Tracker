@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowUpDown } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -41,6 +41,33 @@ const RATING_COLORS: Record<string, string> = {
   NR: 'hsla(72, 20%, 75%, 1.00)', // Brighter gray/silver for better visibility on dark background
 };
 
+const RATING_TIER_ORDER: Record<string, number> = {
+  AAA: 14,
+  'AA+': 13,
+  AA: 12,
+  'AA-': 11,
+  'A+': 10,
+  A: 9,
+  'A-': 8,
+  'BBB+': 7,
+  BBB: 6,
+  'BBB-': 5,
+  'BB+': 4,
+  BB: 3,
+  'BB-': 2,
+  B: 1,
+  NR: 0,
+};
+
+function getRatingRank(rating?: string): number {
+  if (!rating) return -1;
+  const upper = rating.toUpperCase().trim();
+  for (const [key, rank] of Object.entries(RATING_TIER_ORDER)) {
+    if (upper.includes(key)) return rank;
+  }
+  return -1;
+}
+
 function getRatingColor(rating: string, fallback = 'hsl(215 20% 45%)') {
   if (!rating) return fallback;
   const parts = rating.split(' ');
@@ -68,6 +95,20 @@ function getPayoutStyle(payoutType: string) {
   return PAYOUT_TYPE_COLORS['at maturity'];
 }
 
+const BOND_COLUMNS = [
+  { label: 'Security', key: 'securityName' },
+  { label: 'ISIN', key: 'isin' },
+  { label: 'Issuer', key: 'issuer' },
+  { label: 'Rating', key: 'creditRating' },
+  { label: 'Maturity', key: 'maturityDate' },
+  { label: 'Payout Type', key: 'payoutType' },
+  { label: 'Upcoming Interest', key: 'upcomingInterest' },
+  { label: 'Value', key: 'totalValue' },
+  { label: 'YTM', key: 'ytm' },
+  { label: 'Coupon', key: 'couponRate' },
+  { label: 'Cashflow', key: null },
+] as const;
+
 export default function BondsPage() {
   const { bonds, bondMaturityEvents, isLoading, lastFetched, apiErrors } = usePortfolioData();
   const { isHidden } = usePrivacy();
@@ -84,31 +125,77 @@ export default function BondsPage() {
     return map;
   }, [bondMaturityEvents]);
 
-  const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' }>({ key: '', direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({
+    key: 'maturityDate',
+    direction: 'asc',
+  });
 
   const handleSort = (key: string) => {
     let direction: 'asc' | 'desc' = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
+    if (sortConfig.key === key) {
+      direction = sortConfig.direction === 'asc' ? 'desc' : 'asc';
+    } else {
+      if (['totalValue', 'ytm', 'couponRate', 'upcomingInterest'].includes(key)) {
+        direction = 'desc';
+      }
+    }
     setSortConfig({ key, direction });
   };
 
   const sortedBonds = useMemo(() => {
-    let result = [...bonds];
-    if (sortConfig.key) {
-      result.sort((a: any, b: any) => {
-        if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === 'asc' ? 1 : -1;
-        return 0;
-      });
-    } else {
-      result.sort((a, b) => (a.maturityDate ?? '').localeCompare(b.maturityDate ?? ''));
+    const result = [...bonds];
+    const { key, direction } = sortConfig;
+    if (!key) {
+      return result.sort((a, b) => (a.maturityDate ?? '').localeCompare(b.maturityDate ?? ''));
     }
-    return result;
-  }, [bonds, sortConfig]);
 
-  const SortIcon = ({ columnKey }: { columnKey: string }) => (
-    <ArrowUpDown className={`inline-block ml-1 w-3 h-3 transition-colors ${sortConfig.key === columnKey ? 'text-foreground' : 'text-muted-foreground/50'}`} />
-  );
+    result.sort((a, b) => {
+      let valA: any;
+      let valB: any;
+
+      if (key === 'upcomingInterest') {
+        valA = nextPaymentMap.get(a.isin)?.amount ?? 0;
+        valB = nextPaymentMap.get(b.isin)?.amount ?? 0;
+      } else if (key === 'creditRating') {
+        valA = getRatingRank(a.creditRating);
+        valB = getRatingRank(b.creditRating);
+      } else if (key === 'maturityDate') {
+        valA = a.maturityDate ? new Date(a.maturityDate).getTime() : 0;
+        valB = b.maturityDate ? new Date(b.maturityDate).getTime() : 0;
+      } else {
+        valA = (a as any)[key];
+        valB = (b as any)[key];
+      }
+
+      if (valA == null && valB == null) return 0;
+      if (valA == null) return 1;
+      if (valB == null) return -1;
+
+      if (typeof valA === 'string' && typeof valB === 'string') {
+        const cmp = valA.localeCompare(valB, undefined, { sensitivity: 'base', numeric: true });
+        return direction === 'asc' ? cmp : -cmp;
+      }
+
+      if (valA < valB) return direction === 'asc' ? -1 : 1;
+      if (valA > valB) return direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return result;
+  }, [bonds, sortConfig, nextPaymentMap]);
+
+  const SortIcon = ({ columnKey }: { columnKey: string }) => {
+    if (sortConfig.key !== columnKey) {
+      return (
+        <ArrowUpDown className="inline-block ml-1.5 w-3 h-3 text-muted-foreground/35 group-hover:text-muted-foreground/80 transition-colors" />
+      );
+    }
+    return sortConfig.direction === 'asc' ? (
+      <ArrowUp className="inline-block ml-1.5 w-3 h-3 text-primary font-bold transition-transform" />
+    ) : (
+      <ArrowDown className="inline-block ml-1.5 w-3 h-3 text-primary font-bold transition-transform" />
+    );
+  };
 
   return (
     <>
@@ -120,16 +207,41 @@ export default function BondsPage() {
 
         {/* Upcoming maturities */}
         <Card className="border-border/50">
-          <CardHeader className="pb-5">
-            <CardTitle>Upcoming Maturities</CardTitle>
+          <CardHeader className="pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <CardTitle>Upcoming Maturities</CardTitle>
+              <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                {bonds.length} holdings • Click column headers to sort by security, rating, maturity, yield, or value
+              </CardDescription>
+            </div>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="border-border/50 hover:bg-transparent">
-                  {['Security', 'ISIN', 'Issuer', 'Rating', 'Maturity', 'Payout Type', 'Upcoming Interest', 'Value', 'YTM', 'Coupon', 'Cashflow'].map(h => (
-                    <TableHead key={h} className="text-xs font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">{h}</TableHead>
+                  {BOND_COLUMNS.map((col) => (
+                    <TableHead
+                      key={col.label}
+                      className={`text-xs font-semibold uppercase tracking-wider whitespace-nowrap select-none transition-colors ${
+                        col.key
+                          ? 'hover:text-foreground cursor-pointer group text-muted-foreground'
+                          : 'text-muted-foreground cursor-default'
+                      } ${sortConfig.key === col.key ? 'text-foreground font-bold' : ''}`}
+                      onClick={() => col.key && handleSort(col.key)}
+                      aria-sort={
+                        col.key && sortConfig.key === col.key
+                          ? sortConfig.direction === 'asc'
+                            ? 'ascending'
+                            : 'descending'
+                          : undefined
+                      }
+                    >
+                      <span className="inline-flex items-center">
+                        {col.label}
+                        {col.key && <SortIcon columnKey={col.key} />}
+                      </span>
+                    </TableHead>
                   ))}
                 </TableRow>
               </TableHeader>
