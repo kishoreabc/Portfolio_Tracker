@@ -182,15 +182,59 @@ export async function syncNews(
   }
 
   // ── 2. Deduplicate ─────────────────────────────────────────────────────────
-  const newItems: typeof items = [];
+  // A. In-batch bilingual filtering:
+  // If the RSS feed contains both English (/premium-en/) and Tamil (/premium-ta/) versions
+  // of the same article, keep the English version and skip the Tamil duplicate to save AI calls.
+  const enPremiumTimestamps = new Set<string>();
   for (const item of items) {
+    if (item.link?.includes('/premium-en/') && item.pubDate) {
+      try {
+        enPremiumTimestamps.add(new Date(item.pubDate).toISOString());
+      } catch {}
+    }
+  }
+
+  const filteredItems: typeof items = [];
+  for (const item of items) {
+    if (item.link?.includes('/premium-ta/') && item.pubDate) {
+      try {
+        const itemIso = new Date(item.pubDate).toISOString();
+        if (enPremiumTimestamps.has(itemIso)) {
+          console.log(`[news/sync] Discarded in-feed Tamil duplicate of English article: ${item.title}`);
+          result.skipped++;
+          continue;
+        }
+      } catch {}
+    }
+    filteredItems.push(item);
+  }
+
+  // B. Database existence & counterpart check:
+  const newItems: typeof items = [];
+  const seenSourceIds = new Set<string>();
+
+  for (const item of filteredItems) {
     const sourceId = item.guid || item.link;
+    if (seenSourceIds.has(sourceId)) {
+      result.skipped++;
+      continue;
+    }
+    seenSourceIds.add(sourceId);
+
     const exists = await newsRepo.exists(sourceId);
     if (exists) {
       result.skipped++;
-    } else {
-      newItems.push(item);
+      continue;
     }
+
+    const counterpartExists = await newsRepo.existsCounterpart(item);
+    if (counterpartExists) {
+      console.log(`[news/sync] Skipped article because English counterpart already exists in DB: ${item.title}`);
+      result.skipped++;
+      continue;
+    }
+
+    newItems.push(item);
   }
 
   console.log(`[news/sync] ${newItems.length} new articles to process, ${result.skipped} skipped`);

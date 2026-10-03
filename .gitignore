@@ -130,10 +130,11 @@ tmp/
 *.7z
 *.rar
 *.iso
-
 # ------------------------------------------------------------------------------
 # Antigravity & Agent Tooling Customizations
 # ------------------------------------------------------------------------------
 .agents
 .agents/
 skills-lock.json
+scratch
+supabase/migrations

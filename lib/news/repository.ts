@@ -44,6 +44,42 @@ export class NewsRepository {
     return !!data;
   }
 
+  /**
+   * Check if a bilingual counterpart article already exists in the database.
+   * Prevents re-importing and re-processing Tamil duplicates (/premium-ta/)
+   * when an English version (/premium-en/) with the same publication timestamp is already present.
+   */
+  async existsCounterpart(item: { link: string; pubDate: string | null }): Promise<boolean> {
+    if (!item.link || !item.pubDate) return false;
+
+    // Check if this is a Tamil premium article whose English counterpart might already exist
+    const isTamilPremium = item.link.includes('/premium-ta/');
+    if (!isTamilPremium) return false;
+
+    try {
+      const pubDate = new Date(item.pubDate);
+      const windowStart = new Date(pubDate.getTime() - 30 * 60 * 1000).toISOString();
+      const windowEnd = new Date(pubDate.getTime() + 30 * 60 * 1000).toISOString();
+
+      const { data, error } = await supabase
+        .from('news')
+        .select('id')
+        .or('category.eq.Premium,source_url.ilike.%/premium-en/%')
+        .gte('published_at', windowStart)
+        .lte('published_at', windowEnd)
+        .limit(1);
+
+      if (error) {
+        console.warn(`[news/repo] existsCounterpart check failed: ${error.message}`);
+        return false;
+      }
+
+      return Boolean(data && data.length > 0);
+    } catch {
+      return false;
+    }
+  }
+
   /** Insert a new article. Returns the inserted row ID. */
   async insert(article: ProcessedArticle): Promise<number> {
     const { data, error } = await supabase
@@ -148,8 +184,23 @@ export class NewsRepository {
     const { data, error, count } = await query;
     if (error) throw new Error(`DB getArticles failed: ${error.message}`);
 
+    const rawArticles = (data as DbNewsRow[]).map(mapRow);
+    const seenPremiumTimestamps = new Set<string>();
+    const deduplicatedArticles: NewsArticle[] = [];
+
+    for (const art of rawArticles) {
+      if (art.category === 'Premium' && art.publishedAt) {
+        if (seenPremiumTimestamps.has(art.publishedAt)) {
+          // If we already saw a counterpart article at this exact publication timestamp, skip duplicate
+          continue;
+        }
+        seenPremiumTimestamps.add(art.publishedAt);
+      }
+      deduplicatedArticles.push(art);
+    }
+
     return {
-      articles: (data as DbNewsRow[]).map(mapRow),
+      articles: deduplicatedArticles,
       total: count ?? 0,
     };
   }
