@@ -286,7 +286,7 @@ export default function ReportsPage() {
   const handleExportPdf = async (type: string) => {
     setExporting({ id: type, format: 'pdf' });
     try {
-      let payload: any = { reportType: type };
+      const payload: any = { reportType: type };
 
       if (type === 'ai') {
         let aiInsights = null;

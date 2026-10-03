@@ -15,16 +15,16 @@
  * 7. Traceable Provenance & Claim Coverage: Factual claims validated against deterministic math.
  */
 
-import type { AIInsightsResponse, AnalysisMetadata, IntegratedView, MatrixStock } from '@/types/insights';
+import type { AIInsightsResponse, IntegratedView, MatrixStock } from '@/types/insights';
 import type { AgentActivityEvent, AgentId, ActivityType, AgentStatus } from '@/types/agent-activity';
 import type { PortfolioInput } from './pipeline';
-import type { PortfolioSnapshot, MarketSnapshot, NewsSnapshot } from '@/types/portfolio-snapshot';
+import type { PortfolioSnapshot } from '@/types/portfolio-snapshot';
 import type { ScoringWeights } from '@/types/insights';
-import { createEvidenceCollection, buildEvidenceGraph } from '@/types/evidence';
+import { createEvidenceCollection } from '@/types/evidence';
 import { computeEngineConfidence, type EngineConfidence } from '@/types/engine-output';
 
 // Data Foundation
-import { checkCanAnalyze, evaluateStaleness, buildAgentDataValidityContext } from '@/lib/analytics/stalenessPolicy';
+import { checkCanAnalyze, evaluateStaleness } from '@/lib/analytics/stalenessPolicy';
 import { fetchMarketSnapshot } from '@/lib/data/market';
 import { fetchNewsSnapshot } from '@/lib/data/news';
 import { evaluateDataQuality } from '@/lib/analytics/dataQuality';
@@ -61,9 +61,6 @@ import { runSynthesizer } from '@/lib/ai/agents/synthesizer';
 // Config
 import { getTaxRules } from '@/lib/config/taxRules';
 import { NIFTY_50_LONG_TERM_PE } from '@/lib/config/marketBenchmarks';
-
-// In-flight pipeline runs registry for analysis idempotency (Prompt #23)
-const inFlightPipelineRuns = new Map<string, Promise<AIInsightsResponse>>();
 
 export interface PipelineV2Options {
   mode?: 'quick' | 'deep' | 'no_ai' | 'auto';
@@ -312,7 +309,7 @@ export async function buildAIInsightsV2(
   // ═══════════════════════════════════════════════════════════════════════════
 
   const dataQuality = evaluateDataQuality(portfolio, market, news);
-  const stalenessReport = evaluateStaleness(market, news);
+  const _stalenessReport = evaluateStaleness(market, news);
   const clusteredNews = clusterNewsArticles(news.articles, sectors, holdingTickers, evidence);
 
   emit('portfolio_analyst', 'milestone', `Data quality assessed: ${dataQuality.overall}`, {
@@ -367,7 +364,7 @@ export async function buildAIInsightsV2(
     history: historicalSnapshots,
   });
 
-  const macroTransmission = buildMacroTransmissionMap({
+  const _macroTransmission = buildMacroTransmissionMap({
     sectorAllocation: input.sectorAllocation.map((s) => ({ sector: s.sector, percent: s.percent })),
     brentCrude: market.brentCrude ? { price: market.brentCrude.price, changePct: market.brentCrude.changePct || 0 } : undefined,
     usdInr: market.usdInr ? { price: market.usdInr.price, changePct: market.usdInr.changePct || 0 } : undefined,
@@ -395,7 +392,7 @@ export async function buildAIInsightsV2(
     .filter((s) => ['information technology', 'it', 'tech', 'pharmaceuticals', 'pharma'].some((k) => s.sector.toLowerCase().includes(k)))
     .reduce((sum, s) => sum + s.percent * 100, 0);
 
-  const stressAttribution = attributeStressImpact({
+  const _stressAttribution = attributeStressImpact({
     stressResults: stressTests,
     equityWeightPct,
     bondWeightPct,

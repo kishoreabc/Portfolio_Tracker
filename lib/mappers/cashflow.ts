@@ -1,15 +1,9 @@
 import type { ParsedSheet } from '@/types/sheets';
 import type { Transaction, MonthlySummary, CashFlowStats } from '@/types/transactions';
-import { format, parseISO, isValid, getYear, getMonth } from 'date-fns';
+import { parseISO, isValid, getYear, getMonth } from 'date-fns';
 
 function parseDate(raw: string | null | undefined): Date | null {
   if (!raw) return null;
-  // Try DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD, DD-MMM-YYYY
-  const formats = [
-    /^(\d{2})\/(\d{2})\/(\d{4})$/, // DD/MM/YYYY
-    /^(\d{4})-(\d{2})-(\d{2})$/, // ISO
-    /^(\d{2})-([A-Za-z]{3})-(\d{4})$/, // DD-Mon-YYYY
-  ];
   const s = String(raw).trim();
 
   // Try ISO first

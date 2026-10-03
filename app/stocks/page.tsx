@@ -12,9 +12,7 @@ import { SectorAllocationChart } from '@/components/charts/SectorAllocationChart
 import { usePortfolioData } from '@/hooks/usePortfolioData';
 import { useStockModal } from '@/lib/stock-modal-context';
 import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
-import {
-  BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell,
-} from 'recharts';
+
 
 function fmt(v: number, isHidden: boolean = false) {
   if (isHidden) return PRIVACY_MASK;
@@ -52,7 +50,7 @@ export default function StocksPage() {
   );
 
   const filteredAndSorted = useMemo(() => {
-    let result = [...equity].filter((h) =>
+    const result = [...equity].filter((h) =>
       !search ||
       h.name.toLowerCase().includes(search.toLowerCase()) ||
       h.ticker.toLowerCase().includes(search.toLowerCase()) ||

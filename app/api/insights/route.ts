@@ -4,7 +4,7 @@ import { buildAIInsightsV2 } from '@/lib/ai/pipeline-v2';
 import type { PortfolioInput } from '@/lib/ai/pipeline';
 import type { AgentActivityEvent } from '@/types/agent-activity';
 import { checkRateLimit, rateLimitResponse } from '@/lib/server/rateLimiter';
-import { methodNotAllowed, privateNoStoreHeaders, unauthorizedResponse } from '@/lib/server/apiHelpers';
+import { privateNoStoreHeaders, unauthorizedResponse } from '@/lib/server/apiHelpers';
 
 // Cache: 15-minute window, isolated per user ID (Section 47)
 const userInsightCache = new Map<string, { prompt_hash: string; result: unknown; fetchedAt: number }>();

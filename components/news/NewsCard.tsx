@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ExternalLink, Briefcase } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import type { NewsArticle } from '@/types/news';
 import { NewsSentimentBadge } from './NewsSentimentBadge';
 import { NewsImpactBadge } from './NewsImpactBadge';

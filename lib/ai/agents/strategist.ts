@@ -36,7 +36,7 @@ interface StrategistInput {
 export async function runStrategistAgent(input: StrategistInput): Promise<StrategistOutput> {
   const {
     portfolio, fundamental, technical, macro,
-    risk, stress, crossFactors, taxRules, evidence,
+    risk, stress, crossFactors, taxRules, evidence: _evidence,
   } = input;
 
   const crossFactorSummary = crossFactors

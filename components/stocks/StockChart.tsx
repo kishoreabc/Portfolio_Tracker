@@ -56,7 +56,7 @@ export const StockChart = memo(function StockChart({
     const { createChart, ColorType, CrosshairMode, CandlestickSeries, AreaSeries, LineSeries } = await import('lightweight-charts');
 
     // Sort candles by time
-    let sorted = [...candles].sort((a, b) => a.time - b.time);
+    const sorted = [...candles].sort((a, b) => a.time - b.time);
 
     let topMargin = 0.1;
     if (chartType === 'candlestick' && sorted.length > 0) {
@@ -372,11 +372,17 @@ export const StockChart = memo(function StockChart({
     container.addEventListener('mousedown', handleMouseDown, { capture: true });
     window.addEventListener('mousemove', handleMouseMove, { capture: true });
     window.addEventListener('mouseup', handleMouseUp, { capture: true });
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
 
     return () => {
       container.removeEventListener('mousedown', handleMouseDown, { capture: true });
       window.removeEventListener('mousemove', handleMouseMove, { capture: true });
       window.removeEventListener('mouseup', handleMouseUp, { capture: true });
+      container.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
     };
   }, []);
 

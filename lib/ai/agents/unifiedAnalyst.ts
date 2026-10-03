@@ -70,7 +70,7 @@ export async function runUnifiedAnalyst(input: UnifiedAnalystInput): Promise<Uni
     fundamental,
     technical,
     macro,
-    risk,
+    risk: _risk,
     beta,
     bondRisk,
     tax,

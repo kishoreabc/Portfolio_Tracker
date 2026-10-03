@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { RefreshCw, Database } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -17,7 +17,7 @@ export function RefreshDatabaseButton() {
       // Invalidate and refetch all news queries
       await queryClient.invalidateQueries({ queryKey: ['news'] });
       setResult('Database synced');
-    } catch (err) {
+    } catch {
       setResult('Failed to sync');
     } finally {
       setIsRefreshing(false);

@@ -6,7 +6,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
@@ -14,9 +13,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 
-import { Calendar, CheckCircle2, Clock, AlertCircle, RefreshCw, Landmark, ArrowUpRight, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
-import type { NsdlCashFlowResponse, NsdlCashFlowItem } from '@/types/bonds';
-import { format, parseISO, isValid, isBefore, isAfter, startOfDay } from 'date-fns';
+import { CheckCircle2, Clock, AlertCircle, RefreshCw, Landmark, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import type { NsdlCashFlowResponse } from '@/types/bonds';
+import { format, parseISO, isValid, isBefore, startOfDay } from 'date-fns';
 import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
 
 interface BondCashflowDialogProps {
@@ -65,7 +64,7 @@ export function BondCashflowDialog({
   isin,
   securityName,
   unitsHeld = 0,
-  faceValue = 0,
+  faceValue: _faceValue = 0,
   open: controlledOpen,
   onOpenChange: setControlledOpen,
   trigger,
@@ -335,7 +334,7 @@ export function BondCashflowDialog({
             </div>
           ) : filteredSchedule.length === 0 ? (
             <div className="py-12 text-center text-muted-foreground text-xs">
-              No cashflow events found for filter "{filter}".
+              No cashflow events found for filter &quot;{filter}&quot;.
             </div>
           ) : (
             <Table wrapperClassName="h-[380px] overflow-y-auto pr-2 custom-scrollbar">

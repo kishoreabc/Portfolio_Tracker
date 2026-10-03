@@ -52,7 +52,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return session;
     },
-    async signIn({ user }) {
+    async signIn() {
       // Any authenticated user can log in
       return true;
     },

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import appLogo from '@/app/icon.png';
-import { Terminal, Shield, Code, Cpu, AlertCircle, ArrowLeft } from 'lucide-react';
+import { AlertCircle, ArrowLeft } from 'lucide-react';
 
 export const metadata = {
   title: 'Portfolio Dashboard API Reference & Endpoint Documentation',

@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Compass, Target, CheckCircle2 } from 'lucide-react';
+import { Compass, CheckCircle2 } from 'lucide-react';
 import type { LongTermStrategy } from '@/types/insights';
 
 export function LongTermStrategyCard({ data }: { data?: LongTermStrategy | string }) {

@@ -72,8 +72,8 @@ export function ValuationIntelligenceCard({ data, equity }: ValuationIntelligenc
     if (!sortKey) return holdingsList;
     return [...holdingsList].sort((a, b) => {
       const getSector = (h: any) => h.sectorPe ?? (typeof h.benchmarkPe === 'number' && h.benchmarkPe !== 22.8 ? h.benchmarkPe : undefined) ?? getSectorPE(undefined, h.symbol);
-      let valA: any = sortKey === 'sectorPe' ? getSector(a) : (a as any)[sortKey];
-      let valB: any = sortKey === 'sectorPe' ? getSector(b) : (b as any)[sortKey];
+      const valA: any = sortKey === 'sectorPe' ? getSector(a) : (a as any)[sortKey];
+      const valB: any = sortKey === 'sectorPe' ? getSector(b) : (b as any)[sortKey];
       if (valA == null && valB == null) return 0;
       if (valA == null) return 1;
       if (valB == null) return -1;

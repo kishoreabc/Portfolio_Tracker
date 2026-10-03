@@ -8,7 +8,7 @@ import { NewsFilters } from '@/components/news/NewsFilters';
 import { NewsList } from '@/components/news/NewsList';
 import { SyncButton } from '@/components/news/SyncButton';
 import { RefreshDatabaseButton } from '@/components/news/RefreshDatabaseButton';
-import { Newspaper, Database, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Database, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Topbar } from '@/components/layout/Topbar';
 import { useRouter, usePathname } from 'next/navigation';
 

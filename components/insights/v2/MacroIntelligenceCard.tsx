@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Globe, ArrowUpRight, ArrowDownRight, Compass, Flame, DollarSign, Percent, TrendingUp } from 'lucide-react';
+import { Globe, Flame, DollarSign, Percent } from 'lucide-react';
 import type { MacroIntelligence } from '@/types/insights';
 
 interface MacroIntelligenceCardProps {

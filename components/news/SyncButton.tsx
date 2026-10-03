@@ -15,7 +15,7 @@ export function SyncButton() {
       const data = await syncNews();
       setResult(`${data.newArticles} news updated`);
       setTimeout(() => setResult(null), 5000);
-    } catch (err) {
+    } catch {
       setResult('Failed to sync');
       setTimeout(() => setResult(null), 5000);
     }

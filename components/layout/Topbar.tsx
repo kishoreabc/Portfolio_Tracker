@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { RefreshCw, Clock, Wifi, WifiOff, ALargeSmall, Menu, XCircle, X, LogOut } from 'lucide-react';
+import { RefreshCw, Clock, Wifi, WifiOff, Menu, X, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import { useRefreshData } from '@/hooks/useRefreshData';

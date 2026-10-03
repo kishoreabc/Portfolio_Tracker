@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ShieldAlert, AlertCircle, AlertTriangle, Eye, ShieldCheck, Quote } from 'lucide-react';
+import { ShieldAlert, Eye, Quote } from 'lucide-react';
 import type { RiskIntelligence } from '@/types/insights';
 
 interface RiskIntelligenceCardProps {

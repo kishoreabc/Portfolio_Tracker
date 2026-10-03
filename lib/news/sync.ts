@@ -9,7 +9,6 @@ import { newsRepo } from './repository';
 import type { NewsSyncResult } from '@/types/news';
 import type { ProcessedArticle } from './types';
 
-const BATCH_SIZE = Number(process.env.NEWS_SYNC_BATCH_SIZE ?? '5');
 const MAX_CONCURRENCY = Number(process.env.MAX_NVIDIA_CONCURRENCY ?? '2');
 
 /**

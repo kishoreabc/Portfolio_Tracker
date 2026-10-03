@@ -14,7 +14,7 @@ interface Props {
   data: AssetClassSummary[];
 }
 
-function CustomOuterLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }: any) {
+function CustomOuterLabel({ cx, cy, midAngle, innerRadius: _innerRadius, outerRadius, percent, name }: any) {
   const radius = outerRadius * 1.25;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);

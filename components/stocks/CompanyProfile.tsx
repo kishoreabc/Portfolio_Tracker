@@ -1,7 +1,7 @@
 'use client';
 
 import { memo, useState } from 'react';
-import { ExternalLink, Globe, Users, MapPin, Building, ChevronDown, ChevronUp } from 'lucide-react';
+import { ExternalLink, Globe, Users, MapPin, ChevronDown, ChevronUp } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface CompanyProfileProps {

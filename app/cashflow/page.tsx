@@ -54,8 +54,8 @@ export default function CashFlowPage() {
   const sortedSummaries = useMemo(() => {
     if (!monthlySortKey) return [...summaries].reverse();
     return [...summaries].sort((a, b) => {
-      let valA = a[monthlySortKey];
-      let valB = b[monthlySortKey];
+      const valA = a[monthlySortKey];
+      const valB = b[monthlySortKey];
       if (typeof valA === 'string') {
         const cmp = valA.localeCompare(String(valB));
         return monthlySortAsc ? cmp : -cmp;
@@ -84,8 +84,8 @@ export default function CashFlowPage() {
   const sortedTransactions = useMemo(() => {
     if (!dailySortKey) return selectedTransactions;
     return [...selectedTransactions].sort((a, b) => {
-      let valA = dailySortKey === 'date' ? a.date.getTime() : a[dailySortKey];
-      let valB = dailySortKey === 'date' ? b.date.getTime() : b[dailySortKey];
+      const valA = dailySortKey === 'date' ? a.date.getTime() : a[dailySortKey];
+      const valB = dailySortKey === 'date' ? b.date.getTime() : b[dailySortKey];
       return dailySortAsc ? (valA as number) - (valB as number) : (valB as number) - (valA as number);
     });
   }, [selectedTransactions, dailySortKey, dailySortAsc]);

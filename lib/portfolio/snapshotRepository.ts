@@ -79,7 +79,7 @@ function ensureLocalCacheDir(): void {
     if (!fs.existsSync(LOCAL_SNAPSHOTS_DIR)) {
       fs.mkdirSync(LOCAL_SNAPSHOTS_DIR, { recursive: true });
     }
-  } catch (err) {
+  } catch {
     // Non-fatal if filesystem is read-only
   }
 }

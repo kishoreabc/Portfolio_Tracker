@@ -1,8 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import type { NewsSentiment, NewsImpact } from '@/types/news';
+
 
 export function NewsFilters() {
   const router = useRouter();

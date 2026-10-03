@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 import { forbiddenResponse, methodNotAllowed } from '@/lib/server/apiHelpers';
 
 export async function GET() {

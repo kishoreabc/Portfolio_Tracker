@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { format, isSameMonth, startOfMonth } from 'date-fns';
+import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -133,7 +133,6 @@ export default function CalendarPage() {
   }, [bondMaturityEvents]);
 
   const hasEstimated = false;
-  const allReal = upcomingCoupons.length > 0;
 
   return (
     <>

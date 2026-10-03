@@ -6,7 +6,7 @@ import { Topbar } from '@/components/layout/Topbar';
 import { usePortfolioData } from '@/hooks/usePortfolioData';
 import { useAiInsights } from '@/hooks/useAiInsights';
 import { useState, useMemo } from 'react';
-import { Sparkles, AlertCircle, RefreshCw, Brain, Globe, TrendingUp, Network, Download, FileText, CheckCircle2, Zap, ShieldCheck } from 'lucide-react';
+import { Sparkles, AlertCircle, RefreshCw, Brain, Globe, TrendingUp, Network, Download, Zap, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePrivacy, maskInsightsData } from '@/lib/privacy-context';

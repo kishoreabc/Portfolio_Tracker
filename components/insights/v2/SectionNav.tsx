@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart3, TrendingUp, PieChart, ShieldAlert, Layers, Globe, CheckSquare, Grid } from 'lucide-react';
+import { BarChart3, TrendingUp, PieChart, ShieldAlert, Layers, Globe, Grid } from 'lucide-react';
 
 export type IntelligenceSection =
   | 'overview'

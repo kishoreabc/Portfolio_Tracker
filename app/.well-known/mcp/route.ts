@@ -94,7 +94,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { jsonrpc = '2.0', id = 1, method, params } = body;
+    const { id = 1, method, params } = body;
 
     if (method === 'initialize') {
       return NextResponse.json({

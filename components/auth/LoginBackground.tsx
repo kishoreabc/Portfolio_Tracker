@@ -1,6 +1,6 @@
 'use client';
 
-import { delay, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { CandlestickChart, Activity, Wallet, Banknote, Briefcase, TrendingUp, TrendingDown, DollarSign, Bitcoin } from 'lucide-react';
 

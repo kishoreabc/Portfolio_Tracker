@@ -71,7 +71,7 @@ export async function callAgent<T>(
   prompt: string,
   systemPrompt: string,
   schema: z.ZodType<T>,
-  maxRetries: number = 2
+  _maxRetries: number = 2
 ): Promise<T> {
   return globalAgentLimiter.run(async () => {
     const manager = getInsightsModelManager();
@@ -119,7 +119,7 @@ export async function callAgent<T>(
 
         // Parse JSON
         const jsonStr = extractJSON(text);
-        let cleaned = jsonStr
+        const cleaned = jsonStr
           .replace(/,\s*([}\]])/g, '$1')
           .replace(/[\x00-\x1F\x7F-\x9F]/g, (c: string) => (c === '\n' || c === '\r' || c === '\t' ? c : ''));
 
@@ -136,7 +136,7 @@ export async function callAgent<T>(
         }
 
         // Validate with Zod
-        let result = schema.safeParse(parsed);
+        const result = schema.safeParse(parsed);
         if (result.success) {
           console.log(`[${agentName}] ✅ Output validated against schema (model: ${name})`);
           return result.data;

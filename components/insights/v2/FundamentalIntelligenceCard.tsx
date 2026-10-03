@@ -91,8 +91,8 @@ export function FundamentalIntelligenceCard({ data, equity }: FundamentalIntelli
   const sortedHoldings = useMemo(() => {
     if (!sortKey) return holdingsList;
     return [...holdingsList].sort((a, b) => {
-      let valA: any = a[sortKey];
-      let valB: any = b[sortKey];
+      const valA: any = a[sortKey];
+      const valB: any = b[sortKey];
       if (valA == null && valB == null) return 0;
       if (valA == null) return 1;
       if (valB == null) return -1;

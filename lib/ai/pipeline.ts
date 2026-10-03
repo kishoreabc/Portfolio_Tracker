@@ -12,12 +12,10 @@
  * Node 5 — reportGeneratorNode   : Programmatic assembly of structured AIInsightsResponse
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { getInsightsModelManager } from './models';
 import type {
   AIInsightsResponse,
-  PortfolioHealthBreakdown,
   ScoringWeights,
   ExecutiveSummaryInsight,
   FundamentalIntelligence,
@@ -31,7 +29,6 @@ import type {
   PerformanceContributor,
   MacroIntelligence,
   MacroExposure,
-  FundamentalTechnicalMatrix,
   MatrixStock,
   ReviewFlag,
   ThesisHolding,

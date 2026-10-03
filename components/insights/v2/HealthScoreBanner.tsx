@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Activity, ShieldCheck, HelpCircle, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { Activity, ShieldCheck, HelpCircle, ChevronDown } from 'lucide-react';
 import type { PortfolioHealthBreakdown, AIConfidence, ScoringWeights } from '@/types/insights';
 
 interface HealthScoreBannerProps {

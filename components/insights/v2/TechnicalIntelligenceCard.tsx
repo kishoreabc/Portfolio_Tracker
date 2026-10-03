@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, TrendingDown, Minus, Activity, ArrowUpRight, ArrowDownRight, Compass } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import type { TechnicalIntelligence } from '@/types/insights';
 
 interface TechnicalIntelligenceCardProps {
@@ -115,13 +115,11 @@ export function TechnicalIntelligenceCard({ data }: TechnicalIntelligenceCardPro
           </h4>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {data.signals.map((sig, idx) => {
-              const isAbove200 = (sig.priceVs200DMA ?? 0) >= 0;
-              return (
-                <div
-                  key={idx}
-                  className="p-3.5 rounded-xl border border-border/40 bg-card/40 hover:bg-card/70 transition-all space-y-2"
-                >
+            {data.signals.map((sig, idx) => (
+              <div
+                key={idx}
+                className="p-3.5 rounded-xl border border-border/40 bg-card/40 hover:bg-card/70 transition-all space-y-2"
+              >
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="text-xs font-bold text-foreground">{sig.symbol}</span>
@@ -154,8 +152,7 @@ export function TechnicalIntelligenceCard({ data }: TechnicalIntelligenceCardPro
                     {sig.signalExplanation}
                   </p>
                 </div>
-              );
-            })}
+              ))}
           </div>
         </div>
       </CardContent>

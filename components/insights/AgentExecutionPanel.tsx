@@ -16,7 +16,6 @@ import {
   TrendingDown,
   Layers,
   Activity,
-  ChevronRight,
   FileCheck,
   Target,
   Compass,

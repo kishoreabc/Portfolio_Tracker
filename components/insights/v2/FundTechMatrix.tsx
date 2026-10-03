@@ -1,8 +1,8 @@
 'use client';
 
+import { Grid } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Grid, HelpCircle } from 'lucide-react';
-import type { FundamentalTechnicalMatrix, MatrixStock } from '@/types/insights';
+import type { FundamentalTechnicalMatrix } from '@/types/insights';
 
 interface FundTechMatrixProps {
   data?: FundamentalTechnicalMatrix;

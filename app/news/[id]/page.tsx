@@ -5,8 +5,7 @@ import { OriginalTamilDialog } from '@/components/news/OriginalTamilDialog';
 import { RelatedNews } from '@/components/news/RelatedNews';
 import { NewsSentimentBadge } from '@/components/news/NewsSentimentBadge';
 import { NewsImpactBadge } from '@/components/news/NewsImpactBadge';
-import { formatDistanceToNow } from 'date-fns';
-import { ExternalLink, Briefcase, ArrowLeft, Building2, Sparkles } from 'lucide-react';
+import { ExternalLink, ArrowLeft, Building2, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
 import { use, useEffect } from 'react';

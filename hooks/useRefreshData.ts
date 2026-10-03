@@ -51,7 +51,7 @@ export function useRefreshData() {
             message = parsed.error.message;
           }
         }
-      } catch (e) {
+      } catch {
         // ignore parse error
       }
 

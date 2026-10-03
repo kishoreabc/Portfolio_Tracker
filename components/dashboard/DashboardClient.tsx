@@ -277,8 +277,8 @@ export default function DashboardClient() {
                           let barColor = 'bg-blue-400';
                           let bg = 'bg-blue-500/10';
                           let Icon = TrendingUp;
-                          let unit = isEquity ? 'stocks' : isBond ? 'bonds' : 'holdings';
-                          let count = isEquity
+                          const unit = isEquity ? 'stocks' : isBond ? 'bonds' : 'holdings';
+                          const count = isEquity
                             ? equityCount
                             : isBond
                             ? bondCount
@@ -344,8 +344,8 @@ export default function DashboardClient() {
 
                     const sortedRows = [...rows].sort((a, b) => {
                       if (!assetSortKey) return 0;
-                      let valA: any = assetSortKey === 'pct' ? a.alloc : a[assetSortKey];
-                      let valB: any = assetSortKey === 'pct' ? b.alloc : b[assetSortKey];
+                      const valA: any = assetSortKey === 'pct' ? a.alloc : a[assetSortKey];
+                      const valB: any = assetSortKey === 'pct' ? b.alloc : b[assetSortKey];
                       if (typeof valA === 'string') {
                         const cmp = valA.localeCompare(String(valB));
                         return assetSortAsc ? cmp : -cmp;

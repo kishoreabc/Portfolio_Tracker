@@ -14,9 +14,9 @@ interface Props {
   data: AssetClassSummary[];
 }
 
-function CustomLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }: {
+function CustomLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent, name: _name }: {
   cx: number; cy: number; midAngle: number; innerRadius: number; outerRadius: number;
-  percent: number; name: string;
+  percent: number; name?: string;
 }) {
   const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
@@ -70,7 +70,7 @@ export function AssetAllocationPie({ data }: Props) {
         <Legend
           iconType="circle"
           iconSize={8}
-          formatter={(value, entry) => (
+          formatter={(value) => (
             <span style={{ color: 'hsl(215 20% 75%)', fontSize: '12px' }}>
               {String(value)}
             </span>
