@@ -15,9 +15,8 @@
  * 7. Traceable Provenance & Claim Coverage: Factual claims validated against deterministic math.
  */
 
-import type { AIInsightsResponse, IntegratedView, MatrixStock } from '@/types/insights';
+import type { AIInsightsResponse, IntegratedView, MatrixStock, PortfolioInput } from '@/types/insights';
 import type { AgentActivityEvent, AgentId, ActivityType, AgentStatus } from '@/types/agent-activity';
-import type { PortfolioInput } from './pipeline';
 import type { PortfolioSnapshot } from '@/types/portfolio-snapshot';
 import type { ScoringWeights } from '@/types/insights';
 import { createEvidenceCollection } from '@/types/evidence';

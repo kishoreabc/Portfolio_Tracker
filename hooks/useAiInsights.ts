@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import type { AIInsightsResponse } from '@/types/insights';
-import type { PortfolioInput } from '@/lib/ai/pipeline';
+import type { AIInsightsResponse, PortfolioInput } from '@/types/insights';
 import {
   type PipelineState,
   type AgentActivityEvent,

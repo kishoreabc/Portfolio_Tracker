@@ -137,4 +137,3 @@ tmp/
 .agents/
 skills-lock.json
 scratch
-supabase/migrations

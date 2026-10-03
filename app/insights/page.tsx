@@ -38,7 +38,7 @@ import { CashFlowCard } from '@/components/insights/CashFlowCard';
 import { RecommendationsCard } from '@/components/insights/RecommendationsCard';
 import { AgentExecutionPanel } from '@/components/insights/AgentExecutionPanel';
 
-import type { PortfolioInput } from '@/lib/ai/pipeline';
+import type { PortfolioInput } from '@/types/insights';
 
 export default function InsightsPage() {
   const { isHidden } = usePrivacy();

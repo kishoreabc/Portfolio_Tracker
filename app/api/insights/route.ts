@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { buildAIInsightsV2 } from '@/lib/ai/pipeline-v2';
-import type { PortfolioInput } from '@/lib/ai/pipeline';
+import type { PortfolioInput } from '@/types/insights';
 import type { AgentActivityEvent } from '@/types/agent-activity';
 import { checkRateLimit, rateLimitResponse } from '@/lib/server/rateLimiter';
 import { privateNoStoreHeaders, unauthorizedResponse } from '@/lib/server/apiHelpers';

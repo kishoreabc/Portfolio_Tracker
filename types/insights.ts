@@ -396,3 +396,54 @@ export interface AIInsightsResponse {
   integratedViews?: IntegratedView[];
 }
 
+// ─── Input Types for AI Pipeline ─────────────────────────────────────────────
+
+export interface EquityInput {
+  ticker: string;
+  name: string;
+  sector: string;
+  currentValue: number;
+  percentChange: number;
+  allocationPercent: number;
+  shares: number;
+}
+
+export interface BondInput {
+  isin: string;
+  securityName: string;
+  sector: string;
+  creditRating: string;
+  ytm: number;
+  couponRate: number;
+  duration: number;
+  totalValue: number;
+  maturityDate: string | null;
+}
+
+export interface PortfolioInput {
+  // Aggregates
+  netWorth: number;
+  equityTotal: number;
+  bondTotal: number;
+  equityCount: number;
+  bondCount: number;
+  diversificationScore: number;
+  herfindahlIndex: number;
+  top5Percent: number;
+  // Holdings
+  topEquity: EquityInput[];
+  topBonds: BondInput[];
+  winners: EquityInput[];
+  losers: EquityInput[];
+  // Allocation
+  assetAllocation: { label: string; percent: number }[];
+  sectorAllocation: { sector: string; percent: number }[];
+  // Cash flow
+  totalInvestment: number;
+  totalExpenses: number;
+  monthlyAvgInvestment: number;
+  lastMonthInvestment: number;
+  lastMonthExpenses: number;
+  previousReport?: any;
+}
+
