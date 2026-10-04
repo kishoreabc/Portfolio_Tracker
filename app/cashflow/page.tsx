@@ -42,6 +42,39 @@ export default function CashFlowPage() {
   const [selectedMonth, setSelectedMonth] = useState<MonthlySummary | null>(null);
   const [showTooltip, setShowTooltip] = useState(false);
 
+  const availableYears = useMemo(() => {
+    const years = Array.from(new Set(summaries.map(s => s.year))).sort((a, b) => b - a);
+    return ['All', ...years.map(String)];
+  }, [summaries]);
+
+  const [selectedYear, setSelectedYear] = useState<string>('All');
+
+  const filteredSummaries = useMemo(() => {
+    if (selectedYear === 'All') return summaries;
+    const yearNum = Number(selectedYear);
+    return summaries.filter(s => s.year === yearNum);
+  }, [summaries, selectedYear]);
+
+  const kpis = useMemo(() => {
+    const totalInvested = filteredSummaries.reduce((sum, s) => sum + s.investment, 0);
+    const totalExpenses = filteredSummaries.reduce((sum, s) => sum + s.totalExpenses, 0);
+    const totalFood = filteredSummaries.reduce((sum, s) => sum + s.foodAndEntertainment, 0);
+    const totalOthers = filteredSummaries.reduce((sum, s) => sum + s.others, 0);
+    const monthCount = filteredSummaries.length;
+    // Total money = investment + food and expense and others
+    const totalMoney = totalInvested + totalExpenses;
+    const monthlyAvgSpending = monthCount > 0 ? totalMoney / monthCount : 0;
+
+    return {
+      totalInvested,
+      totalExpenses,
+      totalFood,
+      totalOthers,
+      monthlyAvgSpending,
+      monthCount,
+    };
+  }, [filteredSummaries]);
+
   type MonthlySortKey = 'label' | 'investment' | 'foodAndEntertainment' | 'others' | 'totalExpenses';
   const [monthlySortKey, setMonthlySortKey] = useState<MonthlySortKey | null>(null);
   const [monthlySortAsc, setMonthlySortAsc] = useState(false);
@@ -52,8 +85,8 @@ export default function CashFlowPage() {
   };
 
   const sortedSummaries = useMemo(() => {
-    if (!monthlySortKey) return [...summaries].reverse();
-    return [...summaries].sort((a, b) => {
+    if (!monthlySortKey) return [...filteredSummaries].reverse();
+    return [...filteredSummaries].sort((a, b) => {
       const valA = a[monthlySortKey];
       const valB = b[monthlySortKey];
       if (typeof valA === 'string') {
@@ -62,7 +95,7 @@ export default function CashFlowPage() {
       }
       return monthlySortAsc ? (valA as number) - (valB as number) : (valB as number) - (valA as number);
     });
-  }, [summaries, monthlySortKey, monthlySortAsc]);
+  }, [filteredSummaries, monthlySortKey, monthlySortAsc]);
 
   const selectedTransactions = useMemo(() => {
     if (!selectedMonth) return [];
@@ -116,27 +149,62 @@ export default function CashFlowPage() {
     <>
       <Topbar lastFetched={lastFetched} pageTitle="Cash Flow" apiErrors={apiErrors} />
       <div className="p-3 sm:p-4 md:p-6 space-y-4 animate-fade-in-up">
+        {/* Year Filter Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card/40 border border-border/40 rounded-xl px-4 py-3">
+          <div>
+            <p className="text-sm font-semibold text-foreground">Cash Flow Timeline</p>
+            <p className="text-xs text-muted-foreground">
+              {selectedYear === 'All'
+                ? `Showing all-time data across ${kpis.monthCount} recorded months`
+                : `Showing ${selectedYear} yearly data across ${kpis.monthCount} recorded months`}
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5 p-1 bg-muted/40 border border-border/50 rounded-xl self-start sm:self-auto">
+            {availableYears.map((year) => {
+              const isActive = selectedYear === year;
+              return (
+                <button
+                  key={year}
+                  type="button"
+                  onClick={() => setSelectedYear(year)}
+                  className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                    isActive
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-white/[0.04]'
+                  }`}
+                >
+                  {year}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Summary KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {[
-            { label: 'Total Invested', value: cashFlowStats.totalInvestment, color: 'text-blue-400' },
-            { label: 'Total Expenses', value: cashFlowStats.totalExpenses, color: 'text-red-400' },
+            { label: 'Total Invested', value: kpis.totalInvested, color: 'text-blue-400' },
+            { label: 'Total Expenses', value: kpis.totalExpenses, color: 'text-red-400' },
+            { label: 'Food & Entertainment', value: kpis.totalFood, color: 'text-amber-400' },
+            { label: 'Others', value: kpis.totalOthers, color: 'text-purple-400' },
             {
               label: 'Monthly Avg Spending',
-              value:
-                cashFlowStats.monthlyAverageSpending ??
-                (summaries.length > 0 ? cashFlowStats.totalExpenses / summaries.length : 0),
+              value: kpis.monthlyAvgSpending,
               color: 'text-rose-400',
+              subtitle: `Total money ÷ ${kpis.monthCount} ${kpis.monthCount === 1 ? 'mo' : 'mos'}`,
             },
-            { label: 'Food & Entertainment', value: cashFlowStats.totalFoodAndEntertainment, color: 'text-amber-400' },
-            { label: 'Others', value: cashFlowStats.totalOthers, color: 'text-purple-400' },
-          ].map(({ label, value, color }) => (
+          ].map(({ label, value, color, subtitle }) => (
             <motion.div key={label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
               className="rounded-xl border border-border/50 p-4 sm:p-5 bg-card flex flex-col justify-between last:col-span-2 sm:last:col-span-1">
               {isLoading ? <Skeleton className="h-8 bg-white/5" /> : (
                 <>
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">{label}</p>
                   <p className={`text-2xl sm:text-3xl font-extrabold tabular-nums tracking-tight ${color}`}>{fmt(value, isHidden)}</p>
+                  {subtitle && (
+                    <p className="text-[11px] text-muted-foreground/70 font-medium mt-1 tracking-tight">
+                      {subtitle}
+                    </p>
+                  )}
                 </>
               )}
             </motion.div>
@@ -147,10 +215,15 @@ export default function CashFlowPage() {
         <Card className="border-border/50">
           <CardHeader className="pb-5">
             <CardTitle>Monthly Breakdown</CardTitle>
-            <p className="text-xs text-muted-foreground font-normal">From Daily Transaction sheet · {cashFlowStats.startDate?.toLocaleDateString('en-IN') ?? '—'} to {cashFlowStats.endDate?.toLocaleDateString('en-IN') ?? '—'}</p>
+            <p className="text-xs text-muted-foreground font-normal">
+              From Daily Transaction sheet ·{' '}
+              {filteredSummaries.length > 0
+                ? `${filteredSummaries[0]?.label} to ${filteredSummaries[filteredSummaries.length - 1]?.label} (${kpis.monthCount} months)`
+                : 'No transaction data'}
+            </p>
           </CardHeader>
           <CardContent>
-            {isLoading ? <Skeleton className="h-[280px] bg-white/5" /> : <CashFlowChart data={summaries} />}
+            {isLoading ? <Skeleton className="h-[280px] bg-white/5" /> : <CashFlowChart data={filteredSummaries} />}
           </CardContent>
         </Card>
 
