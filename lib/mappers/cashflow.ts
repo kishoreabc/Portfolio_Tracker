@@ -2,13 +2,7 @@ import type { ParsedSheet } from '@/types/sheets';
 import type { Transaction, MonthlySummary, CashFlowStats } from '@/types/transactions';
 import { parseISO, isValid, getYear, getMonth } from 'date-fns';
 
-interface ParseDateContext {
-  lastValidMonth: number;
-  lastValidYear: number;
-  seenYearMonths: Set<string>;
-}
-
-function parseDate(raw: string | null | undefined, context?: ParseDateContext): Date | null {
+function parseDate(raw: string | null | undefined): Date | null {
   if (!raw) return null;
   const s = String(raw).trim();
 
@@ -18,28 +12,10 @@ function parseDate(raw: string | null | undefined, context?: ParseDateContext): 
     if (isValid(d)) return d;
   } catch { /* fall through */ }
 
-  // Try DD/MM/YYYY or DD-MM-YYYY
+  // Try DD/MM/YYYY
   const ddmm = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
   if (ddmm) {
-    const day = Number(ddmm[1]);
-    let monthNum = Number(ddmm[2]); // 1-12
-    const year = Number(ddmm[3]);
-
-    // Resilient healing for spreadsheet copy-paste / month index typos:
-    // If a block labeled '04' (April) appears immediately after September (month 9) or October (month 10)
-    // within the same year, and an April block for this year was already seen earlier in sequence,
-    // this block is an October block accidentally entered with '04' instead of '10'.
-    if (
-      context &&
-      monthNum === 4 &&
-      (context.lastValidMonth === 8 || context.lastValidMonth === 9) &&
-      context.lastValidYear === year &&
-      context.seenYearMonths.has(`${year}-03`)
-    ) {
-      monthNum = 10;
-    }
-
-    const d = new Date(year, monthNum - 1, day);
+    const d = new Date(Number(ddmm[3]), Number(ddmm[2]) - 1, Number(ddmm[1]));
     if (isValid(d)) return d;
   }
 
@@ -57,23 +33,10 @@ export function mapTransactions(sheet: ParsedSheet | null): Transaction[] {
   const today = new Date();
   today.setHours(23, 59, 59, 999); // Include all of today
 
-  const context: ParseDateContext = {
-    lastValidMonth: -1,
-    lastValidYear: -1,
-    seenYearMonths: new Set<string>(),
-  };
-
   return sheet.rows
     .map((row) => {
-      const date = parseDate(row.date as string, context);
+      const date = parseDate(row.date as string);
       if (!date) return null;
-
-      const y = getYear(date);
-      const m = getMonth(date);
-      context.lastValidMonth = m;
-      context.lastValidYear = y;
-      context.seenYearMonths.add(`${y}-${String(m).padStart(2, '0')}`);
-
       return {
         date,
         foodAndEntertainment: Number(row.foodAndEntertainment ?? 0),
@@ -93,6 +56,7 @@ export function buildCashFlowStats(transactions: Transaction[]): CashFlowStats {
       totalExpenses: 0,
       totalFoodAndEntertainment: 0,
       totalOthers: 0,
+      monthlyAverageSpending: 0,
       monthlySummaries: [],
       startDate: null,
       endDate: null,
@@ -140,11 +104,15 @@ export function buildCashFlowStats(transactions: Transaction[]): CashFlowStats {
     (a, b) => a.year * 12 + a.month - (b.year * 12 + b.month)
   );
 
+  const monthCount = monthlySummaries.length || 1;
+  const monthlyAverageSpending = totalExpenses / monthCount;
+
   return {
     totalInvestment,
     totalExpenses,
     totalFoodAndEntertainment,
     totalOthers,
+    monthlyAverageSpending,
     monthlySummaries,
     startDate: transactions[0].date,
     endDate: transactions[transactions.length - 1].date,

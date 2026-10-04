@@ -465,15 +465,25 @@ export default function DashboardClient() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-3"
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"
           >
             {[
               { label: 'Total Invested', value: formatINR(cashFlowStats.totalInvestment, isHidden) },
               { label: 'Total Expenses', value: formatINR(cashFlowStats.totalExpenses, isHidden) },
+              {
+                label: 'Monthly Avg Spending',
+                value: formatINR(
+                  cashFlowStats.monthlyAverageSpending ??
+                    (cashFlowStats.monthlySummaries.length
+                      ? cashFlowStats.totalExpenses / cashFlowStats.monthlySummaries.length
+                      : 0),
+                  isHidden
+                ),
+              },
               { label: 'Food & Ent.', value: formatINR(cashFlowStats.totalFoodAndEntertainment, isHidden) },
               { label: 'Others', value: formatINR(cashFlowStats.totalOthers, isHidden) },
             ].map(({ label, value }) => (
-              <div key={label} className="rounded-xl border border-border/40 px-4 py-3.5 bg-card/50">
+              <div key={label} className="rounded-xl border border-border/40 px-4 py-3.5 bg-card/50 last:col-span-2 sm:last:col-span-1">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">{label}</p>
                 <p className="text-lg sm:text-xl font-bold text-foreground tabular-nums tracking-tight">{value}</p>
               </div>

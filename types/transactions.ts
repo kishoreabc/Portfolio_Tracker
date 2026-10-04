@@ -22,6 +22,7 @@ export interface CashFlowStats {
   totalExpenses: number;
   totalFoodAndEntertainment: number;
   totalOthers: number;
+  monthlyAverageSpending?: number;
   monthlySummaries: MonthlySummary[];
   /** Earliest transaction date */
   startDate: Date | null;

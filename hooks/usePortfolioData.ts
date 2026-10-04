@@ -43,13 +43,22 @@ export function usePortfolioData(force = false) {
         totalExpenses: 0,
         totalFoodAndEntertainment: 0,
         totalOthers: 0,
+        monthlyAverageSpending: 0,
         monthlySummaries: [],
         startDate: null,
         endDate: null,
       };
     }
+    const monthCount = data.cashFlowStats.monthlySummaries?.length || 1;
+    const monthlyAverageSpending =
+      data.cashFlowStats.monthlyAverageSpending ??
+      (data.cashFlowStats.monthlySummaries?.length
+        ? data.cashFlowStats.totalExpenses / monthCount
+        : 0);
+
     return {
       ...data.cashFlowStats,
+      monthlyAverageSpending,
       startDate: data.cashFlowStats.startDate ? new Date(data.cashFlowStats.startDate) : null,
       endDate: data.cashFlowStats.endDate ? new Date(data.cashFlowStats.endDate) : null,
     };

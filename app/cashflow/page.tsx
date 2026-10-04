@@ -117,15 +117,22 @@ export default function CashFlowPage() {
       <Topbar lastFetched={lastFetched} pageTitle="Cash Flow" apiErrors={apiErrors} />
       <div className="p-3 sm:p-4 md:p-6 space-y-4 animate-fade-in-up">
         {/* Summary KPIs */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {[
             { label: 'Total Invested', value: cashFlowStats.totalInvestment, color: 'text-blue-400' },
             { label: 'Total Expenses', value: cashFlowStats.totalExpenses, color: 'text-red-400' },
+            {
+              label: 'Monthly Avg Spending',
+              value:
+                cashFlowStats.monthlyAverageSpending ??
+                (summaries.length > 0 ? cashFlowStats.totalExpenses / summaries.length : 0),
+              color: 'text-rose-400',
+            },
             { label: 'Food & Entertainment', value: cashFlowStats.totalFoodAndEntertainment, color: 'text-amber-400' },
             { label: 'Others', value: cashFlowStats.totalOthers, color: 'text-purple-400' },
           ].map(({ label, value, color }) => (
             <motion.div key={label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-              className="rounded-xl border border-border/50 p-4 sm:p-5 bg-card flex flex-col justify-between">
+              className="rounded-xl border border-border/50 p-4 sm:p-5 bg-card flex flex-col justify-between last:col-span-2 sm:last:col-span-1">
               {isLoading ? <Skeleton className="h-8 bg-white/5" /> : (
                 <>
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">{label}</p>
