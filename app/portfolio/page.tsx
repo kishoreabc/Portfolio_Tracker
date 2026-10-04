@@ -136,7 +136,7 @@ export default function PortfolioPage() {
             title="Equity Holdings"
             value={fmt(equityTotal, isHidden)}
             subValue={`${equityRows.length} stocks · ${equityPct.toFixed(1)}% of total`}
-            accentColor="green"
+            accentColor="blue"
             icon={TrendingUp}
             isPrivate
             isLoading={isLoading}
@@ -162,14 +162,14 @@ export default function PortfolioPage() {
 
         {/* ── Equity Holdings ── */}
         <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-          <Card className="border-emerald-500/25 bg-gradient-to-b from-emerald-950/15 via-card to-card shadow-md hover:border-emerald-500/40 transition-all">
+          <Card className="border-blue-500/25 bg-gradient-to-b from-blue-950/15 via-card to-card shadow-md hover:border-blue-500/40 transition-all">
             <CardHeader className="pb-5 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 border border-emerald-500/30 flex items-center justify-center flex-shrink-0 shadow-xs">
-                  <TrendingUp className="w-4 h-4 text-emerald-400 stroke-[2.5]" />
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/10 border border-blue-500/30 flex items-center justify-center flex-shrink-0 shadow-xs">
+                  <TrendingUp className="w-4 h-4 text-blue-400 stroke-[2.5]" />
                 </div>
                 <div className="flex-1">
-                  <CardTitle className="text-emerald-400 font-bold flex items-center gap-2">
+                  <CardTitle className="text-blue-400 font-bold flex items-center gap-2">
                     Equity Holdings
                     <span className="text-xs text-muted-foreground font-normal">
                       ({equityRows.length} stocks · {fmt(equityTotal, isHidden)})
@@ -183,7 +183,7 @@ export default function PortfolioPage() {
                   placeholder="Search stocks…"
                   value={equitySearch}
                   onChange={(e) => setEquitySearch(e.target.value)}
-                  className="pl-9 bg-background/80 border-emerald-500/20 focus:border-emerald-500/50 h-9 text-sm"
+                  className="pl-9 bg-background/80 border-blue-500/20 focus:border-blue-500/50 h-9 text-sm"
                 />
               </div>
             </CardHeader>
@@ -226,14 +226,14 @@ export default function PortfolioPage() {
                       <motion.tr key={row.id}
                         initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.015 }}
-                        className="border-border/30 hover:bg-emerald-500/[0.03] transition-colors"
+                        className="border-border/30 hover:bg-blue-500/[0.03] transition-colors"
                       >
                         <TableCell
-                          className="text-sm font-semibold text-foreground max-w-[200px] truncate cursor-pointer hover:text-emerald-400 transition-colors"
+                          className="text-sm font-semibold text-foreground max-w-[200px] truncate cursor-pointer hover:text-blue-400 transition-colors"
                           onClick={() => openStock(row.ticker)}
                         >{row.name}</TableCell>
                         <TableCell
-                          className="text-xs font-mono text-emerald-400 font-semibold cursor-pointer hover:text-emerald-300 hover:underline transition-colors"
+                          className="text-xs font-mono text-blue-400 font-semibold cursor-pointer hover:text-blue-300 hover:underline transition-colors"
                           onClick={() => openStock(row.ticker)}
                         >{row.ticker}</TableCell>
                         <TableCell className="text-xs text-muted-foreground/80 font-normal">{row.sector}</TableCell>
@@ -241,9 +241,9 @@ export default function PortfolioPage() {
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
                             <div className="w-12 h-1.5 rounded-full bg-white/10 overflow-hidden">
-                              <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full" style={{ width: `${Math.min(row.localAllocPct, 100)}%` }} />
+                              <div className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full" style={{ width: `${Math.min(row.localAllocPct, 100)}%` }} />
                             </div>
-                            <span className="text-sm text-emerald-400 font-semibold tabular-nums w-12 text-right">
+                            <span className="text-sm text-blue-400 font-semibold tabular-nums w-12 text-right">
                               {row.localAllocPct.toFixed(2)}%
                             </span>
                           </div>
@@ -252,10 +252,10 @@ export default function PortfolioPage() {
                     ))}
                     {/* Equity subtotal */}
                     {!isLoading && equityRows.length > 0 && (
-                      <TableRow className="border-t border-emerald-500/20 bg-emerald-500/[0.04]">
+                      <TableRow className="border-t border-blue-500/20 bg-blue-500/[0.04]">
                         <TableCell colSpan={3} className="text-sm font-bold text-foreground">Total Equity</TableCell>
                         <TableCell className="text-right text-sm font-bold tabular-nums text-foreground">{fmt(equityTotal, isHidden)}</TableCell>
-                        <TableCell className="text-right text-sm font-bold text-emerald-400">100.00%</TableCell>
+                        <TableCell className="text-right text-sm font-bold text-blue-400">100.00%</TableCell>
                       </TableRow>
                     )}
                   </TableBody>

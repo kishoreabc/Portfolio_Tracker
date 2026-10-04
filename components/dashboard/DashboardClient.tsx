@@ -142,7 +142,7 @@ export default function DashboardClient() {
             value={isLoading ? '—' : formatINR(equityTotal)}
             subValue={`${equityCount} stocks`}
             icon={TrendingUp}
-            accentColor="green"
+            accentColor="blue"
             isLoading={isLoading}
             href="/stocks"
             isPrivate

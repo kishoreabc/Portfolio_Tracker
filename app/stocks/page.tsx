@@ -105,7 +105,7 @@ export default function StocksPage() {
             value={isLoading ? '—' : fmt(equityTotal, isHidden)}
             subValue={isLoading ? undefined : `${equity.length} holdings`}
             icon={TrendingUp}
-            accentColor="green"
+            accentColor="blue"
             isLoading={isLoading}
             isPrivate
           />
@@ -116,7 +116,7 @@ export default function StocksPage() {
             change={isLoading ? undefined : todaysChangePct}
             changeLabel="today"
             icon={Activity}
-            accentColor={todaysChange >= 0 ? 'teal' : 'red'}
+            accentColor={todaysChange >= 0 ? 'green' : 'red'}
             isLoading={isLoading}
             isPrivate
           />
@@ -126,7 +126,7 @@ export default function StocksPage() {
             value={isLoading || !winners[0] ? '—' : winners[0].ticker}
             subValue={isLoading || !winners[0] ? undefined : `+${(winners[0].percentChange * 100).toFixed(2)}% (${winners[0].name})`}
             icon={ArrowUpRight}
-            accentColor="cyan"
+            accentColor={(winners[0]?.percentChange ?? 0) >= 0 ? 'green' : 'red'}
             isLoading={isLoading}
           />
           <KpiCard
@@ -135,7 +135,7 @@ export default function StocksPage() {
             value={isLoading || !losers[0] ? '—' : losers[0].ticker}
             subValue={isLoading || !losers[0] ? undefined : `${(losers[0].percentChange * 100).toFixed(2)}% (${losers[0].name})`}
             icon={ArrowDownRight}
-            accentColor="rose"
+            accentColor={(losers[0]?.percentChange ?? 0) >= 0 ? 'green' : 'red'}
             isLoading={isLoading}
           />
         </div>
