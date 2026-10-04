@@ -337,8 +337,8 @@ export default function ReportsPage() {
   };
 
   const statsItems = [
-    { label: 'Net Worth', value: fmt(netWorth, isHidden), color: 'text-white font-extrabold', cardClass: 'border-blue-500/30 bg-gradient-to-br from-blue-950/30 via-card to-card hover:border-blue-500/50', labelColor: 'text-blue-300' },
-    { label: 'Equity', value: fmt(equityTotal, isHidden), color: 'text-emerald-400 font-extrabold', cardClass: 'border-emerald-500/30 bg-gradient-to-br from-emerald-950/30 via-card to-card hover:border-emerald-500/50', labelColor: 'text-emerald-300' },
+    { label: 'Net Worth', value: fmt(netWorth, isHidden), color: 'text-white font-extrabold', cardClass: 'border-indigo-500/30 bg-gradient-to-br from-indigo-950/30 via-card to-card hover:border-indigo-500/50', labelColor: 'text-indigo-300' },
+    { label: 'Equity', value: fmt(equityTotal, isHidden), color: 'text-blue-400 font-extrabold', cardClass: 'border-blue-500/30 bg-gradient-to-br from-blue-950/30 via-card to-card hover:border-blue-500/50', labelColor: 'text-blue-300' },
     { label: 'Bonds', value: fmt(bondTotal, isHidden), color: 'text-purple-400 font-extrabold', cardClass: 'border-purple-500/30 bg-gradient-to-br from-purple-950/30 via-card to-card hover:border-purple-500/50', labelColor: 'text-purple-300' },
     { label: 'Holdings', value: String(portfolio.length), color: 'text-cyan-400 font-extrabold', cardClass: 'border-cyan-500/30 bg-gradient-to-br from-cyan-950/30 via-card to-card hover:border-cyan-500/50', labelColor: 'text-cyan-300' },
     { label: 'Diversification', value: `${concentrationRisk.diversificationScore}/100`, color: 'text-teal-400 font-extrabold', cardClass: 'border-teal-500/30 bg-gradient-to-br from-teal-950/30 via-card to-card hover:border-teal-500/50', labelColor: 'text-teal-300' },
@@ -354,9 +354,9 @@ export default function ReportsPage() {
       count: portfolio.length, unit: 'holdings', hasCsv: true, hasPdf: true,
     },
     {
-      id: 'equity', icon: TrendingUp, iconColor: 'text-emerald-400', iconBg: 'bg-emerald-500/15',
-      badgeBorder: 'border-emerald-500/30',
-      cardTheme: 'border-emerald-500/25 bg-gradient-to-b from-emerald-950/15 via-card to-card hover:border-emerald-500/40 hover:shadow-emerald-950/30',
+      id: 'equity', icon: TrendingUp, iconColor: 'text-blue-400', iconBg: 'bg-blue-500/15',
+      badgeBorder: 'border-blue-500/30',
+      cardTheme: 'border-blue-500/25 bg-gradient-to-b from-blue-950/15 via-card to-card hover:border-blue-500/40 hover:shadow-blue-950/30',
       title: 'Equity Holdings', description: 'All stock positions with current price, day change, shares, value, and sector.',
       count: equity.length, unit: 'stocks', hasCsv: true, hasPdf: true,
     },
