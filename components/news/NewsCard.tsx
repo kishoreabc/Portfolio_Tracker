@@ -18,7 +18,7 @@ export function NewsCard({ article }: NewsCardProps) {
     (article.originalContent ? article.originalContent.slice(0, 150) + '...' : '');
   
   return (
-    <div className="flex flex-col gap-3 p-5 rounded-xl border border-white/5 bg-white/5 hover:bg-white/[0.07] transition-colors relative group">
+    <div className="flex flex-col gap-3 p-5 rounded-2xl border border-border/50 bg-gradient-to-b from-card via-card to-card hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-950/20 transition-all duration-300 relative group">
       {/* Badges row */}
       <div className="flex items-center flex-wrap gap-2">
         {article.category && (

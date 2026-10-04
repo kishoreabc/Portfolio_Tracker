@@ -73,6 +73,8 @@ interface ReportCardProps {
   icon: React.ElementType;
   iconColor: string;
   iconBg: string;
+  cardTheme: string;
+  badgeBorder: string;
   title: string;
   description: string;
   count: number;
@@ -87,7 +89,7 @@ interface ReportCardProps {
 }
 
 function ReportCard({
-  id, icon: Icon, iconColor, iconBg, title, description,
+  id, icon: Icon, iconColor, iconBg, cardTheme, badgeBorder, title, description,
   count, unit, delay = 0, exporting, hasCsv = true, hasPdf = true,
   onExportCsv, onExportPdf, isLoading,
 }: ReportCardProps) {
@@ -96,30 +98,30 @@ function ReportCard({
   const isAnyExporting = isExportingCsv || isExportingPdf;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }}>
-      <Card className="border-border/50 hover:border-border transition-all hover:shadow-lg hover:shadow-black/10 h-full">
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }} className="h-full">
+      <Card className={`relative overflow-hidden transition-all duration-300 hover:shadow-xl h-full flex flex-col justify-between ${cardTheme}`}>
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
-            <div className="flex items-start gap-3">
-              <div className={`p-2.5 rounded-xl ${iconBg}`}>
-                <Icon className={`w-5 h-5 ${iconColor}`} />
+            <div className="flex items-start gap-3.5">
+              <div className={`w-11 h-11 rounded-xl shadow-sm flex items-center justify-center shrink-0 border ${iconBg} ${badgeBorder}`}>
+                <Icon className={`w-5 h-5 stroke-[2.3] ${iconColor}`} />
               </div>
               <div>
-                <CardTitle className="text-sm font-semibold">{title}</CardTitle>
+                <CardTitle className="text-sm font-bold text-foreground leading-snug">{title}</CardTitle>
                 <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{description}</p>
               </div>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-2">
           {isLoading ? (
             <Skeleton className="h-9 bg-white/5" />
           ) : (
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-xs text-muted-foreground">
+            <div className="flex items-center justify-between gap-3 pt-2 border-t border-border/40">
+              <span className="text-xs text-muted-foreground font-medium">
                 {count > 0 ? (
                   <span>
-                    <span className="font-semibold text-foreground">{count}</span> {unit}
+                    <span className="font-bold text-foreground">{count}</span> {unit}
                   </span>
                 ) : (
                   'No data'
@@ -131,7 +133,7 @@ function ReportCard({
                     id={`export-csv-${id}`}
                     onClick={onExportCsv}
                     disabled={isAnyExporting || count === 0}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-600/15 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-600/25 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 transition-all shadow-xs disabled:opacity-40 disabled:cursor-not-allowed"
                     title="Export as CSV"
                   >
                     {isExportingCsv ? (
@@ -139,7 +141,7 @@ function ReportCard({
                         <Download className="w-3.5 h-3.5" />
                       </motion.div>
                     ) : (
-                      <FileSpreadsheet className="w-3.5 h-3.5" />
+                      <FileSpreadsheet className="w-3.5 h-3.5 stroke-[2.2]" />
                     )}
                     CSV
                   </button>
@@ -149,7 +151,7 @@ function ReportCard({
                     id={`export-pdf-${id}`}
                     onClick={onExportPdf}
                     disabled={isAnyExporting || count === 0}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-600/15 text-blue-400 border border-blue-500/25 hover:bg-blue-600/25 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-500/15 text-blue-300 border border-blue-500/30 hover:bg-blue-500/25 transition-all shadow-xs disabled:opacity-40 disabled:cursor-not-allowed"
                     title="Export as PDF"
                   >
                     {isExportingPdf ? (
@@ -157,7 +159,7 @@ function ReportCard({
                         <Download className="w-3.5 h-3.5" />
                       </motion.div>
                     ) : (
-                      <FileText className="w-3.5 h-3.5" />
+                      <FileText className="w-3.5 h-3.5 stroke-[2.2]" />
                     )}
                     PDF
                   </button>
@@ -335,42 +337,54 @@ export default function ReportsPage() {
   };
 
   const statsItems = [
-    { label: 'Net Worth', value: fmt(netWorth, isHidden), color: 'text-foreground' },
-    { label: 'Equity', value: fmt(equityTotal, isHidden), color: 'text-blue-400' },
-    { label: 'Bonds', value: fmt(bondTotal, isHidden), color: 'text-purple-400' },
-    { label: 'Holdings', value: String(portfolio.length), color: 'text-foreground' },
-    { label: 'Diversification', value: `${concentrationRisk.diversificationScore}/100`, color: 'text-emerald-400' },
-    { label: 'Top-5 Conc.', value: pct(concentrationRisk.top5Percent), color: concentrationRisk.top5Percent > 0.5 ? 'text-red-400' : 'text-amber-400' },
+    { label: 'Net Worth', value: fmt(netWorth, isHidden), color: 'text-white font-extrabold', cardClass: 'border-blue-500/30 bg-gradient-to-br from-blue-950/30 via-card to-card hover:border-blue-500/50', labelColor: 'text-blue-300' },
+    { label: 'Equity', value: fmt(equityTotal, isHidden), color: 'text-emerald-400 font-extrabold', cardClass: 'border-emerald-500/30 bg-gradient-to-br from-emerald-950/30 via-card to-card hover:border-emerald-500/50', labelColor: 'text-emerald-300' },
+    { label: 'Bonds', value: fmt(bondTotal, isHidden), color: 'text-purple-400 font-extrabold', cardClass: 'border-purple-500/30 bg-gradient-to-br from-purple-950/30 via-card to-card hover:border-purple-500/50', labelColor: 'text-purple-300' },
+    { label: 'Holdings', value: String(portfolio.length), color: 'text-cyan-400 font-extrabold', cardClass: 'border-cyan-500/30 bg-gradient-to-br from-cyan-950/30 via-card to-card hover:border-cyan-500/50', labelColor: 'text-cyan-300' },
+    { label: 'Diversification', value: `${concentrationRisk.diversificationScore}/100`, color: 'text-teal-400 font-extrabold', cardClass: 'border-teal-500/30 bg-gradient-to-br from-teal-950/30 via-card to-card hover:border-teal-500/50', labelColor: 'text-teal-300' },
+    { label: 'Top-5 Conc.', value: pct(concentrationRisk.top5Percent), color: concentrationRisk.top5Percent > 0.5 ? 'text-rose-400 font-extrabold' : 'text-amber-400 font-extrabold', cardClass: 'border-amber-500/30 bg-gradient-to-br from-amber-950/30 via-card to-card hover:border-amber-500/50', labelColor: 'text-amber-300' },
   ];
 
   const reports = [
     {
-      id: 'portfolio', icon: BookOpen, iconColor: 'text-indigo-400', iconBg: 'bg-indigo-500/10',
+      id: 'portfolio', icon: BookOpen, iconColor: 'text-indigo-400', iconBg: 'bg-indigo-500/15',
+      badgeBorder: 'border-indigo-500/30',
+      cardTheme: 'border-indigo-500/25 bg-gradient-to-b from-indigo-950/15 via-card to-card hover:border-indigo-500/40 hover:shadow-indigo-950/30',
       title: 'Full Portfolio Report', description: 'All equity and bond holdings with allocation, YTM, credit rating, and sector breakdown.',
       count: portfolio.length, unit: 'holdings', hasCsv: true, hasPdf: true,
     },
     {
-      id: 'equity', icon: TrendingUp, iconColor: 'text-blue-400', iconBg: 'bg-blue-500/10',
+      id: 'equity', icon: TrendingUp, iconColor: 'text-emerald-400', iconBg: 'bg-emerald-500/15',
+      badgeBorder: 'border-emerald-500/30',
+      cardTheme: 'border-emerald-500/25 bg-gradient-to-b from-emerald-950/15 via-card to-card hover:border-emerald-500/40 hover:shadow-emerald-950/30',
       title: 'Equity Holdings', description: 'All stock positions with current price, day change, shares, value, and sector.',
       count: equity.length, unit: 'stocks', hasCsv: true, hasPdf: true,
     },
     {
-      id: 'bonds', icon: BarChart3, iconColor: 'text-purple-400', iconBg: 'bg-purple-500/10',
+      id: 'bonds', icon: BarChart3, iconColor: 'text-purple-400', iconBg: 'bg-purple-500/15',
+      badgeBorder: 'border-purple-500/30',
+      cardTheme: 'border-purple-500/25 bg-gradient-to-b from-purple-950/15 via-card to-card hover:border-purple-500/40 hover:shadow-purple-950/30',
       title: 'Bond Holdings', description: 'All bond positions with ISIN, maturity, YTM, coupon rate, credit rating, and broker.',
       count: bonds.length, unit: 'bonds', hasCsv: true, hasPdf: true,
     },
     {
-      id: 'cashflow', icon: FileSpreadsheet, iconColor: 'text-emerald-400', iconBg: 'bg-emerald-500/10',
+      id: 'cashflow', icon: FileSpreadsheet, iconColor: 'text-teal-400', iconBg: 'bg-teal-500/15',
+      badgeBorder: 'border-teal-500/30',
+      cardTheme: 'border-teal-500/25 bg-gradient-to-b from-teal-950/15 via-card to-card hover:border-teal-500/40 hover:shadow-teal-950/30',
       title: 'Monthly Cash Flow', description: 'Month-by-month breakdown of investments and expenses from your transactions.',
       count: cashFlowStats.monthlySummaries.length, unit: 'months', hasCsv: true, hasPdf: true,
     },
     {
-      id: 'risk', icon: Shield, iconColor: 'text-amber-400', iconBg: 'bg-amber-500/10',
+      id: 'risk', icon: Shield, iconColor: 'text-amber-400', iconBg: 'bg-amber-500/15',
+      badgeBorder: 'border-amber-500/30',
+      cardTheme: 'border-amber-500/25 bg-gradient-to-b from-amber-950/15 via-card to-card hover:border-amber-500/40 hover:shadow-amber-950/30',
       title: 'Risk & Diversification', description: 'Concentration analysis, sector distribution, HHI index, and top 10 holdings by weight.',
       count: portfolio.length, unit: 'holdings', hasCsv: false, hasPdf: true,
     },
     {
-      id: 'ai', icon: Sparkles, iconColor: 'text-rose-400', iconBg: 'bg-rose-500/10',
+      id: 'ai', icon: Sparkles, iconColor: 'text-rose-400', iconBg: 'bg-rose-500/15',
+      badgeBorder: 'border-rose-500/30',
+      cardTheme: 'border-rose-500/25 bg-gradient-to-b from-rose-950/15 via-card to-card hover:border-rose-500/40 hover:shadow-rose-950/30',
       title: 'AI Intelligence Report', description: 'Complete SEBI-grade AI report with health scores, macro scenarios, opportunities, and roadmaps.',
       count: 1, unit: 'report', hasCsv: false, hasPdf: true,
     },
@@ -385,9 +399,9 @@ export default function ReportsPage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {statsItems.map((stat, i) => (
             <motion.div key={stat.label} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-              <Card className="border-border/50">
+              <Card className={`transition-all duration-200 hover:shadow-md ${stat.cardClass}`}>
                 <CardContent className="p-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{stat.label}</p>
+                  <p className={`text-[10px] font-bold uppercase tracking-wider ${stat.labelColor}`}>{stat.label}</p>
                   {isLoading ? (
                     <Skeleton className="h-6 mt-1 bg-white/5" />
                   ) : (

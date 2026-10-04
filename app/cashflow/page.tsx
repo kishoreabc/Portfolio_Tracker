@@ -12,7 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import type { MonthlySummary } from '@/types/transactions';
 import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
-import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, TrendingUp, CreditCard, UtensilsCrossed, Layers, Calendar } from 'lucide-react';
+import { KpiCard } from '@/components/shared/KpiCard';
 
 function fmt(v: number, isHidden: boolean = false) {
   if (isHidden) return PRIVACY_MASK;
@@ -182,33 +183,53 @@ export default function CashFlowPage() {
 
         {/* Summary KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          {[
-            { label: 'Total Invested', value: kpis.totalInvested, color: 'text-blue-400' },
-            { label: 'Total Expenses', value: kpis.totalExpenses, color: 'text-red-400' },
-            { label: 'Food & Entertainment', value: kpis.totalFood, color: 'text-amber-400' },
-            { label: 'Others', value: kpis.totalOthers, color: 'text-purple-400' },
-            {
-              label: 'Monthly Avg Spending',
-              value: kpis.monthlyAvgSpending,
-              color: 'text-rose-400',
-              subtitle: `Total money ÷ ${kpis.monthCount} ${kpis.monthCount === 1 ? 'mo' : 'mos'}`,
-            },
-          ].map(({ label, value, color, subtitle }) => (
-            <motion.div key={label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-              className="rounded-xl border border-border/50 p-4 sm:p-5 bg-card flex flex-col justify-between last:col-span-2 sm:last:col-span-1">
-              {isLoading ? <Skeleton className="h-8 bg-white/5" /> : (
-                <>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">{label}</p>
-                  <p className={`text-2xl sm:text-3xl font-extrabold tabular-nums tracking-tight ${color}`}>{fmt(value, isHidden)}</p>
-                  {subtitle && (
-                    <p className="text-[11px] text-muted-foreground/70 font-medium mt-1 tracking-tight">
-                      {subtitle}
-                    </p>
-                  )}
-                </>
-              )}
-            </motion.div>
-          ))}
+          <KpiCard
+            id="kpi-total-invested"
+            title="Total Invested"
+            value={isLoading ? '—' : fmt(kpis.totalInvested)}
+            icon={TrendingUp}
+            accentColor="blue"
+            isLoading={isLoading}
+            isPrivate
+          />
+          <KpiCard
+            id="kpi-total-expenses"
+            title="Total Expenses"
+            value={isLoading ? '—' : fmt(kpis.totalExpenses)}
+            icon={CreditCard}
+            accentColor="red"
+            isLoading={isLoading}
+            isPrivate
+          />
+          <KpiCard
+            id="kpi-food-ent"
+            title="Food & Entertainment"
+            value={isLoading ? '—' : fmt(kpis.totalFood)}
+            icon={UtensilsCrossed}
+            accentColor="amber"
+            isLoading={isLoading}
+            isPrivate
+          />
+          <KpiCard
+            id="kpi-others"
+            title="Others"
+            value={isLoading ? '—' : fmt(kpis.totalOthers)}
+            icon={Layers}
+            accentColor="purple"
+            isLoading={isLoading}
+            isPrivate
+          />
+          <KpiCard
+            id="kpi-monthly-avg-spending"
+            title="Monthly Avg Spending"
+            value={isLoading ? '—' : fmt(kpis.monthlyAvgSpending)}
+            subValue={isLoading ? undefined : `÷ ${kpis.monthCount} ${kpis.monthCount === 1 ? 'month' : 'months'}`}
+            icon={Calendar}
+            accentColor="rose"
+            isLoading={isLoading}
+            isPrivate
+            className="last:col-span-2 sm:last:col-span-1"
+          />
         </div>
 
         {/* Monthly chart */}

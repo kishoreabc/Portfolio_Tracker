@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Search, ArrowUpDown, ArrowUp, ArrowDown, TrendingUp, Building2 } from 'lucide-react';
+import { Search, ArrowUpDown, ArrowUp, ArrowDown, TrendingUp, Building2, Wallet, PieChart } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Topbar } from '@/components/layout/Topbar';
+import { KpiCard } from '@/components/shared/KpiCard';
 import { usePortfolioData } from '@/hooks/usePortfolioData';
 import { useStockModal } from '@/lib/stock-modal-context';
 import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
@@ -111,23 +112,66 @@ export default function PortfolioPage() {
 
   const equityTotal = equityRows.reduce((s, r) => s + r.currentValue, 0);
   const bondTotal = bondRows.reduce((s, r) => s + r.currentValue, 0);
+  const totalPortfolioValue = equityTotal + bondTotal;
+  const equityPct = totalPortfolioValue > 0 ? (equityTotal / totalPortfolioValue) * 100 : 0;
+  const bondPct = totalPortfolioValue > 0 ? (bondTotal / totalPortfolioValue) * 100 : 0;
 
   return (
     <>
       <Topbar lastFetched={lastFetched} pageTitle="Portfolio" apiErrors={apiErrors} />
-      <div className="p-3 sm:p-4 md:p-6 space-y-5 animate-fade-in-up">
+      <div className="p-3 sm:p-4 md:p-6 space-y-6 animate-fade-in-up">
+
+        {/* ── Summary KPI Cards ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <KpiCard
+            title="Total Portfolio Value"
+            value={fmt(totalPortfolioValue, isHidden)}
+            subValue={`${equityRows.length + bondRows.length} total holdings`}
+            accentColor="blue"
+            icon={Wallet}
+            isPrivate
+            isLoading={isLoading}
+          />
+          <KpiCard
+            title="Equity Holdings"
+            value={fmt(equityTotal, isHidden)}
+            subValue={`${equityRows.length} stocks · ${equityPct.toFixed(1)}% of total`}
+            accentColor="green"
+            icon={TrendingUp}
+            isPrivate
+            isLoading={isLoading}
+          />
+          <KpiCard
+            title="Bond Holdings"
+            value={fmt(bondTotal, isHidden)}
+            subValue={`${bondRows.length} bonds · ${bondPct.toFixed(1)}% of total`}
+            accentColor="purple"
+            icon={Building2}
+            isPrivate
+            isLoading={isLoading}
+          />
+          <KpiCard
+            title="Allocation Split"
+            value={`${equityPct.toFixed(0)}% / ${bondPct.toFixed(0)}%`}
+            subValue="Equity vs Fixed Income"
+            accentColor="cyan"
+            icon={PieChart}
+            isLoading={isLoading}
+          />
+        </div>
+
         {/* ── Equity Holdings ── */}
         <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-          <Card className="border-border/50">
+          <Card className="border-emerald-500/25 bg-gradient-to-b from-emerald-950/15 via-card to-card shadow-md hover:border-emerald-500/40 transition-all">
             <CardHeader className="pb-5 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                  <TrendingUp className="w-3.5 h-3.5 text-blue-400" />
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 border border-emerald-500/30 flex items-center justify-center flex-shrink-0 shadow-xs">
+                  <TrendingUp className="w-4 h-4 text-emerald-400 stroke-[2.5]" />
                 </div>
                 <div className="flex-1">
-                  <CardTitle className="text-blue-400">
+                  <CardTitle className="text-emerald-400 font-bold flex items-center gap-2">
                     Equity Holdings
-                    <span className="ml-2 text-xs text-muted-foreground font-normal">
+                    <span className="text-xs text-muted-foreground font-normal">
                       ({equityRows.length} stocks · {fmt(equityTotal, isHidden)})
                     </span>
                   </CardTitle>
@@ -139,7 +183,7 @@ export default function PortfolioPage() {
                   placeholder="Search stocks…"
                   value={equitySearch}
                   onChange={(e) => setEquitySearch(e.target.value)}
-                  className="pl-9 bg-background border-border/50 h-9 text-sm"
+                  className="pl-9 bg-background/80 border-emerald-500/20 focus:border-emerald-500/50 h-9 text-sm"
                 />
               </div>
             </CardHeader>
@@ -182,24 +226,24 @@ export default function PortfolioPage() {
                       <motion.tr key={row.id}
                         initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.015 }}
-                        className="border-border/30 hover:bg-white/[0.02] transition-colors"
+                        className="border-border/30 hover:bg-emerald-500/[0.03] transition-colors"
                       >
                         <TableCell
-                          className="text-sm font-semibold text-foreground max-w-[200px] truncate cursor-pointer hover:text-blue-300 transition-colors"
+                          className="text-sm font-semibold text-foreground max-w-[200px] truncate cursor-pointer hover:text-emerald-400 transition-colors"
                           onClick={() => openStock(row.ticker)}
                         >{row.name}</TableCell>
                         <TableCell
-                          className="text-xs font-mono text-blue-400 font-semibold cursor-pointer hover:text-blue-300 hover:underline transition-colors"
+                          className="text-xs font-mono text-emerald-400 font-semibold cursor-pointer hover:text-emerald-300 hover:underline transition-colors"
                           onClick={() => openStock(row.ticker)}
                         >{row.ticker}</TableCell>
                         <TableCell className="text-xs text-muted-foreground/80 font-normal">{row.sector}</TableCell>
                         <TableCell className="text-right text-sm font-medium tabular-nums text-foreground">{fmt(row.currentValue, isHidden)}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <div className="w-12 h-1 rounded-full bg-white/10 overflow-hidden">
-                              <div className="h-full bg-blue-400 rounded-full" style={{ width: `${Math.min(row.localAllocPct, 100)}%` }} />
+                            <div className="w-12 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                              <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full" style={{ width: `${Math.min(row.localAllocPct, 100)}%` }} />
                             </div>
-                            <span className="text-sm text-blue-400 font-semibold tabular-nums w-12 text-right">
+                            <span className="text-sm text-emerald-400 font-semibold tabular-nums w-12 text-right">
                               {row.localAllocPct.toFixed(2)}%
                             </span>
                           </div>
@@ -208,10 +252,10 @@ export default function PortfolioPage() {
                     ))}
                     {/* Equity subtotal */}
                     {!isLoading && equityRows.length > 0 && (
-                      <TableRow className="border-t border-border/50 bg-white/[0.015]">
+                      <TableRow className="border-t border-emerald-500/20 bg-emerald-500/[0.04]">
                         <TableCell colSpan={3} className="text-sm font-bold text-foreground">Total Equity</TableCell>
                         <TableCell className="text-right text-sm font-bold tabular-nums text-foreground">{fmt(equityTotal, isHidden)}</TableCell>
-                        <TableCell className="text-right text-sm font-bold text-blue-400">100.00%</TableCell>
+                        <TableCell className="text-right text-sm font-bold text-emerald-400">100.00%</TableCell>
                       </TableRow>
                     )}
                   </TableBody>
@@ -223,16 +267,16 @@ export default function PortfolioPage() {
 
         {/* ── Bond Holdings ── */}
         <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <Card className="border-border/50">
+          <Card className="border-purple-500/25 bg-gradient-to-b from-purple-950/15 via-card to-card shadow-md hover:border-purple-500/40 transition-all">
             <CardHeader className="pb-5 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
-                  <Building2 className="w-3.5 h-3.5 text-purple-400" />
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500/20 to-indigo-500/10 border border-purple-500/30 flex items-center justify-center flex-shrink-0 shadow-xs">
+                  <Building2 className="w-4 h-4 text-purple-400 stroke-[2.5]" />
                 </div>
                 <div className="flex-1">
-                  <CardTitle className="text-purple-400">
+                  <CardTitle className="text-purple-400 font-bold flex items-center gap-2">
                     Bond Holdings
-                    <span className="ml-2 text-xs text-muted-foreground font-normal">
+                    <span className="text-xs text-muted-foreground font-normal">
                       ({bondRows.length} bonds · {fmt(bondTotal, isHidden)})
                     </span>
                   </CardTitle>
@@ -244,7 +288,7 @@ export default function PortfolioPage() {
                   placeholder="Search bonds…"
                   value={bondSearch}
                   onChange={(e) => setBondSearch(e.target.value)}
-                  className="pl-9 bg-background border-border/50 h-9 text-sm"
+                  className="pl-9 bg-background/80 border-purple-500/20 focus:border-purple-500/50 h-9 text-sm"
                 />
               </div>
             </CardHeader>
@@ -287,16 +331,16 @@ export default function PortfolioPage() {
                       <motion.tr key={row.id}
                         initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.015 }}
-                        className="border-border/30 hover:bg-white/[0.02] transition-colors"
+                        className="border-border/30 hover:bg-purple-500/[0.03] transition-colors"
                       >
                         <TableCell className="text-sm font-semibold text-foreground max-w-[200px] truncate">{row.name}</TableCell>
-                        <TableCell className="text-xs font-mono text-muted-foreground">{row.ticker}</TableCell>
+                        <TableCell className="text-xs font-mono text-purple-400 font-semibold">{row.ticker}</TableCell>
                         <TableCell className="text-xs text-muted-foreground/80 font-normal">{row.sector}</TableCell>
                         <TableCell className="text-right text-sm font-medium tabular-nums text-foreground">{fmt(row.currentValue, isHidden)}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <div className="w-12 h-1 rounded-full bg-white/10 overflow-hidden">
-                              <div className="h-full bg-purple-400 rounded-full" style={{ width: `${Math.min(row.localAllocPct, 100)}%` }} />
+                            <div className="w-12 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                              <div className="h-full bg-gradient-to-r from-purple-500 to-indigo-400 rounded-full" style={{ width: `${Math.min(row.localAllocPct, 100)}%` }} />
                             </div>
                             <span className="text-sm text-purple-400 font-semibold tabular-nums w-12 text-right">
                               {row.localAllocPct.toFixed(2)}%
@@ -307,7 +351,7 @@ export default function PortfolioPage() {
                     ))}
                     {/* Bond subtotal */}
                     {!isLoading && bondRows.length > 0 && (
-                      <TableRow className="border-t border-border/50 bg-white/[0.015]">
+                      <TableRow className="border-t border-purple-500/20 bg-purple-500/[0.04]">
                         <TableCell colSpan={3} className="text-sm font-bold text-foreground">Total Bonds</TableCell>
                         <TableCell className="text-right text-sm font-bold tabular-nums text-foreground">{fmt(bondTotal, isHidden)}</TableCell>
                         <TableCell className="text-right text-sm font-bold text-purple-400">100.00%</TableCell>

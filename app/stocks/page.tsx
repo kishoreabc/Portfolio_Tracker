@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, TrendingUp, TrendingDown, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Search, TrendingUp, TrendingDown, ArrowUpDown, ArrowUp, ArrowDown, Activity, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -12,6 +12,7 @@ import { SectorAllocationChart } from '@/components/charts/SectorAllocationChart
 import { usePortfolioData } from '@/hooks/usePortfolioData';
 import { useStockModal } from '@/lib/stock-modal-context';
 import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
+import { KpiCard } from '@/components/shared/KpiCard';
 
 
 function fmt(v: number, isHidden: boolean = false) {
@@ -32,7 +33,7 @@ function fmtChange(v: number) {
 }
 
 export default function StocksPage() {
-  const { equity, winners, losers, isLoading, lastFetched, apiErrors, sectorAllocation } = usePortfolioData();
+  const { equity, winners, losers, isLoading, lastFetched, apiErrors, sectorAllocation, equityTotal, todaysChange, todaysChangePct } = usePortfolioData();
   const { isHidden } = usePrivacy();
   const [search, setSearch] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' }>({ key: '', direction: 'asc' });
@@ -96,18 +97,64 @@ export default function StocksPage() {
     <>
       <Topbar lastFetched={lastFetched} pageTitle="Stocks" apiErrors={apiErrors} />
       <div className="p-3 sm:p-4 md:p-6 space-y-4 animate-fade-in-up">
+        {/* Top Summary KPIs */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <KpiCard
+            id="kpi-stocks-equity"
+            title="Equity Value"
+            value={isLoading ? '—' : fmt(equityTotal, isHidden)}
+            subValue={isLoading ? undefined : `${equity.length} holdings`}
+            icon={TrendingUp}
+            accentColor="green"
+            isLoading={isLoading}
+            isPrivate
+          />
+          <KpiCard
+            id="kpi-stocks-today-change"
+            title="Today's Change"
+            value={isLoading ? '—' : fmt(Math.abs(todaysChange), isHidden)}
+            change={isLoading ? undefined : todaysChangePct}
+            changeLabel="today"
+            icon={Activity}
+            accentColor={todaysChange >= 0 ? 'teal' : 'red'}
+            isLoading={isLoading}
+            isPrivate
+          />
+          <KpiCard
+            id="kpi-stocks-top-gainer"
+            title="Top Gainer"
+            value={isLoading || !winners[0] ? '—' : winners[0].ticker}
+            subValue={isLoading || !winners[0] ? undefined : `+${(winners[0].percentChange * 100).toFixed(2)}% (${winners[0].name})`}
+            icon={ArrowUpRight}
+            accentColor="cyan"
+            isLoading={isLoading}
+          />
+          <KpiCard
+            id="kpi-stocks-top-loser"
+            title="Top Loser"
+            value={isLoading || !losers[0] ? '—' : losers[0].ticker}
+            subValue={isLoading || !losers[0] ? undefined : `${(losers[0].percentChange * 100).toFixed(2)}% (${losers[0].name})`}
+            icon={ArrowDownRight}
+            accentColor="rose"
+            isLoading={isLoading}
+          />
+        </div>
+
         {/* Winners / Losers */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Card className="border-border/50">
+          <Card className="border-emerald-500/30 bg-gradient-to-br from-emerald-950/20 via-card to-card hover:border-emerald-500/50 transition-colors shadow-sm">
             <CardHeader className="pb-5">
               <CardTitle className="flex items-center gap-2 text-emerald-400">
-                <TrendingUp className="w-4 h-4 text-emerald-400" /> Top Gainers
+                <div className="w-7 h-7 rounded-lg bg-emerald-500/15 flex items-center justify-center">
+                  <TrendingUp className="w-4 h-4 text-emerald-400" />
+                </div>
+                Top Gainers
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               {isLoading ? <Skeleton className="h-10 bg-white/5" /> :
                 winners.slice(0, 1).map((w) => (
-                  <div key={w.ticker} className="flex items-center justify-between px-3.5 py-2.5 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
+                  <div key={w.ticker} className="flex items-center justify-between px-3.5 py-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
                     <div>
                       <p className="text-sm font-bold text-foreground">{w.ticker}</p>
                       <p className="text-xs text-muted-foreground truncate max-w-[140px]">{w.name}</p>
@@ -121,22 +168,25 @@ export default function StocksPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-border/50">
+          <Card className="border-rose-500/30 bg-gradient-to-br from-rose-950/20 via-card to-card hover:border-rose-500/50 transition-colors shadow-sm">
             <CardHeader className="pb-5">
-              <CardTitle className="flex items-center gap-2 text-red-400">
-                <TrendingDown className="w-4 h-4 text-red-400" /> Top Losers
+              <CardTitle className="flex items-center gap-2 text-rose-400">
+                <div className="w-7 h-7 rounded-lg bg-rose-500/15 flex items-center justify-center">
+                  <TrendingDown className="w-4 h-4 text-rose-400" />
+                </div>
+                Top Losers
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               {isLoading ? <Skeleton className="h-10 bg-white/5" /> :
                 losers.slice(0, 1).map((l) => (
-                  <div key={l.ticker} className="flex items-center justify-between px-3.5 py-2.5 rounded-lg bg-red-500/5 border border-red-500/10">
+                  <div key={l.ticker} className="flex items-center justify-between px-3.5 py-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20">
                     <div>
                       <p className="text-sm font-bold text-foreground">{l.ticker}</p>
                       <p className="text-xs text-muted-foreground truncate max-w-[140px]">{l.name}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-bold text-red-400">{(l.percentChange * 100).toFixed(2)}%</p>
+                      <p className="text-sm font-bold text-rose-400">{(l.percentChange * 100).toFixed(2)}%</p>
                       <p className="text-xs text-muted-foreground tabular-nums">{fmtPrice(l.currentPrice, isHidden)}</p>
                     </div>
                   </div>

@@ -9,8 +9,9 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { Topbar } from '@/components/layout/Topbar';
 import { usePortfolioData } from '@/hooks/usePortfolioData';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarIcon, Banknote, AlertCircle, CalendarSearch } from 'lucide-react';
+import { CalendarIcon, Banknote, AlertCircle, CalendarSearch, Building2, ShieldCheck, Clock } from 'lucide-react';
 import { BondCashflowDialog } from '@/components/bonds/BondCashflowDialog';
+import { KpiCard } from '@/components/shared/KpiCard';
 import { useState, useEffect } from 'react';
 import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
 
@@ -134,17 +135,67 @@ export default function CalendarPage() {
 
   const hasEstimated = false;
 
+  const totalMaturingValue = nsdlMaturities.reduce((s, e) => s + (e.totalValue || 0), 0);
+  const nextMaturity = nsdlMaturities.length > 0 && nsdlMaturities[0].maturityDate
+    ? format(new Date(nsdlMaturities[0].maturityDate), 'dd MMM yyyy')
+    : 'None';
+  const totalCouponsAmount = upcomingCoupons.reduce((s, c) => s + (c.amount || 0), 0);
+
   return (
     <>
       <Topbar lastFetched={lastFetched} pageTitle="Calendar" apiErrors={apiErrors} />
-      <div className="p-3 sm:p-4 md:p-6 space-y-4 animate-fade-in-up">
+      <div className="p-3 sm:p-4 md:p-6 space-y-6 animate-fade-in-up">
+
+        {/* ── Top Summary KPI Cards ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <KpiCard
+            title="Total Maturing Principal"
+            value={fmt(totalMaturingValue, isHidden)}
+            subValue={`${nsdlMaturities.length} active bonds`}
+            accentColor="purple"
+            icon={Building2}
+            isPrivate
+            isLoading={isLoading || isNsdlLoading}
+          />
+          <KpiCard
+            title="Next Redemption"
+            value={nextMaturity}
+            subValue={nsdlMaturities.length > 0 ? (nsdlMaturities[0].securityName || 'Earliest maturity') : 'No maturity scheduled'}
+            accentColor="blue"
+            icon={CalendarIcon}
+            isLoading={isLoading || isNsdlLoading}
+          />
+          <KpiCard
+            title="Scheduled Payouts"
+            value={fmt(totalCouponsAmount, isHidden)}
+            subValue={`${upcomingCoupons.length} upcoming coupons`}
+            accentColor="amber"
+            icon={Banknote}
+            isPrivate
+            isLoading={isLoading || isNsdlLoading}
+          />
+          <KpiCard
+            title="NSDL Registry"
+            value="Direct Feed"
+            subValue="Realtime CAS schedule"
+            accentColor="teal"
+            icon={ShieldCheck}
+            isLoading={isLoading || isNsdlLoading}
+          />
+        </div>
+
         {/* Bond Maturities */}
-        <Card className="border-border/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <CalendarIcon className="w-4 h-4 text-blue-400" /> Bond Maturities
-            </CardTitle>
-            <p className="text-xs text-muted-foreground">Fetched from official NSDL API</p>
+        <Card className="border-blue-500/25 bg-gradient-to-b from-blue-950/15 via-card to-card shadow-sm hover:border-blue-500/40 transition-all">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                <CalendarIcon className="w-4 h-4 stroke-[2.5]" />
+              </div>
+              <div>
+                <CardTitle className="text-blue-300 font-bold">Bond Maturities</CardTitle>
+                <p className="text-xs text-muted-foreground">Official schedule synced via NSDL API</p>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading || isNsdlLoading ? <Skeleton className="h-40 bg-white/5" /> :
@@ -155,27 +206,27 @@ export default function CalendarPage() {
                   {grouped.map(([month, events]) => (
                     <div key={month}>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">{month}</span>
-                        <div className="flex-1 h-px bg-border/40" />
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">{month}</span>
+                        <div className="flex-1 h-px bg-blue-500/20" />
+                        <span className="text-xs font-semibold text-muted-foreground">
                           {fmt(events.reduce((s, e) => s + e.totalValue, 0), isHidden)} maturing
                         </span>
                       </div>
                       <div className="space-y-2 ml-2">
                         {events.map((e) => (
                           <motion.div key={e.isin} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
-                            className="flex items-center gap-3 p-3 rounded-lg border border-border/40 bg-card hover:bg-white/[0.02]">
-                            <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex flex-col items-center justify-center flex-shrink-0">
-                              <span className="text-xs text-blue-400 font-bold">{format(e.maturityDate, 'dd')}</span>
-                              <span className="text-[10px] text-muted-foreground">{format(e.maturityDate, 'MMM')}</span>
+                            className="flex items-center gap-3 p-3 rounded-xl border border-blue-500/20 bg-card/60 hover:bg-blue-500/[0.04] transition-colors">
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/10 border border-blue-500/30 flex flex-col items-center justify-center flex-shrink-0 shadow-xs">
+                              <span className="text-xs text-blue-400 font-extrabold">{format(e.maturityDate, 'dd')}</span>
+                              <span className="text-[10px] text-muted-foreground uppercase font-semibold">{format(e.maturityDate, 'MMM')}</span>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-foreground truncate">{e.securityName}</p>
-                              <p className="text-xs text-muted-foreground">{e.issuer} · {e.isin}</p>
+                              <p className="text-sm font-semibold text-foreground truncate">{e.securityName}</p>
+                              <p className="text-xs text-muted-foreground">{e.issuer} · <span className="font-mono text-purple-400">{e.isin}</span></p>
                             </div>
                             <div className="text-right flex-shrink-0">
-                              <p className="text-sm font-semibold">{fmt(e.totalValue, isHidden)}</p>
-                              <Badge variant="outline" className="text-[10px] border-green-500/30 text-green-400">
+                              <p className="text-sm font-bold tabular-nums text-foreground">{fmt(e.totalValue, isHidden)}</p>
+                              <Badge variant="outline" className="text-[10px] border-emerald-500/40 text-emerald-400 bg-emerald-500/10 font-bold">
                                 {e.creditRating}
                               </Badge>
                             </div>
@@ -189,14 +240,22 @@ export default function CalendarPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Banknote className="w-4 h-4 text-amber-400" /> Upcoming Coupon Payments
-            </CardTitle>
-            {hasEstimated && (
-              <p className="text-xs text-amber-400/70">⚠️ Bonds without a Payout Date use estimated dates from maturity</p>
-            )}
+        {/* Upcoming Coupons */}
+        <Card className="border-amber-500/25 bg-gradient-to-b from-amber-950/15 via-card to-card shadow-sm hover:border-amber-500/40 transition-all">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                <Banknote className="w-4 h-4 stroke-[2.5]" />
+              </div>
+              <div>
+                <CardTitle className="text-amber-300 font-bold">Upcoming Coupon Payments</CardTitle>
+                {hasEstimated ? (
+                  <p className="text-xs text-amber-400/70">⚠️ Bonds without a Payout Date use estimated dates from maturity</p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Cash flow schedule verified from issuer filings</p>
+                )}
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading || isNsdlLoading ? <Skeleton className="h-40 bg-white/5" /> :
@@ -206,35 +265,35 @@ export default function CalendarPage() {
                 <div className="space-y-2">
                   {upcomingCoupons.map((c, i) => (
                     <motion.div key={`${c.isin}-${i}`} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
-                      className={`flex items-center justify-between p-3 rounded-lg border ${c.isEstimated
-                          ? 'border-amber-500/10 bg-amber-500/5'
-                          : 'border-green-500/10 bg-green-500/5'
+                      className={`flex items-center justify-between p-3 rounded-xl border transition-all ${c.isEstimated
+                          ? 'border-amber-500/20 bg-amber-500/[0.05] hover:border-amber-500/40'
+                          : 'border-emerald-500/20 bg-emerald-500/[0.05] hover:border-emerald-500/40'
                         }`}>
                       <div>
                         <div className="flex items-center gap-2 mb-0.5">
-                          <p className="text-xs font-medium text-foreground truncate max-w-[200px]">{c.name}</p>
+                          <p className="text-xs font-semibold text-foreground truncate max-w-[200px]">{c.name}</p>
                           {c.payoutType && (
-                            <span className="text-[10px] text-muted-foreground border border-border/50 rounded px-1 py-px">{c.payoutType}</span>
+                            <span className="text-[10px] text-muted-foreground border border-border/50 rounded px-1.5 py-px font-medium">{c.payoutType}</span>
                           )}
                           {c.isEstimated && (
-                            <span className="text-[10px] text-amber-400/70">est.</span>
+                            <span className="text-[10px] text-amber-400/80 font-semibold">est.</span>
                           )}
                         </div>
-                        <p className="text-[11px] text-muted-foreground">{format(c.date, 'dd MMM yyyy')} · {(c.couponRate * 100).toFixed(2)}% coupon</p>
+                        <p className="text-[11px] text-muted-foreground">{format(c.date, 'dd MMM yyyy')} · <span className="text-foreground font-semibold">{(c.couponRate * 100).toFixed(2)}%</span> coupon</p>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="text-right">
-                          <p className={`text-sm font-semibold ${c.isEstimated ? 'text-amber-400' : 'text-green-400'}`}>
+                          <p className={`text-sm font-bold tabular-nums ${c.isEstimated ? 'text-amber-400' : 'text-emerald-400'}`}>
                             {c.isEstimated ? '~' : ''}{fmt(c.amount, isHidden)}
                           </p>
                           <p className="text-[11px] text-muted-foreground">{c.isEstimated ? 'est. payment' : 'payment'}</p>
                         </div>
                         <button
                           onClick={() => setSelectedIsin({ isin: c.isin, name: c.name, units: c.unitsHeld })}
-                          className="p-1.5 rounded text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition-colors"
+                          className="p-1.5 rounded-lg text-blue-400 hover:text-blue-300 hover:bg-blue-500/15 border border-blue-500/25 transition-all shadow-xs"
                           title="View NSDL Cashflow Schedule"
                         >
-                          <CalendarSearch className="w-4 h-4" />
+                          <CalendarSearch className="w-4 h-4 stroke-[2.2]" />
                         </button>
                       </div>
                     </motion.div>

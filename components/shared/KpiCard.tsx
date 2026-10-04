@@ -26,6 +26,7 @@ interface KpiCardProps {
   valueClassName?: string;
   isPrivate?: boolean;
   showPrivacyToggle?: boolean;
+  className?: string;
 }
 
 interface AccentTheme {
@@ -154,6 +155,7 @@ export function KpiCard({
   valueClassName,
   isPrivate = false,
   showPrivacyToggle = false,
+  className,
 }: KpiCardProps) {
   const { isHidden } = usePrivacy();
   const theme = ACCENT_THEMES[accentColor] || ACCENT_THEMES.blue;
@@ -168,7 +170,7 @@ export function KpiCard({
 
   if (isLoading) {
     return (
-      <Card className="relative overflow-hidden rounded-2xl p-5 space-y-3 bg-card border-border/50 shadow-sm">
+      <Card className={cn("relative overflow-hidden rounded-2xl p-5 space-y-3 bg-card border-border/50 shadow-sm", className)}>
         <Skeleton className="h-4 w-24 bg-white/5" />
         <Skeleton className="h-8 w-32 bg-white/5" />
         <Skeleton className="h-3 w-20 bg-white/5" />
@@ -184,7 +186,8 @@ export function KpiCard({
         theme.border,
         theme.hoverBorder,
         theme.glow,
-        href ? 'cursor-pointer hover:scale-[1.015] hover:shadow-xl' : 'cursor-default'
+        href ? 'cursor-pointer hover:scale-[1.015] hover:shadow-xl' : 'cursor-default',
+        className
       )}
     >
       {/* Decorative organic background watermarks */}

@@ -67,7 +67,7 @@ function NewsContent() {
   return (
     <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto">
       {/* Controls */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 border border-white/10 rounded-2xl bg-white/[0.02] p-4 md:p-6 overflow-hidden w-full">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 border border-blue-500/20 rounded-2xl bg-gradient-to-b from-blue-950/15 via-card to-card p-4 md:p-6 overflow-hidden w-full shadow-sm">
         <div className="flex-1 w-full max-w-xl">
           <NewsSearch />
         </div>
