@@ -15,6 +15,7 @@ import { KpiCard } from '@/components/shared/KpiCard';
 import { useState, useEffect, useCallback } from 'react';
 import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
 import { getClientCachedBondCashflow, setClientCachedBondCashflow } from '@/lib/bonds/clientCache';
+import { calculateBondSummaryMetrics } from '@/lib/calc/bondAnalytics';
 
 function fmt(v: number, isHidden: boolean = false) {
   if (isHidden) return PRIVACY_MASK;
@@ -211,6 +212,39 @@ export default function CalendarPage() {
     };
   }, [bondList]);
 
+  const weightedAvgYieldText = useMemo(() => {
+    if (bonds && bonds.length > 0) {
+      const metrics = calculateBondSummaryMetrics(bonds);
+      if (metrics.weightedAvgYieldText && metrics.weightedAvgYieldText !== '—') {
+        return metrics.weightedAvgYieldText;
+      }
+    }
+
+    let totalWeightedYield = 0;
+    let yieldWeightSum = 0;
+
+    for (const b of bondList) {
+      const val = (b.totalValue && b.totalValue > 0)
+        ? b.totalValue
+        : (b.unitsHeld * (b.faceValue || 0)) || 0;
+      if (val <= 0) continue;
+
+      let y = (b as any).ytm > 0 ? (b as any).ytm : (b.couponRate > 0 ? b.couponRate : 0);
+      if (y > 1) y = y / 100;
+
+      if (y > 0) {
+        totalWeightedYield += val * y;
+        yieldWeightSum += val;
+      }
+    }
+
+    if (yieldWeightSum > 0) {
+      return `${((totalWeightedYield / yieldWeightSum) * 100).toFixed(2)}% p.a.`;
+    }
+
+    return weightedCouponPct > 0 ? `${weightedCouponPct.toFixed(2)}% p.a.` : '—';
+  }, [bonds, bondList, weightedCouponPct]);
+
   return (
     <>
       <Topbar lastFetched={lastFetched} pageTitle="Calendar" apiErrors={apiErrors} />
@@ -250,7 +284,7 @@ export default function CalendarPage() {
             subValue={
               isLoading || isNsdlLoading
                 ? undefined
-                : `${weightedCouponPct > 0 ? `${weightedCouponPct.toFixed(2)}% p.a. · ` : ''}${fmt(totalAnnualInterest, isHidden)}/yr`
+                : `Weighted Avg. Yield: ${weightedAvgYieldText}`
             }
             accentColor="teal"
             icon={IndianRupee}
