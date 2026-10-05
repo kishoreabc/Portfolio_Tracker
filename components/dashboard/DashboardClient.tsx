@@ -134,7 +134,6 @@ export default function DashboardClient() {
             isLoading={isLoading}
             href="/portfolio"
             isPrivate
-            showPrivacyToggle
           />
           <KpiCard
             id="kpi-equity"

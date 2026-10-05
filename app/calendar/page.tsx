@@ -9,7 +9,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { Topbar } from '@/components/layout/Topbar';
 import { usePortfolioData } from '@/hooks/usePortfolioData';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarIcon, Banknote, AlertCircle, CalendarSearch, Building2, ShieldCheck, Clock, IndianRupee } from 'lucide-react';
+import { CalendarIcon, Banknote, AlertCircle, CalendarSearch, Building2, ShieldCheck, Clock, IndianRupee, CalendarDays, CalendarRange } from 'lucide-react';
 import { BondCashflowDialog } from '@/components/bonds/BondCashflowDialog';
 import { KpiCard } from '@/components/shared/KpiCard';
 import { useState, useEffect, useCallback } from 'react';
@@ -32,6 +32,8 @@ export default function CalendarPage() {
   const [upcomingCoupons, setUpcomingCoupons] = useState<any[]>([]);
   const [nsdlMaturities, setNsdlMaturities] = useState<any[]>([]);
   const [isNsdlLoading, setIsNsdlLoading] = useState(true);
+  const [couponView, setCouponView] = useState<'monthly' | 'yearly'>('monthly');
+  const [selectedCouponYear, setSelectedCouponYear] = useState<string>('All');
 
   const grouped = useMemo(() => {
     const map = new Map<string, any[]>();
@@ -113,7 +115,7 @@ export default function CalendarPage() {
       }
 
       upcoming.sort((a, b) => a.date.getTime() - b.date.getTime());
-      setUpcomingCoupons(upcoming.slice(0, 15));
+      setUpcomingCoupons(upcoming);
       setNsdlMaturities(maturities);
     },
     [bondMaturityEvents]
@@ -203,6 +205,111 @@ export default function CalendarPage() {
       unitsHeld: upcomingCoupons[0].unitsHeld,
     };
   }, [upcomingCoupons]);
+
+  const availableCouponYears = useMemo(() => {
+    const years = new Set<string>();
+    for (const c of upcomingCoupons) {
+      if (c.date) {
+        years.add(String(new Date(c.date).getFullYear()));
+      }
+    }
+    const sorted = Array.from(years).sort();
+    return sorted.length > 1 ? ['All', ...sorted] : sorted;
+  }, [upcomingCoupons]);
+
+  const monthlyCoupons = useMemo(() => {
+    const filtered = selectedCouponYear === 'All'
+      ? upcomingCoupons
+      : upcomingCoupons.filter((c) => String(new Date(c.date).getFullYear()) === selectedCouponYear);
+
+    const map = new Map<string, { monthKey: string; monthDate: Date; coupons: any[]; totalAmount: number }>();
+    for (const c of filtered) {
+      const d = new Date(c.date);
+      const key = format(d, 'MMM yyyy');
+      const entry = map.get(key) ?? {
+        monthKey: key,
+        monthDate: new Date(d.getFullYear(), d.getMonth(), 1),
+        coupons: [],
+        totalAmount: 0,
+      };
+      entry.coupons.push(c);
+      entry.totalAmount += (c.amount || 0);
+      map.set(key, entry);
+    }
+
+    return Array.from(map.values()).sort(
+      (a, b) => a.monthDate.getTime() - b.monthDate.getTime()
+    );
+  }, [upcomingCoupons, selectedCouponYear]);
+
+  const yearlyCoupons = useMemo(() => {
+    const yearsMap = new Map<string, {
+      year: string;
+      totalAmount: number;
+      paymentCount: number;
+      monthlyAvg: number;
+      months: { monthIndex: number; monthName: string; amount: number; count: number }[];
+      bonds: { isin: string; name: string; couponRate: number; totalAmount: number; paymentCount: number; unitsHeld: number }[];
+    }>();
+
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    for (const c of upcomingCoupons) {
+      const d = new Date(c.date);
+      const yStr = String(d.getFullYear());
+      const mIdx = d.getMonth();
+
+      if (!yearsMap.has(yStr)) {
+        yearsMap.set(yStr, {
+          year: yStr,
+          totalAmount: 0,
+          paymentCount: 0,
+          monthlyAvg: 0,
+          months: monthNames.map((name, idx) => ({
+            monthIndex: idx,
+            monthName: name,
+            amount: 0,
+            count: 0,
+          })),
+          bonds: [],
+        });
+      }
+
+      const yEntry = yearsMap.get(yStr)!;
+      yEntry.totalAmount += (c.amount || 0);
+      yEntry.paymentCount += 1;
+      if (yEntry.months[mIdx]) {
+        yEntry.months[mIdx].amount += (c.amount || 0);
+        yEntry.months[mIdx].count += 1;
+      }
+
+      let bEntry = yEntry.bonds.find((b) => b.isin === c.isin);
+      if (!bEntry) {
+        bEntry = {
+          isin: c.isin,
+          name: c.name,
+          couponRate: c.couponRate,
+          totalAmount: 0,
+          paymentCount: 0,
+          unitsHeld: c.unitsHeld,
+        };
+        yEntry.bonds.push(bEntry);
+      }
+      bEntry.totalAmount += (c.amount || 0);
+      bEntry.paymentCount += 1;
+    }
+
+    const result = Array.from(yearsMap.values()).map((y) => {
+      y.monthlyAvg = y.totalAmount / 12;
+      y.bonds.sort((a, b) => b.totalAmount - a.totalAmount);
+      return y;
+    }).sort((a, b) => Number(a.year) - Number(b.year));
+
+    if (selectedCouponYear !== 'All') {
+      return result.filter((y) => y.year === selectedCouponYear);
+    }
+    return result;
+  }, [upcomingCoupons, selectedCouponYear]);
 
   const bondList = bonds && bonds.length > 0 ? bonds : bondMaturityEvents;
 
@@ -374,7 +481,7 @@ export default function CalendarPage() {
 
         {/* Upcoming Coupons */}
         <Card className="border-amber-500/25 bg-gradient-to-b from-amber-950/15 via-card to-card shadow-sm hover:border-amber-500/40 transition-all">
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
                 <Banknote className="w-4 h-4 stroke-[2.5]" />
@@ -383,50 +490,255 @@ export default function CalendarPage() {
                 <CardTitle className="text-amber-300 font-bold">Upcoming Coupon Payments</CardTitle>
               </div>
             </div>
+
+            {/* View Mode Toggle: Monthly / Yearly */}
+            <div className="flex items-center gap-1 p-1 bg-muted/40 border border-border/50 rounded-xl self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setCouponView('monthly')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                  couponView === 'monthly'
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-xs'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-white/[0.04]'
+                }`}
+              >
+                <CalendarDays className="w-3.5 h-3.5" />
+                Monthly
+              </button>
+              <button
+                type="button"
+                onClick={() => setCouponView('yearly')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                  couponView === 'yearly'
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-xs'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-white/[0.04]'
+                }`}
+              >
+                <CalendarRange className="w-3.5 h-3.5" />
+                Yearly
+              </button>
+            </div>
           </CardHeader>
-          <CardContent>
-            {isLoading || isNsdlLoading ? <Skeleton className="h-40 bg-white/5" /> :
-              upcomingCoupons.length === 0 ? (
-                <EmptyState title="No coupon data" description="No upcoming estimated coupon payments found." />
+          <CardContent className="space-y-4">
+            {/* Year Filter Pills if multiple years are present */}
+            {availableCouponYears.length > 2 && !isLoading && !isNsdlLoading && (
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                <span className="text-xs text-muted-foreground font-medium mr-1 flex-shrink-0">Year:</span>
+                {availableCouponYears.map((yr) => {
+                  const isSelected = selectedCouponYear === yr;
+                  return (
+                    <button
+                      key={yr}
+                      type="button"
+                      onClick={() => setSelectedCouponYear(yr)}
+                      className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all flex-shrink-0 ${
+                        isSelected
+                          ? 'bg-amber-500/25 text-amber-300 border border-amber-500/40 shadow-xs'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-white/[0.04] border border-border/40'
+                      }`}
+                    >
+                      {yr}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {isLoading || isNsdlLoading ? (
+              <Skeleton className="h-40 bg-white/5" />
+            ) : upcomingCoupons.length === 0 ? (
+              <EmptyState title="No coupon data" description="No upcoming estimated coupon payments found." />
+            ) : couponView === 'monthly' ? (
+              /* ── Monthly View ── */
+              monthlyCoupons.length === 0 ? (
+                <EmptyState title="No coupons for this period" description="No coupon payments scheduled for the selected year." />
               ) : (
-                <div className="space-y-2">
-                  {upcomingCoupons.map((c, i) => (
-                    <motion.div key={`${c.isin}-${i}`} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
-                      className={`flex items-center justify-between p-3 rounded-xl border transition-all ${c.isEstimated
-                          ? 'border-amber-500/20 bg-amber-500/[0.05] hover:border-amber-500/40'
-                          : 'border-emerald-500/20 bg-emerald-500/[0.05] hover:border-emerald-500/40'
-                        }`}>
-                      <div>
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <p className="text-xs font-semibold text-foreground truncate max-w-[200px]">{c.name}</p>
-                          {c.payoutType && (
-                            <span className="text-[10px] text-muted-foreground border border-border/50 rounded px-1.5 py-px font-medium">{c.payoutType}</span>
-                          )}
-                          {c.isEstimated && (
-                            <span className="text-[10px] text-amber-400/80 font-semibold">est.</span>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-muted-foreground">{format(c.date, 'dd MMM yyyy')} · <span className="text-foreground font-semibold">{(c.couponRate * 100).toFixed(2)}%</span> coupon</p>
+                <div className="space-y-5">
+                  {monthlyCoupons.map((mGroup) => (
+                    <div key={mGroup.monthKey} className="space-y-2.5">
+                      {/* Month Header Banner */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">{mGroup.monthKey}</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-300/90 border border-amber-500/20 font-semibold">
+                          {mGroup.coupons.length} {mGroup.coupons.length === 1 ? 'payment' : 'payments'}
+                        </span>
+                        <div className="flex-1 h-px bg-amber-500/20" />
+                        <span className="text-xs font-bold text-foreground tabular-nums">
+                          {fmt(mGroup.totalAmount, isHidden)}{' '}
+                          <span className="text-[11px] text-muted-foreground font-normal">total</span>
+                        </span>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <p className={`text-sm font-bold tabular-nums ${c.isEstimated ? 'text-amber-400' : 'text-emerald-400'}`}>
-                            {c.isEstimated ? '~' : ''}{fmt(c.amount, isHidden)}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground">{c.isEstimated ? 'est. payment' : 'payment'}</p>
-                        </div>
-                        <button
-                          onClick={() => setSelectedIsin({ isin: c.isin, name: c.name, units: c.unitsHeld })}
-                          className="p-1.5 rounded-lg text-blue-400 hover:text-blue-300 hover:bg-blue-500/15 border border-blue-500/25 transition-all shadow-xs"
-                          title="View NSDL Cashflow Schedule"
-                        >
-                          <CalendarSearch className="w-4 h-4 stroke-[2.2]" />
-                        </button>
+
+                      {/* Coupon items under this month */}
+                      <div className="space-y-2">
+                        {mGroup.coupons.map((c, i) => (
+                          <motion.div
+                            key={`${c.isin}-${c.date}-${i}`}
+                            initial={{ opacity: 0, x: -6 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.02 }}
+                            className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                              c.isEstimated
+                                ? 'border-amber-500/20 bg-amber-500/[0.05] hover:border-amber-500/40'
+                                : 'border-emerald-500/20 bg-emerald-500/[0.05] hover:border-emerald-500/40'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              {/* Date badge */}
+                              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/10 border border-amber-500/30 flex flex-col items-center justify-center flex-shrink-0 shadow-xs">
+                                <span className="text-xs text-amber-400 font-extrabold">{format(new Date(c.date), 'dd')}</span>
+                                <span className="text-[9px] text-muted-foreground uppercase font-semibold">{format(new Date(c.date), 'MMM')}</span>
+                              </div>
+
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2 mb-0.5">
+                                  <p className="text-xs font-semibold text-foreground truncate max-w-[200px] sm:max-w-[340px]">{c.name}</p>
+                                  {c.payoutType && (
+                                    <span className="text-[10px] text-muted-foreground border border-border/50 rounded px-1.5 py-px font-medium">{c.payoutType}</span>
+                                  )}
+                                  {c.isEstimated && (
+                                    <span className="text-[10px] text-amber-400/80 font-semibold">est.</span>
+                                  )}
+                                </div>
+                                <p className="text-[11px] text-muted-foreground">
+                                  {format(new Date(c.date), 'EEEE, dd MMM yyyy')} · <span className="text-foreground font-semibold">{(c.couponRate * 100).toFixed(2)}%</span> coupon
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-3 flex-shrink-0">
+                              <div className="text-right">
+                                <p className={`text-sm font-bold tabular-nums ${c.isEstimated ? 'text-amber-400' : 'text-emerald-400'}`}>
+                                  {c.isEstimated ? '~' : ''}{fmt(c.amount, isHidden)}
+                                </p>
+                                <p className="text-[11px] text-muted-foreground">{c.isEstimated ? 'est. payment' : 'payment'}</p>
+                              </div>
+                              <button
+                                onClick={() => setSelectedIsin({ isin: c.isin, name: c.name, units: c.unitsHeld })}
+                                className="p-1.5 rounded-lg text-blue-400 hover:text-blue-300 hover:bg-blue-500/15 border border-blue-500/25 transition-all shadow-xs"
+                                title="View NSDL Cashflow Schedule"
+                              >
+                                <CalendarSearch className="w-4 h-4 stroke-[2.2]" />
+                              </button>
+                            </div>
+                          </motion.div>
+                        ))}
                       </div>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
-              )}
+              )
+            ) : (
+              /* ── Yearly View ── */
+              yearlyCoupons.length === 0 ? (
+                <EmptyState title="No coupons for this year" description="No coupon payments scheduled for the selected year." />
+              ) : (
+                <div className="space-y-6">
+                  {yearlyCoupons.map((yGroup) => (
+                    <div
+                      key={yGroup.year}
+                      className="p-4 sm:p-5 rounded-2xl border border-amber-500/25 bg-card/60 backdrop-blur-xs space-y-4"
+                    >
+                      {/* Year KPI Banner */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/40">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 font-extrabold text-base">
+                            {yGroup.year}
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-foreground">Annual Projected Coupons</p>
+                            <p className="text-xs text-muted-foreground">
+                              {yGroup.paymentCount} {yGroup.paymentCount === 1 ? 'payment' : 'payments'} across {yGroup.bonds.length} {yGroup.bonds.length === 1 ? 'bond holding' : 'bond holdings'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 self-start sm:self-auto">
+                          <div className="text-right">
+                            <p className="text-xs text-muted-foreground">Annual Income</p>
+                            <p className="text-base font-extrabold text-amber-300 tabular-nums">
+                              {fmt(yGroup.totalAmount, isHidden)}
+                            </p>
+                          </div>
+                          <div className="w-px h-8 bg-border/50" />
+                          <div className="text-right">
+                            <p className="text-xs text-muted-foreground">Monthly Avg</p>
+                            <p className="text-sm font-bold text-emerald-400 tabular-nums">
+                              {fmt(yGroup.monthlyAvg, isHidden)}/mo
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 12-Month Matrix / Calendar Strip */}
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground mb-2">Monthly Distribution ({yGroup.year})</p>
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2">
+                          {yGroup.months.map((m) => {
+                            const hasIncome = m.amount > 0;
+                            return (
+                              <div
+                                key={m.monthName}
+                                className={`p-2.5 rounded-xl border text-center transition-all ${
+                                  hasIncome
+                                    ? 'border-amber-500/30 bg-amber-500/10 hover:border-amber-500/50'
+                                    : 'border-border/20 bg-muted/20 opacity-40'
+                                }`}
+                              >
+                                <p className="text-[11px] font-bold text-muted-foreground uppercase">{m.monthName}</p>
+                                <p className={`text-xs font-extrabold tabular-nums mt-1 ${hasIncome ? 'text-amber-300' : 'text-muted-foreground'}`}>
+                                  {hasIncome ? fmt(m.amount, isHidden) : '—'}
+                                </p>
+                                {hasIncome && (
+                                  <span className="inline-block text-[9px] text-amber-400/80 font-semibold mt-0.5">
+                                    {m.count} {m.count === 1 ? 'payout' : 'payouts'}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Bond Contributions for this Year */}
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground mb-2">Holdings Breakdown</p>
+                        <div className="space-y-2">
+                          {yGroup.bonds.map((b) => (
+                            <div
+                              key={b.isin}
+                              className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl border border-border/40 bg-background/50 hover:bg-amber-500/[0.03] transition-colors"
+                            >
+                              <div className="min-w-0 pr-3">
+                                <p className="text-xs font-semibold text-foreground truncate max-w-[220px] sm:max-w-[380px]">{b.name}</p>
+                                <p className="text-[11px] text-muted-foreground">
+                                  <span className="font-mono text-purple-400">{b.isin}</span> · <span className="text-foreground font-semibold">{(b.couponRate * 100).toFixed(2)}%</span> coupon · {b.paymentCount} {b.paymentCount === 1 ? 'payout' : 'payouts'}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-3 flex-shrink-0">
+                                <div className="text-right">
+                                  <p className="text-xs sm:text-sm font-bold tabular-nums text-emerald-400">
+                                    {fmt(b.totalAmount, isHidden)}
+                                  </p>
+                                  <p className="text-[10px] text-muted-foreground">annual total</p>
+                                </div>
+                                <button
+                                  onClick={() => setSelectedIsin({ isin: b.isin, name: b.name, units: b.unitsHeld })}
+                                  className="p-1.5 rounded-lg text-blue-400 hover:text-blue-300 hover:bg-blue-500/15 border border-blue-500/25 transition-all shadow-xs"
+                                  title="View NSDL Cashflow Schedule"
+                                >
+                                  <CalendarSearch className="w-4 h-4 stroke-[2.2]" />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            )}
           </CardContent>
         </Card>
 
