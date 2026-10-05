@@ -145,7 +145,7 @@ export default function AnalyticsPage() {
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-bold text-emerald-400">+{(w.percentChange * 100).toFixed(2)}%</p>
-                      <p className="text-xs text-muted-foreground tabular-nums">{fmt(w.currentPrice, isHidden)}</p>
+                      <p className="text-xs text-muted-foreground tabular-nums">{fmt(w.currentPrice)}</p>
                     </div>
                   </motion.div>
                 ))}
@@ -175,7 +175,7 @@ export default function AnalyticsPage() {
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-bold text-rose-400">{(l.percentChange * 100).toFixed(2)}%</p>
-                      <p className="text-xs text-muted-foreground tabular-nums">{fmt(l.currentPrice, isHidden)}</p>
+                      <p className="text-xs text-muted-foreground tabular-nums">{fmt(l.currentPrice)}</p>
                     </div>
                   </motion.div>
                 ))}

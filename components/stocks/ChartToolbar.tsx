@@ -37,19 +37,19 @@ export const ChartToolbar = memo(function ChartToolbar({
   chartType, timeRange, onChartTypeChange, onTimeRangeChange, isLoading,
 }: ChartToolbarProps) {
   return (
-    <div className="flex items-center justify-between gap-2 flex-wrap">
+    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
       {/* Time range */}
-      <div className="flex w-full items-center gap-0.5 bg-white/[0.04] rounded-lg p-0.5 border border-border/30">
+      <div className="flex flex-1 items-center gap-0.5 bg-white/[0.04] rounded-lg p-0.5 border border-border/30 overflow-x-auto">
         {TIME_RANGES.map(({ label, value }) => (
           <button
             key={value}
             onClick={() => onTimeRangeChange(value)}
             disabled={isLoading}
-            className={`flex-1 min-w-0 px-1.5 sm:px-2.5 py-1 text-[10px] sm:text-xs font-medium rounded-md transition-all ${
-  timeRange === value
-    ? 'bg-white/10 text-foreground shadow-sm'
-    : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
-} disabled:opacity-50`}
+            className={`flex-1 min-w-[28px] sm:min-w-0 px-1.5 sm:px-2.5 py-1 text-[10px] sm:text-xs font-medium rounded-md transition-all ${
+              timeRange === value
+                ? 'bg-white/10 text-foreground shadow-sm font-bold'
+                : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+            } disabled:opacity-50`}
           >
             {label}
           </button>
@@ -57,7 +57,7 @@ export const ChartToolbar = memo(function ChartToolbar({
       </div>
 
       {/* Chart type */}
-      <div className="flex items-center gap-0.5 bg-white/[0.04] rounded-lg p-0.5 border border-border/30">
+      <div className="flex items-center justify-end gap-0.5 bg-white/[0.04] rounded-lg p-0.5 border border-border/30 shrink-0">
         {CHART_TYPES.map(({ label, value }) => (
           <button
             key={value}
@@ -65,7 +65,7 @@ export const ChartToolbar = memo(function ChartToolbar({
             disabled={isLoading}
             className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
               chartType === value
-                ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-semibold'
                 : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
             } disabled:opacity-50`}
           >

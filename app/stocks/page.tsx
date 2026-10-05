@@ -22,8 +22,8 @@ function fmt(v: number, isHidden: boolean = false) {
   return `₹${v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-function fmtPrice(v: number, isHidden: boolean = false) {
-  if (isHidden) return PRIVACY_MASK;
+function fmtPrice(v: number) {
+  if (typeof v !== 'number' || isNaN(v)) return '₹0.00';
   return `₹${Math.abs(v).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
@@ -124,75 +124,30 @@ export default function StocksPage() {
             id="kpi-stocks-top-gainer"
             title="Top Gainer"
             value={isLoading || !winners[0] ? '—' : winners[0].ticker}
-            subValue={isLoading || !winners[0] ? undefined : `+${(winners[0].percentChange * 100).toFixed(2)}% (${winners[0].name})`}
+            subValue={
+              isLoading || !winners[0]
+                ? undefined
+                : `${fmtPrice(winners[0].currentPrice)} · +${(winners[0].percentChange * 100).toFixed(2)}% (${winners[0].name})`
+            }
             icon={ArrowUpRight}
             accentColor={(winners[0]?.percentChange ?? 0) >= 0 ? 'green' : 'red'}
             isLoading={isLoading}
+            onClick={winners[0] ? () => openStock(winners[0].ticker) : undefined}
           />
           <KpiCard
             id="kpi-stocks-top-loser"
             title="Top Loser"
             value={isLoading || !losers[0] ? '—' : losers[0].ticker}
-            subValue={isLoading || !losers[0] ? undefined : `${(losers[0].percentChange * 100).toFixed(2)}% (${losers[0].name})`}
+            subValue={
+              isLoading || !losers[0]
+                ? undefined
+                : `${fmtPrice(losers[0].currentPrice)} · ${(losers[0].percentChange * 100).toFixed(2)}% (${losers[0].name})`
+            }
             icon={ArrowDownRight}
             accentColor={(losers[0]?.percentChange ?? 0) >= 0 ? 'green' : 'red'}
             isLoading={isLoading}
+            onClick={losers[0] ? () => openStock(losers[0].ticker) : undefined}
           />
-        </div>
-
-        {/* Winners / Losers */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Card className="border-emerald-500/30 bg-gradient-to-br from-emerald-950/20 via-card to-card hover:border-emerald-500/50 transition-colors shadow-sm">
-            <CardHeader className="pb-5">
-              <CardTitle className="flex items-center gap-2 text-emerald-400">
-                <div className="w-7 h-7 rounded-lg bg-emerald-500/15 flex items-center justify-center">
-                  <TrendingUp className="w-4 h-4 text-emerald-400" />
-                </div>
-                Top Gainers
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {isLoading ? <Skeleton className="h-10 bg-white/5" /> :
-                winners.slice(0, 1).map((w) => (
-                  <div key={w.ticker} className="flex items-center justify-between px-3.5 py-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                    <div>
-                      <p className="text-sm font-bold text-foreground">{w.ticker}</p>
-                      <p className="text-xs text-muted-foreground truncate max-w-[140px]">{w.name}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-emerald-400">+{(w.percentChange * 100).toFixed(2)}%</p>
-                      <p className="text-xs text-muted-foreground tabular-nums">{fmtPrice(w.currentPrice, isHidden)}</p>
-                    </div>
-                  </div>
-                ))}
-            </CardContent>
-          </Card>
-
-          <Card className="border-rose-500/30 bg-gradient-to-br from-rose-950/20 via-card to-card hover:border-rose-500/50 transition-colors shadow-sm">
-            <CardHeader className="pb-5">
-              <CardTitle className="flex items-center gap-2 text-rose-400">
-                <div className="w-7 h-7 rounded-lg bg-rose-500/15 flex items-center justify-center">
-                  <TrendingDown className="w-4 h-4 text-rose-400" />
-                </div>
-                Top Losers
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {isLoading ? <Skeleton className="h-10 bg-white/5" /> :
-                losers.slice(0, 1).map((l) => (
-                  <div key={l.ticker} className="flex items-center justify-between px-3.5 py-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20">
-                    <div>
-                      <p className="text-sm font-bold text-foreground">{l.ticker}</p>
-                      <p className="text-xs text-muted-foreground truncate max-w-[140px]">{l.name}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-rose-400">{(l.percentChange * 100).toFixed(2)}%</p>
-                      <p className="text-xs text-muted-foreground tabular-nums">{fmtPrice(l.currentPrice, isHidden)}</p>
-                    </div>
-                  </div>
-                ))}
-            </CardContent>
-          </Card>
         </div>
 
         {/* Sector breakdown */}
@@ -275,7 +230,7 @@ export default function StocksPage() {
                       >{h.name}</TableCell>
                       <TableCell className="text-xs text-muted-foreground/80 font-normal">{h.sector}</TableCell>
                       <TableCell className="text-right text-sm font-medium tabular-nums text-foreground/90">{isHidden ? PRIVACY_MASK : h.shares.toLocaleString()}</TableCell>
-                      <TableCell className="text-right text-sm font-medium tabular-nums text-foreground/90">{fmtPrice(h.currentPrice, isHidden)}</TableCell>
+                      <TableCell className="text-right text-sm font-medium tabular-nums text-foreground/90">{fmtPrice(h.currentPrice)}</TableCell>
                       <TableCell className="text-right text-sm font-medium tabular-nums text-foreground">{fmt(h.currentValue, isHidden)}</TableCell>
                       <TableCell className="text-right text-sm font-medium tabular-nums text-foreground/90">
                         {(h.allocationPercent).toFixed(2)}%

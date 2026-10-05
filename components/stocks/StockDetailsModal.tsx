@@ -86,10 +86,10 @@ export function StockDetailsModal() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 20 }}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-[90vw] max-h-[95vh] flex flex-col"
-            style={{ maxHeight: 'min(95vh, 900px)' }}
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-[92vw] sm:max-w-5xl max-h-[90vh] flex flex-col min-h-0"
+            style={{ maxHeight: 'min(90vh, 880px)' }}
           >
-            <div className="bg-[#0f172a] border border-border/40 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+            <div className="bg-[#0f172a] border border-border/40 rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-full min-h-0">
 
               {/* Header bar */}
               <div className="flex items-start justify-between gap-4 px-5 pt-5 pb-4 border-b border-border/30 shrink-0">
@@ -109,7 +109,7 @@ export function StockDetailsModal() {
               </div>
 
               {/* Scrollable body */}
-              <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-4 space-y-5">
+              <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-4 space-y-5">
 
                 {/* Chart toolbar + chart */}
                 <div className="space-y-3">

@@ -23,6 +23,7 @@ interface KpiCardProps {
   note?: string;
   id?: string;
   href?: string;
+  onClick?: () => void;
   valueClassName?: string;
   isPrivate?: boolean;
   showPrivacyToggle?: boolean;
@@ -152,6 +153,7 @@ export function KpiCard({
   note,
   id,
   href,
+  onClick,
   valueClassName,
   isPrivate = false,
   showPrivacyToggle = false,
@@ -180,13 +182,26 @@ export function KpiCard({
 
   const content = (
     <Card
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
       className={cn(
         'relative overflow-hidden rounded-2xl border p-4 sm:p-5 h-full flex flex-col justify-between transition-all duration-300 text-white shadow-md',
         theme.gradient,
         theme.border,
         theme.hoverBorder,
         theme.glow,
-        href ? 'cursor-pointer hover:scale-[1.015] hover:shadow-xl' : 'cursor-default',
+        (href || onClick) ? 'cursor-pointer hover:scale-[1.015] hover:shadow-xl' : 'cursor-default',
         className
       )}
     >
