@@ -183,7 +183,26 @@ export default function CalendarPage() {
   const nextMaturity = nsdlMaturities.length > 0 && nsdlMaturities[0].maturityDate
     ? format(new Date(nsdlMaturities[0].maturityDate), 'dd MMM yyyy')
     : 'None';
-  const totalCouponsAmount = upcomingCoupons.reduce((s, c) => s + (c.amount || 0), 0);
+  const nextPayout = useMemo(() => {
+    if (upcomingCoupons.length === 0) return null;
+    const firstDateStr = new Date(upcomingCoupons[0].date).toDateString();
+    const sameDayCoupons = upcomingCoupons.filter(
+      (c) => new Date(c.date).toDateString() === firstDateStr
+    );
+    const amount = sameDayCoupons.reduce((sum, c) => sum + (c.amount || 0), 0);
+    const name =
+      sameDayCoupons.length === 1
+        ? sameDayCoupons[0].name
+        : `${sameDayCoupons[0].name} +${sameDayCoupons.length - 1} more`;
+
+    return {
+      formattedDate: format(new Date(upcomingCoupons[0].date), 'dd MMM yyyy'),
+      amount,
+      name,
+      isin: upcomingCoupons[0].isin,
+      unitsHeld: upcomingCoupons[0].unitsHeld,
+    };
+  }, [upcomingCoupons]);
 
   const bondList = bonds && bonds.length > 0 ? bonds : bondMaturityEvents;
 
@@ -270,12 +289,17 @@ export default function CalendarPage() {
             isLoading={isLoading || isNsdlLoading}
           />
           <KpiCard
-            title="Scheduled Payouts"
-            value={fmt(totalCouponsAmount, isHidden)}
-            subValue={`${upcomingCoupons.length} upcoming coupons`}
+            title="Next Payout"
+            value={nextPayout ? nextPayout.formattedDate : 'None'}
+            subValue={
+              isLoading || isNsdlLoading
+                ? undefined
+                : nextPayout
+                ? `${fmt(nextPayout.amount, isHidden)} · ${nextPayout.name}`
+                : 'No upcoming payout'
+            }
             accentColor="amber"
             icon={Banknote}
-            isPrivate
             isLoading={isLoading || isNsdlLoading}
           />
           <KpiCard
@@ -302,7 +326,6 @@ export default function CalendarPage() {
               </div>
               <div>
                 <CardTitle className="text-blue-300 font-bold">Bond Maturities</CardTitle>
-                <p className="text-xs text-muted-foreground">Official schedule synced via NSDL API</p>
               </div>
             </div>
           </CardHeader>
@@ -358,11 +381,6 @@ export default function CalendarPage() {
               </div>
               <div>
                 <CardTitle className="text-amber-300 font-bold">Upcoming Coupon Payments</CardTitle>
-                {hasEstimated ? (
-                  <p className="text-xs text-amber-400/70">⚠️ Bonds without a Payout Date use estimated dates from maturity</p>
-                ) : (
-                  <p className="text-xs text-muted-foreground">Cash flow schedule verified from issuer filings</p>
-                )}
               </div>
             </div>
           </CardHeader>
