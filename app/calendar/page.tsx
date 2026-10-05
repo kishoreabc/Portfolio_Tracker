@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,7 +9,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { Topbar } from '@/components/layout/Topbar';
 import { usePortfolioData } from '@/hooks/usePortfolioData';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarIcon, Banknote, AlertCircle, CalendarSearch, Building2, ShieldCheck, Clock, IndianRupee, CalendarDays, CalendarRange } from 'lucide-react';
+import { CalendarIcon, Banknote, AlertCircle, CalendarSearch, Building2, ShieldCheck, Clock, IndianRupee, CalendarDays, CalendarRange, ChevronDown } from 'lucide-react';
 import { BondCashflowDialog } from '@/components/bonds/BondCashflowDialog';
 import { KpiCard } from '@/components/shared/KpiCard';
 import { useState, useEffect, useCallback } from 'react';
@@ -34,6 +34,8 @@ export default function CalendarPage() {
   const [isNsdlLoading, setIsNsdlLoading] = useState(true);
   const [couponView, setCouponView] = useState<'monthly' | 'yearly'>('monthly');
   const [selectedCouponYear, setSelectedCouponYear] = useState<string>('All');
+  const [isMonthlyExpanded, setIsMonthlyExpanded] = useState(false);
+  const [isYearlyExpanded, setIsYearlyExpanded] = useState(false);
 
   const grouped = useMemo(() => {
     const map = new Map<string, any[]>();
@@ -371,6 +373,188 @@ export default function CalendarPage() {
     return weightedCouponPct > 0 ? `${weightedCouponPct.toFixed(2)}% p.a.` : '—';
   }, [bonds, bondList, weightedCouponPct]);
 
+  // Reset expansion when switching year filter or view mode
+  useEffect(() => {
+    setIsMonthlyExpanded(false);
+    setIsYearlyExpanded(false);
+  }, [selectedCouponYear, couponView]);
+
+  const renderMonthGroup = (mGroup: (typeof monthlyCoupons)[0]) => (
+    <div key={mGroup.monthKey} className="space-y-2.5">
+      {/* Month Header Banner */}
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">{mGroup.monthKey}</span>
+        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-300/90 border border-amber-500/20 font-semibold">
+          {mGroup.coupons.length} {mGroup.coupons.length === 1 ? 'payment' : 'payments'}
+        </span>
+        <div className="flex-1 h-px bg-amber-500/20" />
+        <span className="text-xs font-bold text-foreground tabular-nums">
+          {fmt(mGroup.totalAmount, isHidden)}{' '}
+          <span className="text-[11px] text-muted-foreground font-normal">total</span>
+        </span>
+      </div>
+
+      {/* Coupon items under this month */}
+      <div className="space-y-2">
+        {mGroup.coupons.map((c, i) => (
+          <motion.div
+            key={`${c.isin}-${c.date}-${i}`}
+            initial={{ opacity: 0, x: -6 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: i * 0.02 }}
+            className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+              c.isEstimated
+                ? 'border-amber-500/20 bg-amber-500/[0.05] hover:border-amber-500/40'
+                : 'border-emerald-500/20 bg-emerald-500/[0.05] hover:border-emerald-500/40'
+            }`}
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              {/* Date badge */}
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/10 border border-amber-500/30 flex flex-col items-center justify-center flex-shrink-0 shadow-xs">
+                <span className="text-xs text-amber-400 font-extrabold">{format(new Date(c.date), 'dd')}</span>
+                <span className="text-[9px] text-muted-foreground uppercase font-semibold">{format(new Date(c.date), 'MMM')}</span>
+              </div>
+
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <p className="text-xs font-semibold text-foreground truncate max-w-[200px] sm:max-w-[340px]">{c.name}</p>
+                  {c.payoutType && (
+                    <span className="text-[10px] text-muted-foreground border border-border/50 rounded px-1.5 py-px font-medium">{c.payoutType}</span>
+                  )}
+                  {c.isEstimated && (
+                    <span className="text-[10px] text-amber-400/80 font-semibold">est.</span>
+                  )}
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  {format(new Date(c.date), 'EEEE, dd MMM yyyy')} · <span className="text-foreground font-semibold">{(c.couponRate * 100).toFixed(2)}%</span> coupon
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <div className="text-right">
+                <p className={`text-sm font-bold tabular-nums ${c.isEstimated ? 'text-amber-400' : 'text-emerald-400'}`}>
+                  {c.isEstimated ? '~' : ''}{fmt(c.amount, isHidden)}
+                </p>
+                <p className="text-[11px] text-muted-foreground">{c.isEstimated ? 'est. payment' : 'payment'}</p>
+              </div>
+              <button
+                onClick={() => setSelectedIsin({ isin: c.isin, name: c.name, units: c.unitsHeld })}
+                className="p-1.5 rounded-lg text-blue-400 hover:text-blue-300 hover:bg-blue-500/15 border border-blue-500/25 transition-all shadow-xs"
+                title="View NSDL Cashflow Schedule"
+              >
+                <CalendarSearch className="w-4 h-4 stroke-[2.2]" />
+              </button>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderYearGroup = (yGroup: (typeof yearlyCoupons)[0]) => (
+    <div
+      key={yGroup.year}
+      className="p-4 sm:p-5 rounded-2xl border border-amber-500/25 bg-card/60 backdrop-blur-xs space-y-4"
+    >
+      {/* Year KPI Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/40">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 font-extrabold text-base">
+            {yGroup.year}
+          </div>
+          <div>
+            <p className="text-sm font-bold text-foreground">Annual Projected Coupons</p>
+            <p className="text-xs text-muted-foreground">
+              {yGroup.paymentCount} {yGroup.paymentCount === 1 ? 'payment' : 'payments'} across {yGroup.bonds.length} {yGroup.bonds.length === 1 ? 'bond holding' : 'bond holdings'}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 self-start sm:self-auto">
+          <div className="text-right">
+            <p className="text-xs text-muted-foreground">Annual Income</p>
+            <p className="text-base font-extrabold text-amber-300 tabular-nums">
+              {fmt(yGroup.totalAmount, isHidden)}
+            </p>
+          </div>
+          <div className="w-px h-8 bg-border/50" />
+          <div className="text-right">
+            <p className="text-xs text-muted-foreground">Monthly Avg</p>
+            <p className="text-sm font-bold text-emerald-400 tabular-nums">
+              {fmt(yGroup.monthlyAvg, isHidden)}/mo
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* 12-Month Matrix / Calendar Strip */}
+      <div>
+        <p className="text-xs font-semibold text-muted-foreground mb-2">Monthly Distribution ({yGroup.year})</p>
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2">
+          {yGroup.months.map((m) => {
+            const hasIncome = m.amount > 0;
+            return (
+              <div
+                key={m.monthName}
+                className={`p-2.5 rounded-xl border text-center transition-all ${
+                  hasIncome
+                    ? 'border-amber-500/30 bg-amber-500/10 hover:border-amber-500/50'
+                    : 'border-border/20 bg-muted/20 opacity-40'
+                }`}
+              >
+                <p className="text-[11px] font-bold text-muted-foreground uppercase">{m.monthName}</p>
+                <p className={`text-xs font-extrabold tabular-nums mt-1 ${hasIncome ? 'text-amber-300' : 'text-muted-foreground'}`}>
+                  {hasIncome ? fmt(m.amount, isHidden) : '—'}
+                </p>
+                {hasIncome && (
+                  <span className="inline-block text-[9px] text-amber-400/80 font-semibold mt-0.5">
+                    {m.count} {m.count === 1 ? 'payout' : 'payouts'}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Bond Contributions for this Year */}
+      <div>
+        <p className="text-xs font-semibold text-muted-foreground mb-2">Holdings Breakdown</p>
+        <div className="space-y-2">
+          {yGroup.bonds.map((b) => (
+            <div
+              key={b.isin}
+              className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl border border-border/40 bg-background/50 hover:bg-amber-500/[0.03] transition-colors"
+            >
+              <div className="min-w-0 pr-3">
+                <p className="text-xs font-semibold text-foreground truncate max-w-[220px] sm:max-w-[380px]">{b.name}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  <span className="font-mono text-purple-400">{b.isin}</span> · <span className="text-foreground font-semibold">{(b.couponRate * 100).toFixed(2)}%</span> coupon · {b.paymentCount} {b.paymentCount === 1 ? 'payout' : 'payouts'}
+                </p>
+              </div>
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <div className="text-right">
+                  <p className="text-xs sm:text-sm font-bold tabular-nums text-emerald-400">
+                    {fmt(b.totalAmount, isHidden)}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">annual total</p>
+                </div>
+                <button
+                  onClick={() => setSelectedIsin({ isin: b.isin, name: b.name, units: b.unitsHeld })}
+                  className="p-1.5 rounded-lg text-blue-400 hover:text-blue-300 hover:bg-blue-500/15 border border-blue-500/25 transition-all shadow-xs"
+                  title="View NSDL Cashflow Schedule"
+                >
+                  <CalendarSearch className="w-4 h-4 stroke-[2.2]" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <>
       <Topbar lastFetched={lastFetched} pageTitle="Calendar" apiErrors={apiErrors} />
@@ -554,78 +738,49 @@ export default function CalendarPage() {
                 <EmptyState title="No coupons for this period" description="No coupon payments scheduled for the selected year." />
               ) : (
                 <div className="space-y-5">
-                  {monthlyCoupons.map((mGroup) => (
-                    <div key={mGroup.monthKey} className="space-y-2.5">
-                      {/* Month Header Banner */}
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">{mGroup.monthKey}</span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-300/90 border border-amber-500/20 font-semibold">
-                          {mGroup.coupons.length} {mGroup.coupons.length === 1 ? 'payment' : 'payments'}
-                        </span>
-                        <div className="flex-1 h-px bg-amber-500/20" />
-                        <span className="text-xs font-bold text-foreground tabular-nums">
-                          {fmt(mGroup.totalAmount, isHidden)}{' '}
-                          <span className="text-[11px] text-muted-foreground font-normal">total</span>
-                        </span>
-                      </div>
+                  {/* First month always visible */}
+                  {renderMonthGroup(monthlyCoupons[0])}
 
-                      {/* Coupon items under this month */}
-                      <div className="space-y-2">
-                        {mGroup.coupons.map((c, i) => (
+                  {/* Remaining months with expand/collapse animation */}
+                  {monthlyCoupons.length > 1 && (
+                    <>
+                      <AnimatePresence initial={false}>
+                        {isMonthlyExpanded && (
                           <motion.div
-                            key={`${c.isin}-${c.date}-${i}`}
-                            initial={{ opacity: 0, x: -6 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: i * 0.02 }}
-                            className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
-                              c.isEstimated
-                                ? 'border-amber-500/20 bg-amber-500/[0.05] hover:border-amber-500/40'
-                                : 'border-emerald-500/20 bg-emerald-500/[0.05] hover:border-emerald-500/40'
-                            }`}
+                            key="more-months"
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.35, ease: 'easeInOut' }}
+                            className="overflow-hidden space-y-5"
                           >
-                            <div className="flex items-center gap-3 min-w-0">
-                              {/* Date badge */}
-                              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/10 border border-amber-500/30 flex flex-col items-center justify-center flex-shrink-0 shadow-xs">
-                                <span className="text-xs text-amber-400 font-extrabold">{format(new Date(c.date), 'dd')}</span>
-                                <span className="text-[9px] text-muted-foreground uppercase font-semibold">{format(new Date(c.date), 'MMM')}</span>
-                              </div>
-
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-2 mb-0.5">
-                                  <p className="text-xs font-semibold text-foreground truncate max-w-[200px] sm:max-w-[340px]">{c.name}</p>
-                                  {c.payoutType && (
-                                    <span className="text-[10px] text-muted-foreground border border-border/50 rounded px-1.5 py-px font-medium">{c.payoutType}</span>
-                                  )}
-                                  {c.isEstimated && (
-                                    <span className="text-[10px] text-amber-400/80 font-semibold">est.</span>
-                                  )}
-                                </div>
-                                <p className="text-[11px] text-muted-foreground">
-                                  {format(new Date(c.date), 'EEEE, dd MMM yyyy')} · <span className="text-foreground font-semibold">{(c.couponRate * 100).toFixed(2)}%</span> coupon
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-3 flex-shrink-0">
-                              <div className="text-right">
-                                <p className={`text-sm font-bold tabular-nums ${c.isEstimated ? 'text-amber-400' : 'text-emerald-400'}`}>
-                                  {c.isEstimated ? '~' : ''}{fmt(c.amount, isHidden)}
-                                </p>
-                                <p className="text-[11px] text-muted-foreground">{c.isEstimated ? 'est. payment' : 'payment'}</p>
-                              </div>
-                              <button
-                                onClick={() => setSelectedIsin({ isin: c.isin, name: c.name, units: c.unitsHeld })}
-                                className="p-1.5 rounded-lg text-blue-400 hover:text-blue-300 hover:bg-blue-500/15 border border-blue-500/25 transition-all shadow-xs"
-                                title="View NSDL Cashflow Schedule"
-                              >
-                                <CalendarSearch className="w-4 h-4 stroke-[2.2]" />
-                              </button>
-                            </div>
+                            {monthlyCoupons.slice(1).map(renderMonthGroup)}
                           </motion.div>
-                        ))}
+                        )}
+                      </AnimatePresence>
+
+                      {/* Expand/Collapse Button with Down Arrow */}
+                      <div className="pt-2 flex justify-center">
+                        <button
+                          type="button"
+                          onClick={() => setIsMonthlyExpanded(!isMonthlyExpanded)}
+                          className="group flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 transition-all shadow-xs"
+                        >
+                          <span>
+                            {isMonthlyExpanded
+                              ? 'Show less'
+                              : `Show ${monthlyCoupons.length - 1} more ${monthlyCoupons.length - 1 === 1 ? 'month' : 'months'}`}
+                          </span>
+                          <motion.div
+                            animate={{ rotate: isMonthlyExpanded ? 180 : 0 }}
+                            transition={{ duration: 0.25 }}
+                          >
+                            <ChevronDown className="w-4 h-4 text-amber-400 group-hover:translate-y-0.5 transition-transform" />
+                          </motion.div>
+                        </button>
                       </div>
-                    </div>
-                  ))}
+                    </>
+                  )}
                 </div>
               )
             ) : (
@@ -634,108 +789,49 @@ export default function CalendarPage() {
                 <EmptyState title="No coupons for this year" description="No coupon payments scheduled for the selected year." />
               ) : (
                 <div className="space-y-6">
-                  {yearlyCoupons.map((yGroup) => (
-                    <div
-                      key={yGroup.year}
-                      className="p-4 sm:p-5 rounded-2xl border border-amber-500/25 bg-card/60 backdrop-blur-xs space-y-4"
-                    >
-                      {/* Year KPI Banner */}
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/40">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 font-extrabold text-base">
-                            {yGroup.year}
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold text-foreground">Annual Projected Coupons</p>
-                            <p className="text-xs text-muted-foreground">
-                              {yGroup.paymentCount} {yGroup.paymentCount === 1 ? 'payment' : 'payments'} across {yGroup.bonds.length} {yGroup.bonds.length === 1 ? 'bond holding' : 'bond holdings'}
-                            </p>
-                          </div>
-                        </div>
+                  {/* First year always visible */}
+                  {renderYearGroup(yearlyCoupons[0])}
 
-                        <div className="flex items-center gap-4 self-start sm:self-auto">
-                          <div className="text-right">
-                            <p className="text-xs text-muted-foreground">Annual Income</p>
-                            <p className="text-base font-extrabold text-amber-300 tabular-nums">
-                              {fmt(yGroup.totalAmount, isHidden)}
-                            </p>
-                          </div>
-                          <div className="w-px h-8 bg-border/50" />
-                          <div className="text-right">
-                            <p className="text-xs text-muted-foreground">Monthly Avg</p>
-                            <p className="text-sm font-bold text-emerald-400 tabular-nums">
-                              {fmt(yGroup.monthlyAvg, isHidden)}/mo
-                            </p>
-                          </div>
-                        </div>
-                      </div>
+                  {/* Remaining years with expand/collapse animation */}
+                  {yearlyCoupons.length > 1 && (
+                    <>
+                      <AnimatePresence initial={false}>
+                        {isYearlyExpanded && (
+                          <motion.div
+                            key="more-years"
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.35, ease: 'easeInOut' }}
+                            className="overflow-hidden space-y-6 pt-2"
+                          >
+                            {yearlyCoupons.slice(1).map(renderYearGroup)}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
 
-                      {/* 12-Month Matrix / Calendar Strip */}
-                      <div>
-                        <p className="text-xs font-semibold text-muted-foreground mb-2">Monthly Distribution ({yGroup.year})</p>
-                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2">
-                          {yGroup.months.map((m) => {
-                            const hasIncome = m.amount > 0;
-                            return (
-                              <div
-                                key={m.monthName}
-                                className={`p-2.5 rounded-xl border text-center transition-all ${
-                                  hasIncome
-                                    ? 'border-amber-500/30 bg-amber-500/10 hover:border-amber-500/50'
-                                    : 'border-border/20 bg-muted/20 opacity-40'
-                                }`}
-                              >
-                                <p className="text-[11px] font-bold text-muted-foreground uppercase">{m.monthName}</p>
-                                <p className={`text-xs font-extrabold tabular-nums mt-1 ${hasIncome ? 'text-amber-300' : 'text-muted-foreground'}`}>
-                                  {hasIncome ? fmt(m.amount, isHidden) : '—'}
-                                </p>
-                                {hasIncome && (
-                                  <span className="inline-block text-[9px] text-amber-400/80 font-semibold mt-0.5">
-                                    {m.count} {m.count === 1 ? 'payout' : 'payouts'}
-                                  </span>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
+                      {/* Expand/Collapse Button with Down Arrow */}
+                      <div className="pt-2 flex justify-center">
+                        <button
+                          type="button"
+                          onClick={() => setIsYearlyExpanded(!isYearlyExpanded)}
+                          className="group flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 transition-all shadow-xs"
+                        >
+                          <span>
+                            {isYearlyExpanded
+                              ? 'Show less'
+                              : `Show ${yearlyCoupons.length - 1} more ${yearlyCoupons.length - 1 === 1 ? 'year' : 'years'}`}
+                          </span>
+                          <motion.div
+                            animate={{ rotate: isYearlyExpanded ? 180 : 0 }}
+                            transition={{ duration: 0.25 }}
+                          >
+                            <ChevronDown className="w-4 h-4 text-amber-400 group-hover:translate-y-0.5 transition-transform" />
+                          </motion.div>
+                        </button>
                       </div>
-
-                      {/* Bond Contributions for this Year */}
-                      <div>
-                        <p className="text-xs font-semibold text-muted-foreground mb-2">Holdings Breakdown</p>
-                        <div className="space-y-2">
-                          {yGroup.bonds.map((b) => (
-                            <div
-                              key={b.isin}
-                              className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl border border-border/40 bg-background/50 hover:bg-amber-500/[0.03] transition-colors"
-                            >
-                              <div className="min-w-0 pr-3">
-                                <p className="text-xs font-semibold text-foreground truncate max-w-[220px] sm:max-w-[380px]">{b.name}</p>
-                                <p className="text-[11px] text-muted-foreground">
-                                  <span className="font-mono text-purple-400">{b.isin}</span> · <span className="text-foreground font-semibold">{(b.couponRate * 100).toFixed(2)}%</span> coupon · {b.paymentCount} {b.paymentCount === 1 ? 'payout' : 'payouts'}
-                                </p>
-                              </div>
-                              <div className="flex items-center gap-3 flex-shrink-0">
-                                <div className="text-right">
-                                  <p className="text-xs sm:text-sm font-bold tabular-nums text-emerald-400">
-                                    {fmt(b.totalAmount, isHidden)}
-                                  </p>
-                                  <p className="text-[10px] text-muted-foreground">annual total</p>
-                                </div>
-                                <button
-                                  onClick={() => setSelectedIsin({ isin: b.isin, name: b.name, units: b.unitsHeld })}
-                                  className="p-1.5 rounded-lg text-blue-400 hover:text-blue-300 hover:bg-blue-500/15 border border-blue-500/25 transition-all shadow-xs"
-                                  title="View NSDL Cashflow Schedule"
-                                >
-                                  <CalendarSearch className="w-4 h-4 stroke-[2.2]" />
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                    </>
+                  )}
                 </div>
               )
             )}
