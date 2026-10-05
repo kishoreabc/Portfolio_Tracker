@@ -12,8 +12,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CalendarIcon, Banknote, AlertCircle, CalendarSearch, Building2, ShieldCheck, Clock, IndianRupee } from 'lucide-react';
 import { BondCashflowDialog } from '@/components/bonds/BondCashflowDialog';
 import { KpiCard } from '@/components/shared/KpiCard';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
+import { getClientCachedBondCashflow, setClientCachedBondCashflow } from '@/lib/bonds/clientCache';
 
 function fmt(v: number, isHidden: boolean = false) {
   if (isHidden) return PRIVACY_MASK;
@@ -42,42 +43,25 @@ export default function CalendarPage() {
     );
   }, [nsdlMaturities]);
 
-  useEffect(() => {
-    async function fetchNsdl() {
-      if (bondMaturityEvents.length === 0) {
-        setIsNsdlLoading(false);
-        return;
-      }
-      setIsNsdlLoading(true);
-      
-      const uniqueIsins = Array.from(new Set(bondMaturityEvents.filter(e => e.isin).map(e => e.isin)));
-      const promises = uniqueIsins.map(async (isin) => {
-        try {
-          const res = await fetch(`/api/bonds/cashflow?isin=${isin}`);
-          if (!res.ok) return null;
-          const data = await res.json();
-          return { isin, data };
-        } catch { return null; }
-      });
-      
-      const results = await Promise.all(promises);
+  const processScheduleResults = useCallback(
+    (results: { isin: string; data: any }[]) => {
       const today = new Date();
-      today.setHours(0,0,0,0);
+      today.setHours(0, 0, 0, 0);
       const upcoming: any[] = [];
       const maturities: any[] = [];
-      
+
       for (const res of results) {
         if (!res || !res.data?.cashFlowSchedule) continue;
-        const bond = bondMaturityEvents.find(e => e.isin === res.isin);
+        const bond = bondMaturityEvents.find((e) => e.isin === res.isin);
         if (!bond) continue;
-        
+
         let bondMaturityDate: Date | null = null;
         let bondTotalAmount = 0;
-        
+
         for (const item of res.data.cashFlowSchedule) {
           const dateStr = item.dueDate || item.paymentDate;
           if (!dateStr || dateStr === '-' || dateStr === 'NA') continue;
-          
+
           let d: Date | null = null;
           const parts = dateStr.split(/[-/]/);
           if (parts.length === 3) {
@@ -87,12 +71,13 @@ export default function CalendarPage() {
               d = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
             }
           }
-          
+
           if (d && !isNaN(d.getTime()) && d >= today) {
-            const amtPerUnit = typeof item.amountPayable === 'number'
-              ? item.amountPayable
-              : parseFloat(String(item.amountPayable || '0').replace(/,/g, '')) || 0;
-            
+            const amtPerUnit =
+              typeof item.amountPayable === 'number'
+                ? item.amountPayable
+                : parseFloat(String(item.amountPayable || '0').replace(/,/g, '')) || 0;
+
             upcoming.push({
               date: d,
               amount: amtPerUnit * bond.unitsHeld,
@@ -104,34 +89,92 @@ export default function CalendarPage() {
               unitsHeld: bond.unitsHeld,
             });
           }
-          
+
           if (item.cashFlowsEvent?.toLowerCase().includes('redemption') && d && !isNaN(d.getTime())) {
             bondMaturityDate = d;
-            const amtPerUnit = typeof item.amountPayable === 'number'
-              ? item.amountPayable
-              : parseFloat(String(item.amountPayable || '0').replace(/,/g, '')) || 0;
+            const amtPerUnit =
+              typeof item.amountPayable === 'number'
+                ? item.amountPayable
+                : parseFloat(String(item.amountPayable || '0').replace(/,/g, '')) || 0;
             bondTotalAmount = amtPerUnit * bond.unitsHeld;
           }
         }
-        
+
         maturities.push({
-          maturityDate: bondMaturityDate || bond.maturityDate, // fallback to sheet if missing
-          totalValue: bondTotalAmount || bond.totalValue, // fallback to sheet if missing
+          maturityDate: bondMaturityDate || bond.maturityDate,
+          totalValue: bondTotalAmount || bond.totalValue,
           securityName: bond.securityName,
           isin: bond.isin,
           issuer: bond.issuer,
           creditRating: bond.creditRating,
-          unitsHeld: bond.unitsHeld
+          unitsHeld: bond.unitsHeld,
         });
       }
-      
-      upcoming.sort((a,b) => a.date.getTime() - b.date.getTime());
+
+      upcoming.sort((a, b) => a.date.getTime() - b.date.getTime());
       setUpcomingCoupons(upcoming.slice(0, 15));
       setNsdlMaturities(maturities);
-      setIsNsdlLoading(false);
+    },
+    [bondMaturityEvents]
+  );
+
+  useEffect(() => {
+    async function fetchNsdl() {
+      if (bondMaturityEvents.length === 0) {
+        setIsNsdlLoading(false);
+        return;
+      }
+
+      const uniqueIsins = Array.from(new Set(bondMaturityEvents.filter((e) => e.isin).map((e) => e.isin)));
+      const cachedResults: { isin: string; data: any }[] = [];
+      const isinsToFetch: string[] = [];
+
+      for (const isin of uniqueIsins) {
+        const cached = getClientCachedBondCashflow(isin);
+        if (cached && (cached.status === 200 || (cached.cashFlowSchedule && cached.cashFlowSchedule.length > 0))) {
+          cachedResults.push({ isin, data: cached });
+        } else {
+          isinsToFetch.push(isin);
+        }
+      }
+
+      // If cached data exists for any/all ISINs, display it immediately (0ms delay)
+      if (cachedResults.length > 0) {
+        processScheduleResults(cachedResults);
+        if (isinsToFetch.length === 0) {
+          setIsNsdlLoading(false);
+          return;
+        }
+      } else {
+        setIsNsdlLoading(true);
+      }
+
+      // Fetch uncached ISINs in parallel (serviced by server-side disk cache or external NSDL)
+      try {
+        const promises = isinsToFetch.map(async (isin) => {
+          try {
+            const res = await fetch(`/api/bonds/cashflow?isin=${encodeURIComponent(isin)}`);
+            if (!res.ok) return null;
+            const data = await res.json();
+            if (data && (data.status === 200 || (data.cashFlowSchedule && data.cashFlowSchedule.length > 0))) {
+              setClientCachedBondCashflow(isin, data);
+            }
+            return { isin, data };
+          } catch {
+            return null;
+          }
+        });
+
+        const freshResults = (await Promise.all(promises)).filter(Boolean) as { isin: string; data: any }[];
+        const combined = [...cachedResults, ...freshResults];
+        processScheduleResults(combined);
+      } finally {
+        setIsNsdlLoading(false);
+      }
     }
+
     fetchNsdl();
-  }, [bondMaturityEvents]);
+  }, [bondMaturityEvents, processScheduleResults]);
 
   const hasEstimated = false;
 

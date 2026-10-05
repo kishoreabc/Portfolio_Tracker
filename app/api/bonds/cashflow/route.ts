@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { fetchNsdlCashFlow } from '@/lib/bonds/nsdl';
-import type { NsdlCashFlowResponse } from '@/types/bonds';
+import { getCachedBondCashflow, saveCachedBondCashflow } from '@/lib/bonds/cache';
 import { checkRateLimit, getClientIdentifier, rateLimitResponse } from '@/lib/server/rateLimiter';
 import { methodNotAllowed, privateNoStoreHeaders, safeErrorResponse, unauthorizedResponse } from '@/lib/server/apiHelpers';
-
-// Simple in-memory cache: isin -> { data, ts }
-const cache = new Map<string, { data: NsdlCashFlowResponse; ts: number }>();
-const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 export const dynamic = 'force-dynamic';
 
@@ -20,13 +16,14 @@ export async function GET(req: NextRequest) {
   const userId = session.user.id || session.user.email || null;
   const clientId = getClientIdentifier(req, userId);
 
-  // Rate limit: 40 requests per minute
-  const limitResult = checkRateLimit(`bonds-cashflow:${clientId}`, 40, 60 * 1000);
+  // Rate limit: 60 requests per minute
+  const limitResult = checkRateLimit(`bonds-cashflow:${clientId}`, 60, 60 * 1000);
   if (!limitResult.allowed) {
     return rateLimitResponse(limitResult.resetTime, 'Bond cashflow request rate limit exceeded.');
   }
 
   const isin = req.nextUrl.searchParams.get('isin');
+  const force = req.nextUrl.searchParams.get('force') === 'true';
 
   if (!isin) {
     return NextResponse.json(
@@ -45,24 +42,46 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const now = Date.now();
-  const cached = cache.get(cleanIsin);
-  if (cached && now - cached.ts < CACHE_TTL_MS) {
-    return NextResponse.json(cached.data, { headers: privateNoStoreHeaders });
+  // Check persistent disk & memory cache if not forced
+  if (!force) {
+    const cached = await getCachedBondCashflow(cleanIsin);
+    if (cached) {
+      return NextResponse.json(cached, {
+        headers: {
+          ...privateNoStoreHeaders,
+          'X-Cache': 'HIT',
+        },
+      });
+    }
   }
 
   try {
     const data = await fetchNsdlCashFlow(cleanIsin);
 
-    // Only cache non-empty schedules for full TTL (10m); empty results get short TTL (30s)
-    if (data.cashFlowSchedule.length > 0) {
-      cache.set(cleanIsin, { data, ts: now });
-    } else if (data.status === 200 || data.status === 400) {
-      cache.set(cleanIsin, { data, ts: now - CACHE_TTL_MS + 30000 });
+    // Save to persistent cache
+    if (data.cashFlowSchedule && data.cashFlowSchedule.length > 0) {
+      await saveCachedBondCashflow(cleanIsin, data);
+    } else if (data.status === 200) {
+      await saveCachedBondCashflow(cleanIsin, data);
     }
 
-    return NextResponse.json(data, { headers: privateNoStoreHeaders });
+    return NextResponse.json(data, {
+      headers: {
+        ...privateNoStoreHeaders,
+        'X-Cache': 'MISS',
+      },
+    });
   } catch (err) {
+    // If external call failed, fallback to stale cache if available
+    const stale = await getCachedBondCashflow(cleanIsin, true);
+    if (stale) {
+      return NextResponse.json(stale, {
+        headers: {
+          ...privateNoStoreHeaders,
+          'X-Cache': 'STALE',
+        },
+      });
+    }
     return safeErrorResponse('api/bonds/cashflow', err, 'Failed to fetch bond cash flow schedule');
   }
 }

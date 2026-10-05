@@ -17,6 +17,7 @@ import { CheckCircle2, Clock, AlertCircle, RefreshCw, Landmark, ArrowUpDown, Arr
 import type { NsdlCashFlowResponse } from '@/types/bonds';
 import { format, parseISO, isValid, isBefore, startOfDay } from 'date-fns';
 import { usePrivacy, PRIVACY_MASK } from '@/lib/privacy-context';
+import { getClientCachedBondCashflow, setClientCachedBondCashflow } from '@/lib/bonds/clientCache';
 
 interface BondCashflowDialogProps {
   isin: string;
@@ -110,10 +111,19 @@ export function BondCashflowDialog({
   const fetchCashflow = async (force = false) => {
     if (!isin) return;
 
-    if (!force && cacheRef.current[isin]) {
-      setData(cacheRef.current[isin]);
-      setError(null);
-      return;
+    if (!force) {
+      if (cacheRef.current[isin]) {
+        setData(cacheRef.current[isin]);
+        setError(null);
+        return;
+      }
+      const clientCached = getClientCachedBondCashflow(isin);
+      if (clientCached) {
+        cacheRef.current[isin] = clientCached;
+        setData(clientCached);
+        setError(null);
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -127,6 +137,7 @@ export function BondCashflowDialog({
       
       if (json.status === 200 || json.cashFlowSchedule.length > 0) {
         cacheRef.current[isin] = json;
+        setClientCachedBondCashflow(isin, json);
       }
       
       setData(json);
