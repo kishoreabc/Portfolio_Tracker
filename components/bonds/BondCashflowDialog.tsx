@@ -233,11 +233,6 @@ export function BondCashflowDialog({
                 </Badge>
               </div>
             </div>
-            {data && (
-              <Badge variant="secondary" className="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 whitespace-nowrap">
-                Official NSDL BDS Data
-              </Badge>
-            )}
           </div>
 
           {/* Quick Metrics Bar */}

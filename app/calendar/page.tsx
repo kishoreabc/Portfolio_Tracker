@@ -9,7 +9,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { Topbar } from '@/components/layout/Topbar';
 import { usePortfolioData } from '@/hooks/usePortfolioData';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarIcon, Banknote, AlertCircle, CalendarSearch, Building2, ShieldCheck, Clock } from 'lucide-react';
+import { CalendarIcon, Banknote, AlertCircle, CalendarSearch, Building2, ShieldCheck, Clock, IndianRupee } from 'lucide-react';
 import { BondCashflowDialog } from '@/components/bonds/BondCashflowDialog';
 import { KpiCard } from '@/components/shared/KpiCard';
 import { useState, useEffect } from 'react';
@@ -23,7 +23,7 @@ function fmt(v: number, isHidden: boolean = false) {
 }
 
 export default function CalendarPage() {
-  const { bondMaturityEvents, isLoading, lastFetched, apiErrors } = usePortfolioData();
+  const { bonds, bondMaturityEvents, isLoading, lastFetched, apiErrors } = usePortfolioData();
   const { isHidden } = usePrivacy();
   const [selectedIsin, setSelectedIsin] = useState<{ isin: string; name: string; units?: number } | null>(null);
 
@@ -141,6 +141,33 @@ export default function CalendarPage() {
     : 'None';
   const totalCouponsAmount = upcomingCoupons.reduce((s, c) => s + (c.amount || 0), 0);
 
+  const bondList = bonds && bonds.length > 0 ? bonds : bondMaturityEvents;
+
+  const { totalAnnualInterest, monthlyInterest, weightedCouponPct } = useMemo(() => {
+    let annualInterest = 0;
+    let totalPrincipal = 0;
+
+    for (const b of bondList) {
+      const rawRate = Number(b.couponRate ?? 0);
+      const rate = rawRate > 1 ? rawRate / 100 : rawRate;
+      const principal = (b.unitsHeld > 0 && b.faceValue > 0)
+        ? b.faceValue * b.unitsHeld
+        : (b.totalValue || 0);
+
+      annualInterest += principal * rate;
+      totalPrincipal += principal;
+    }
+
+    const monthly = annualInterest / 12;
+    const avgCoupon = totalPrincipal > 0 ? (annualInterest / totalPrincipal) * 100 : 0;
+
+    return {
+      totalAnnualInterest: annualInterest,
+      monthlyInterest: monthly,
+      weightedCouponPct: avgCoupon,
+    };
+  }, [bondList]);
+
   return (
     <>
       <Topbar lastFetched={lastFetched} pageTitle="Calendar" apiErrors={apiErrors} />
@@ -175,11 +202,16 @@ export default function CalendarPage() {
             isLoading={isLoading || isNsdlLoading}
           />
           <KpiCard
-            title="NSDL Registry"
-            value="Direct Feed"
-            subValue="Realtime CAS schedule"
+            title="Monthly Interest"
+            value={fmt(monthlyInterest, isHidden)}
+            subValue={
+              isLoading || isNsdlLoading
+                ? undefined
+                : `${weightedCouponPct > 0 ? `${weightedCouponPct.toFixed(2)}% p.a. · ` : ''}${fmt(totalAnnualInterest, isHidden)}/yr`
+            }
             accentColor="teal"
-            icon={ShieldCheck}
+            icon={IndianRupee}
+            isPrivate
             isLoading={isLoading || isNsdlLoading}
           />
         </div>
