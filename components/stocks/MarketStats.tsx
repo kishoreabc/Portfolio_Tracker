@@ -28,6 +28,12 @@ function fmtVol(v: number | undefined | null): string {
   return v.toLocaleString('en-IN');
 }
 
+function fmtDivYield(v: number | undefined | null): string {
+  if (v == null || isNaN(v) || v <= 0) return '—';
+  // Yahoo Finance returns dividendYield directly in percentage form (e.g. 6.02 for 6.02%)
+  return `${v.toFixed(2)}%`;
+}
+
 export const MarketStats = memo(function MarketStats({ quote, profile, isLoading }: MarketStatsProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const prof = profile as any;
@@ -40,6 +46,17 @@ export const MarketStats = memo(function MarketStats({ quote, profile, isLoading
     (industry as string)?.toLowerCase().includes('bank'));
 
   const pbValue = (quote?.priceToBook ?? prof?.defaultKeyStatistics?.priceToBook?.raw ?? prof?.defaultKeyStatistics?.priceToBook) as number | undefined;
+
+  const cmp = Number(quote?.regularMarketPrice) || 0;
+  const divRate = Number(quote?.dividendRate) || 0;
+
+  // Actual Dividend Yield (%) = (Annual Dividend / Current Market Price) * 100
+  let calculatedDivYield: number | null = null;
+  if (divRate > 0 && cmp > 0) {
+    calculatedDivYield = (divRate / cmp) * 100;
+  } else if (typeof quote?.dividendYield === 'number' && !isNaN(quote.dividendYield as number) && (quote.dividendYield as number) > 0) {
+    calculatedDivYield = quote.dividendYield as number;
+  }
 
   const stats = [
     { label: 'Open', value: fmtPrice(quote?.regularMarketOpen as number) },
@@ -54,7 +71,7 @@ export const MarketStats = memo(function MarketStats({ quote, profile, isLoading
     { label: isBank ? 'PB Ratio (Bank)' : 'PE Ratio', value: fmtNum((isBank ? (pbValue ?? quote?.trailingPE) : quote?.trailingPE) as number) },
     { label: isBank ? 'PE Ratio' : 'PB Ratio', value: fmtNum((isBank ? quote?.trailingPE : pbValue) as number) },
     { label: 'EPS', value: fmtNum(eps as number) },
-    { label: 'Div Yield', value: quote?.dividendYield ? `${((quote.dividendYield as number) * 100).toFixed(2)}%` : '—' },
+    { label: 'Div Yield', value: fmtDivYield(calculatedDivYield) },
     { label: 'Sector', value: (sector as string) || '—' },
     { label: 'Industry', value: (industry as string) || '—' },
   ];

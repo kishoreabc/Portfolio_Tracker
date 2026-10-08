@@ -126,7 +126,7 @@ async function fetchHoldingData(
     trailingPE: typeof quote.trailingPE === 'number' ? Math.round(quote.trailingPE * 10) / 10 : undefined,
     forwardPE: typeof quote.forwardPE === 'number' ? Math.round(quote.forwardPE * 10) / 10 : undefined,
     priceToBook: typeof quote.priceToBook === 'number' ? Math.round(quote.priceToBook * 10) / 10 : undefined,
-    dividendYield: typeof quote.dividendYield === 'number' ? Math.round(quote.dividendYield * 1000) / 10 : undefined,
+    dividendYield: typeof quote.dividendYield === 'number' ? Math.round(quote.dividendYield * 100) / 100 : undefined,
 
     fiftyDayAverage: fiftyDayAvg ? Math.round(fiftyDayAvg * 10) / 10 : undefined,
     twoHundredDayAverage: twoHundredDayAvg ? Math.round(twoHundredDayAvg * 10) / 10 : undefined,

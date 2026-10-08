@@ -137,3 +137,5 @@ tmp/
 .agents/
 skills-lock.json
 scratch
+
+prompt

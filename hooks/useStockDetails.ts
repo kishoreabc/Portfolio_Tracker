@@ -31,6 +31,7 @@ interface QuoteData {
   trailingPE?: number;
   priceToBook?: number;
   trailingEps?: number;
+  dividendRate?: number;
   dividendYield?: number;
   fiftyTwoWeekHigh?: number;
   fiftyTwoWeekLow?: number;

@@ -24,8 +24,8 @@ function formatPrice(v: number) {
 
 function formatLargeNumber(v: number): string {
   if (v >= 1e12) return `₹${(v / 1e12).toFixed(2)}L Cr`;
-  if (v >= 1e7) return `₹${(v / 1e7).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}Cr`;
-  if (v >= 1e5) return `₹${(v / 1e5).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}L`;
+  if (v >= 1e7) return `₹${Math.round(v / 1e7).toLocaleString('en-IN')} Cr`;
+  if (v >= 1e5) return `₹${(v / 1e5).toLocaleString('en-IN', { maximumFractionDigits: 1 })}L`;
   return `₹${v.toLocaleString('en-IN')}`;
 }
 

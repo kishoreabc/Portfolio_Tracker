@@ -39,12 +39,17 @@ export async function GET(
     return NextResponse.json(cached.data, { headers: privateNoStoreHeaders });
   }
 
-  // Try NSE (.NS) first, then BSE (.BO)
-  const suffixes = upperSymbol.includes('.') ? [''] : ['.NS', '.BO'];
+  // Try candidates: NSE (.NS) first, then BSE (.BO), plus aliases for demerged tickers
+  const candidateSymbols =
+    upperSymbol === 'TATAMOTORS'
+      ? ['TMCV.NS', 'TMPV.NS', 'TATAMOTORS.NS', 'TATAMOTORS.BO']
+      : upperSymbol.includes('.')
+      ? [upperSymbol]
+      : [upperSymbol + '.NS', upperSymbol + '.BO'];
+
   let rawQuote: any = null;
 
-  for (const suffix of suffixes) {
-    const yahooSymbol = upperSymbol + suffix;
+  for (const yahooSymbol of candidateSymbols) {
     try {
       const yf = await import('yahoo-finance2');
       const YahooFinance = yf.default || yf;
@@ -52,12 +57,23 @@ export async function GET(
       rawQuote = await yahooFinance.quote(yahooSymbol, {}, { validateResult: false });
       if (rawQuote) break;
     } catch {
-      // try next suffix
+      // try next candidate
     }
   }
 
   if (!rawQuote) {
     return NextResponse.json({ error: 'Symbol not found' }, { status: 404, headers: privateNoStoreHeaders });
+  }
+
+  const rawDivRate = rawQuote.dividendRate != null ? Number(rawQuote.dividendRate) : (rawQuote.trailingAnnualDividendRate != null ? Number(rawQuote.trailingAnnualDividendRate) : null);
+  const cmp = typeof rawQuote.regularMarketPrice === 'number' && rawQuote.regularMarketPrice > 0 ? Number(rawQuote.regularMarketPrice) : null;
+
+  // Calculate actual dividend yield based on CMP (Current Market Price): (Annual Dividend / CMP) * 100
+  let calculatedDividendYield: number | null = null;
+  if (rawDivRate != null && rawDivRate > 0 && cmp != null && cmp > 0) {
+    calculatedDividendYield = Number(((rawDivRate / cmp) * 100).toFixed(2));
+  } else if (rawQuote.dividendYield != null) {
+    calculatedDividendYield = Number(Number(rawQuote.dividendYield).toFixed(2));
   }
 
   // Explicitly sanitize and pick ONLY fields required by the frontend UI
@@ -78,7 +94,8 @@ export async function GET(
     trailingPE: rawQuote.trailingPE,
     priceToBook: rawQuote.priceToBook,
     trailingEps: rawQuote.trailingEps,
-    dividendYield: rawQuote.dividendYield,
+    dividendRate: rawDivRate,
+    dividendYield: calculatedDividendYield,
     fiftyTwoWeekHigh: rawQuote.fiftyTwoWeekHigh,
     fiftyTwoWeekLow: rawQuote.fiftyTwoWeekLow,
     exchange: rawQuote.exchange,
