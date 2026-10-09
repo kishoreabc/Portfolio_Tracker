@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Copy, ExternalLink, Check } from 'lucide-react';
+import Link from 'next/link';
+import { X, Copy, ExternalLink, Check, Compass } from 'lucide-react';
 import { useStockModal } from '@/lib/stock-modal-context';
 import { useStockDetails } from '@/hooks/useStockDetails';
 import type { TimeRange } from '@/hooks/useStockDetails';
@@ -147,6 +148,14 @@ export function StockDetailsModal() {
               <div className="flex items-center justify-between gap-3 px-5 py-3 border-t border-border/30 shrink-0 bg-white/[0.01]">
                 <p className="text-xs text-muted-foreground/40">Data from Yahoo Finance · {activeSymbol}.NS</p>
                 <div className="flex items-center gap-2">
+                  <Link
+                    href={`/stock-analysis/${activeSymbol}`}
+                    onClick={closeStock}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 text-white shadow-sm shadow-blue-500/20 transition-all"
+                  >
+                    <Compass className="w-3.5 h-3.5" />
+                    Research & Fundamentals
+                  </Link>
                   <button
                     onClick={handleCopy}
                     className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-white/5 hover:bg-white/10 border border-border/30 text-muted-foreground hover:text-foreground transition-all"

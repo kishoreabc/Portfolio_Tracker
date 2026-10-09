@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 import {
   Star,
   Plus,
@@ -16,6 +17,7 @@ import {
   ExternalLink,
   Sparkles,
   BarChart2,
+  Compass,
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
@@ -381,6 +383,13 @@ export function WatchlistTable({ onOpenAddModal, openStock }: WatchlistTableProp
                     {/* Actions */}
                     <TableCell className="text-right pr-5">
                       <div className="inline-flex items-center justify-end gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
+                        <Link
+                          href={`/stock-analysis/${item.symbol}`}
+                          className="h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
+                          title={`View fundamental analysis & Screener metrics for ${item.symbol}`}
+                        >
+                          <Compass className="w-3.5 h-3.5" />
+                        </Link>
                         <Button
                           size="icon-sm"
                           variant="ghost"

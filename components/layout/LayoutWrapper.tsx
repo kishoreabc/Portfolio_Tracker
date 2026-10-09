@@ -30,6 +30,8 @@ const AUTH_DASHBOARD_ROUTES = [
   '/',
   '/portfolio',
   '/stocks',
+  '/stock-analysis',
+  '/analysis',
   '/bonds',
   '/cashflow',
   '/calendar',

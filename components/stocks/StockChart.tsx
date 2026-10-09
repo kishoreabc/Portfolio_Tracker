@@ -116,6 +116,9 @@ export const StockChart = memo(function StockChart({
         timeVisible: true,
         secondsVisible: false,
         minBarSpacing: 0.001,
+        fixLeftEdge: true,
+        fixRightEdge: true,
+        rightOffset: 0,
         tickMarkFormatter: (time: number, tickMarkType: number) => {
           const d = new Date(time * 1000);
           if (tickMarkType === 0) return d.getFullYear().toString();
@@ -131,30 +134,6 @@ export const StockChart = memo(function StockChart({
 
     chartRef.current = chart;
 
-    if (timeRange === '1d' && sorted.length > 0) {
-      const firstCandleTime = sorted[0].time;
-      const d = new Date(firstCandleTime * 1000);
-      const formatter = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Kolkata', year: 'numeric', month: 'numeric', day: 'numeric' });
-      const parts = formatter.formatToParts(d);
-      const year = parts.find(p => p.type === 'year')!.value;
-      const month = parts.find(p => p.type === 'month')!.value;
-      const day = parts.find(p => p.type === 'day')!.value;
-
-      const dateStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T03:45:00Z`;
-      const marketOpenTime = Math.floor(new Date(dateStr).getTime() / 1000);
-      const endTime = marketOpenTime + 74 * 300; // 15:25 IST
-
-      const lastTime = sorted[sorted.length - 1].time;
-      if (lastTime < endTime) {
-        let nextTime = lastTime + 300;
-        nextTime = Math.ceil(nextTime / 300) * 300;
-        while (nextTime <= endTime) {
-          sorted.push({ time: nextTime } as any);
-          nextTime += 300;
-        }
-      }
-    }
-
     let series;
     if (chartType === 'candlestick') {
       series = chart.addSeries(CandlestickSeries, {
@@ -167,16 +146,13 @@ export const StockChart = memo(function StockChart({
         lastValueVisible: false,
         priceLineVisible: false,
       });
-      series.setData(sorted.map((c) => {
-        if (c.close === undefined) return { time: c.time as unknown as string };
-        return {
-          time: c.time as unknown as string,
-          open: c.open,
-          high: c.high,
-          low: c.low,
-          close: c.close,
-        };
-      }));
+      series.setData(sorted.map((c) => ({
+        time: c.time as unknown as string,
+        open: c.open,
+        high: c.high,
+        low: c.low,
+        close: c.close,
+      })));
 
       const { HistogramSeries } = await import('lightweight-charts');
       const volumeSeries = chart.addSeries(HistogramSeries, {
@@ -191,7 +167,6 @@ export const StockChart = memo(function StockChart({
         scaleMargins: { top: 0.8, bottom: 0 },
       });
       volumeSeries.setData(sorted.map(c => {
-        if (c.close === undefined) return { time: c.time as unknown as string };
         const isUp = c.close >= c.open;
         return {
           time: c.time as unknown as string,
@@ -210,10 +185,10 @@ export const StockChart = memo(function StockChart({
         crosshairMarkerRadius: 4,
         crosshairMarkerBackgroundColor: lineColor,
       });
-      series.setData(sorted.map((c) => {
-        if (c.close === undefined) return { time: c.time as unknown as string };
-        return { time: c.time as unknown as string, value: c.close };
-      }));
+      series.setData(sorted.map((c) => ({
+        time: c.time as unknown as string,
+        value: c.close,
+      })));
     } else {
       series = chart.addSeries(LineSeries, {
         color: lineColor,
@@ -222,10 +197,10 @@ export const StockChart = memo(function StockChart({
         crosshairMarkerRadius: 4,
         crosshairMarkerBackgroundColor: lineColor,
       });
-      series.setData(sorted.map((c) => {
-        if (c.close === undefined) return { time: c.time as unknown as string };
-        return { time: c.time as unknown as string, value: c.close };
-      }));
+      series.setData(sorted.map((c) => ({
+        time: c.time as unknown as string,
+        value: c.close,
+      })));
     }
 
     seriesRef.current = series;
@@ -265,16 +240,20 @@ export const StockChart = memo(function StockChart({
 
     chart.subscribeCrosshairMove(handleCrosshairMove);
 
-    // Resize observer
+    // Resize observer: keep chart width synced and re-fit content to full width
     const ro = new ResizeObserver((entries) => {
       if (entries[0] && chartRef.current) {
-        chartRef.current.applyOptions({ width: entries[0].contentRect.width });
+        const newWidth = entries[0].contentRect.width;
+        if (newWidth > 0) {
+          chartRef.current.applyOptions({ width: newWidth });
+          chartRef.current.timeScale().fitContent();
+        }
       }
     });
     ro.observe(containerRef.current);
 
     return () => ro.disconnect();
-  }, [candles, chartType, lineColor, destroyChart]); // intentionally omitting showVolume to avoid full rebuild
+  }, [candles, chartType, timeRange, lineColor, destroyChart]); // intentionally omitting showVolume to avoid full rebuild
 
   useEffect(() => {
     if (volumeSeriesRef.current) {

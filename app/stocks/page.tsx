@@ -16,7 +16,9 @@ import {
   Plus,
   Briefcase,
   Layers,
+  Compass,
 } from 'lucide-react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -412,6 +414,9 @@ export default function StocksPage() {
                             </span>
                           </TableHead>
                         ))}
+                        <TableHead className="text-right text-sm font-semibold uppercase tracking-wider pr-4 text-muted-foreground">
+                          Analysis
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -421,7 +426,7 @@ export default function StocksPage() {
                             <TableCell className="px-2 text-center">
                               <Skeleton className="h-4 w-4 mx-auto bg-white/5" />
                             </TableCell>
-                            {Array.from({ length: 10 }).map((_, j) => (
+                            {Array.from({ length: 11 }).map((_, j) => (
                               <TableCell key={j}>
                                 <Skeleton className="h-4 bg-white/5" />
                               </TableCell>
@@ -541,6 +546,16 @@ export default function StocksPage() {
                                   {h.percentChange >= 0 ? '+' : '-'}
                                   {Math.abs(h.percentChange * 100).toFixed(2)}%
                                 </span>
+                              </TableCell>
+                              <TableCell className="text-right pr-4">
+                                <Link
+                                  href={`/stock-analysis/${h.ticker}`}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 hover:text-blue-300 border border-blue-500/20 transition-all"
+                                  title={`View fundamental analysis for ${h.ticker}`}
+                                >
+                                  <Compass className="w-3.5 h-3.5" />
+                                  <span className="hidden sm:inline">Research</span>
+                                </Link>
                               </TableCell>
                             </motion.tr>
                           );

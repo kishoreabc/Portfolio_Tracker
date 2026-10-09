@@ -6,8 +6,6 @@ const STORAGE_KEY = 'portfolio_watchlist_symbols';
 const DEFAULT_WATCHLIST = ['RELIANCE', 'TCS', 'HDFCBANK', 'INFY', 'TATAMOTORS', 'ITC'];
 const EVENT_NAME = 'portfolio-watchlist-change';
 
-let memoryWatchlist: string[] | null = null;
-
 function getStoredWatchlist(): string[] {
   if (typeof window === 'undefined') return DEFAULT_WATCHLIST;
   try {

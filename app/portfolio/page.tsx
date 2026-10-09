@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Search, ArrowUpDown, ArrowUp, ArrowDown, TrendingUp, Building2, Wallet, PieChart } from 'lucide-react';
+import Link from 'next/link';
+import { Search, ArrowUpDown, ArrowUp, ArrowDown, TrendingUp, Building2, Wallet, PieChart, Compass } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
@@ -219,10 +220,13 @@ export default function PortfolioPage() {
                           </span>
                         </TableHead>
                       ))}
+                      <TableHead className="text-right text-sm font-semibold uppercase tracking-wider pr-4 text-muted-foreground">
+                        Analysis
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {isLoading ? <SkeletonRows cols={5} /> : equityRows.map((row, i) => (
+                    {isLoading ? <SkeletonRows cols={6} /> : equityRows.map((row, i) => (
                       <motion.tr key={row.id}
                         initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.015 }}
@@ -248,6 +252,16 @@ export default function PortfolioPage() {
                             </span>
                           </div>
                         </TableCell>
+                        <TableCell className="text-right pr-4">
+                          <Link
+                            href={`/stock-analysis/${row.ticker}`}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 hover:text-blue-300 border border-blue-500/20 transition-all"
+                            title={`View Screener-style fundamental analysis for ${row.ticker}`}
+                          >
+                            <Compass className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">Analysis</span>
+                          </Link>
+                        </TableCell>
                       </motion.tr>
                     ))}
                     {/* Equity subtotal */}
@@ -256,6 +270,7 @@ export default function PortfolioPage() {
                         <TableCell colSpan={3} className="text-sm font-bold text-foreground">Total Equity</TableCell>
                         <TableCell className="text-right text-sm font-bold tabular-nums text-foreground">{fmt(equityTotal, isHidden)}</TableCell>
                         <TableCell className="text-right text-sm font-bold text-blue-400">100.00%</TableCell>
+                        <TableCell className="text-right pr-4" />
                       </TableRow>
                     )}
                   </TableBody>
