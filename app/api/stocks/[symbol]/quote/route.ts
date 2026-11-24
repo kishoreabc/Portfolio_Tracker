@@ -45,7 +45,7 @@ export async function GET(
       ? ['TMCV.NS', 'TMPV.NS', 'TATAMOTORS.NS', 'TATAMOTORS.BO']
       : upperSymbol.includes('.')
       ? [upperSymbol]
-      : [upperSymbol + '.NS', upperSymbol + '.BO'];
+      : [upperSymbol + '.NS', upperSymbol + '.BO', upperSymbol];
 
   let rawQuote: any = null;
 

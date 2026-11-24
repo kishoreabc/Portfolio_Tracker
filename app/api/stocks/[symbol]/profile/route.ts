@@ -37,7 +37,7 @@ export async function GET(
     return NextResponse.json(cached.data, { headers: privateNoStoreHeaders });
   }
 
-  const suffixes = upperSymbol.includes('.') ? [''] : ['.NS', '.BO'];
+  const suffixes = upperSymbol.includes('.') ? [''] : ['.NS', '.BO', ''];
   let rawProfile: any = null;
 
   for (const suffix of suffixes) {

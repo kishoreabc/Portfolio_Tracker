@@ -1,5 +1,6 @@
 import type { ParsedSheet } from '@/types/sheets';
-import type { EquityHolding } from '@/types/holdings';
+import type { EquityHolding, StockMarket } from '@/types/holdings';
+import { isUSStock } from '@/lib/stocks/market';
 
 export const BANK_PB_DEFAULTS: Record<string, number> = {
   SOUTHBANK: 1.01,
@@ -75,9 +76,14 @@ export function mapEquityHoldings(sheet: ParsedSheet | null): EquityHolding[] {
         ? (pb ?? null)
         : (pe ?? (pb ?? null));
 
+      const exchange = String(row.exchange ?? 'NSE').trim();
+      const isUS = isUSStock({ exchange, ticker });
+      const market: StockMarket = isUS ? 'us' : 'indian';
+      const country: 'IN' | 'US' = isUS ? 'US' : 'IN';
+
       return {
         ticker,
-        exchange: String(row.exchange ?? 'NSE').trim(),
+        exchange,
         name: String(row.name ?? row.ticker ?? '').trim(),
         currentPrice,
         priceChange,
@@ -90,6 +96,8 @@ export function mapEquityHoldings(sheet: ParsedSheet | null): EquityHolding[] {
         pb,
         valuationType,
         valuationRatio,
+        market,
+        country,
       };
     })
     .filter((h) => h.ticker && h.currentValue >= 0);

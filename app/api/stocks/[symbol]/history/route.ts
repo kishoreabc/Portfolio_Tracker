@@ -74,7 +74,7 @@ export async function GET(
     return NextResponse.json(cached.data, { headers: privateNoStoreHeaders });
   }
 
-  const suffixes = upperSymbol.includes('.') ? [''] : ['.NS', '.BO'];
+  const suffixes = upperSymbol.includes('.') ? [''] : ['.NS', '.BO', ''];
   let result: unknown = null;
 
   for (const suffix of suffixes) {

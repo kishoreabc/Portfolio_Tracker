@@ -1,3 +1,5 @@
+export type StockMarket = 'indian' | 'us';
+
 export interface EquityHolding {
   ticker: string;
   exchange: string;
@@ -13,6 +15,8 @@ export interface EquityHolding {
   pb?: number | null;
   valuationType?: 'PE' | 'PB' | null;
   valuationRatio?: number | null;
+  market?: StockMarket;
+  country?: 'IN' | 'US';
 }
 
 export type PortfolioRowType = 'equity' | 'bond';
